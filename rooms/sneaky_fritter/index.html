@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Bubble Pop!</title>
+    <title>Pucanje Mjehurića!</title>
     <style>
         * {
             margin: 0;
@@ -145,12 +145,12 @@
 </head>
 <body>
     <div id="game-container">
-        <div id="score">Score: 0</div>
-        <div id="difficulty">Level 1</div>
+        <div id="score">Bodovi: 0</div>
+        <div id="difficulty">Razina 1</div>
         <div id="game-over">
-            <h1>Game Over!</h1>
-            <p id="final-score">Final Score: 0</p>
-            <button id="restart-btn">Play Again</button>
+            <h1>Kraj Igre!</h1>
+            <p id="final-score">Konačni Rezultat: 0</p>
+            <button id="restart-btn">Igraj Ponovno</button>
         </div>
     </div>
 
@@ -228,7 +228,7 @@
                 if (!gameRunning) return;
 
                 score += 10;
-                scoreDisplay.textContent = 'Score: ' + score;
+                scoreDisplay.textContent = 'Bodovi: ' + score;
 
                 updateDifficulty();
 
@@ -273,7 +273,7 @@
             const newLevel = Math.floor(score / 100) + 1;
             if (newLevel !== difficultyLevel) {
                 difficultyLevel = newLevel;
-                difficultyDisplay.textContent = 'Level ' + difficultyLevel;
+                difficultyDisplay.textContent = 'Razina ' + difficultyLevel;
 
                 clearInterval(spawnInterval);
                 currentSpawnRate = Math.max(300, 1000 - (difficultyLevel - 1) * 100);
@@ -303,8 +303,8 @@
             score = 0;
             difficultyLevel = 1;
             currentSpawnRate = 1000;
-            scoreDisplay.textContent = 'Score: 0';
-            difficultyDisplay.textContent = 'Level 1';
+            scoreDisplay.textContent = 'Bodovi: 0';
+            difficultyDisplay.textContent = 'Razina 1';
             gameOverScreen.style.display = 'none';
             gameRunning = true;
 
@@ -320,7 +320,7 @@
             clearInterval(spawnInterval);
             clearInterval(updateInterval);
 
-            finalScoreDisplay.textContent = 'Final Score: ' + score;
+            finalScoreDisplay.textContent = 'Konačni Rezultat: ' + score;
             gameOverScreen.style.display = 'block';
         }
 
