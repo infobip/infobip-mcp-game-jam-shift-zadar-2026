@@ -163,6 +163,34 @@
             opacity: 0.6;
         }
 
+        #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 200;
+        }
+
+        #game-over-screen h1 {
+            font-size: 48px;
+            color: #ff0844;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px #ff0844;
+        }
+
+        #game-over-screen .stats {
+            font-size: 24px;
+            color: #00ff88;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
         #start-screen {
             position: absolute;
             top: 0;
@@ -193,7 +221,7 @@
             line-height: 1.6;
         }
 
-        #start-btn {
+        .game-btn {
             padding: 16px 48px;
             font-size: 24px;
             background: linear-gradient(135deg, #00ff88 0%, #00d9ff 100%);
@@ -208,7 +236,7 @@
             min-height: 60px;
         }
 
-        #start-btn:active {
+        .game-btn:active {
             transform: scale(0.95);
         }
 
@@ -246,8 +274,18 @@
 
         <div id="start-screen">
             <h1>⚡ 360° SHOOTER ⚡</h1>
-            <p>Drag to move your ship<br>Tap anywhere to shoot in that direction!<br>Full 360° aiming - you can't miss!</p>
-            <button id="start-btn">START MISSION</button>
+            <p>Drag to move your ship<br>Tap anywhere to shoot in that direction!<br>Don't let enemies touch you!</p>
+            <button class="game-btn" id="start-btn">START MISSION</button>
+        </div>
+
+        <div id="game-over-screen">
+            <h1>💀 GAME OVER 💀</h1>
+            <div class="stats">
+                <div>Final Score: <span id="final-score">0</span></div>
+                <div>Wave Reached: <span id="final-wave">1</span></div>
+                <div>Total Kills: <span id="final-kills">0</span></div>
+            </div>
+            <button class="game-btn" id="retry-btn">TRY AGAIN</button>
         </div>
     </div>
 
@@ -259,14 +297,17 @@
         const waveDisplay = document.getElementById('wave');
         const killsDisplay = document.getElementById('kills');
         const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
         const startBtn = document.getElementById('start-btn');
+        const retryBtn = document.getElementById('retry-btn');
 
         let score = 0;
         let wave = 1;
         let kills = 0;
         let gameActive = false;
         let enemySpawnInterval;
-        let waveEnemiesRemaining = 0;
+        let waveEnemiesSpawned = 0;
+        let maxEnemiesPerWave = 10;
 
         // Hero movement
         let heroX = window.innerWidth / 2;
@@ -280,6 +321,7 @@
         const ACCELERATION = 0.8;
         const FRICTION = 0.85;
         const MAX_SPEED = 15;
+        const COLLISION_DISTANCE = 55; // Distance for enemy collision
 
         function updateHeroPosition() {
             if (!gameActive) return;
@@ -317,7 +359,50 @@
             hero.style.bottom = (window.innerHeight - heroY) + 'px';
             hero.style.transform = 'translateX(-50%)';
 
+            // Check collision with enemies
+            checkEnemyCollision();
+
             requestAnimationFrame(updateHeroPosition);
+        }
+
+        function checkEnemyCollision() {
+            const enemies = document.querySelectorAll('.enemy');
+            enemies.forEach(enemy => {
+                if (enemy.dataset.destroyed) return;
+
+                const rect = enemy.getBoundingClientRect();
+                const enemyX = rect.left + rect.width / 2;
+                const enemyY = rect.top + rect.height / 2;
+
+                const dx = heroX - enemyX;
+                const dy = heroY - enemyY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < COLLISION_DISTANCE) {
+                    gameOver();
+                }
+            });
+        }
+
+        function gameOver() {
+            gameActive = false;
+            clearInterval(enemySpawnInterval);
+
+            // Show game over screen
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('final-wave').textContent = wave;
+            document.getElementById('final-kills').textContent = kills;
+            gameOverScreen.style.display = 'flex';
+
+            // Big explosion at hero
+            const explosion = document.createElement('div');
+            explosion.className = 'explosion';
+            explosion.textContent = '💥';
+            explosion.style.left = heroX + 'px';
+            explosion.style.top = heroY + 'px';
+            explosion.style.fontSize = '80px';
+            gameArea.appendChild(explosion);
+            setTimeout(() => explosion.remove(), 500);
         }
 
         // Touch/pointer handling
@@ -485,11 +570,6 @@
             setTimeout(() => hitEffect.remove(), 600);
 
             enemy.remove();
-
-            waveEnemiesRemaining--;
-            if (waveEnemiesRemaining <= 0) {
-                nextWave();
-            }
         }
 
         function createEnemy() {
@@ -527,15 +607,12 @@
 
             gameArea.appendChild(enemy);
 
-            const duration = Math.max(4000 - (wave * 150), 2000);
+            const duration = Math.max(3500 - (wave * 100), 2000);
 
             let startTime = Date.now();
             let animationFrame;
 
-            // Move toward center of screen
-            const targetCenterX = window.innerWidth / 2;
-            const targetCenterY = window.innerHeight / 2;
-
+            // Move toward hero's current position
             function animate() {
                 if (!gameActive || enemy.dataset.destroyed) {
                     if (!enemy.dataset.destroyed) enemy.remove();
@@ -550,8 +627,9 @@
                     return;
                 }
 
-                const currentX = startX + (targetCenterX - startX) * progress;
-                const currentY = startY + (targetCenterY - startY) * progress;
+                // Track hero position
+                const currentX = startX + (heroX - startX) * progress;
+                const currentY = startY + (heroY - startY) * progress;
 
                 enemy.style.left = currentX + 'px';
                 enemy.style.top = currentY + 'px';
@@ -574,7 +652,8 @@
         function nextWave() {
             wave++;
             waveDisplay.textContent = wave;
-            waveEnemiesRemaining = 5 + (wave * 2);
+            waveEnemiesSpawned = 0;
+            maxEnemiesPerWave = 10 + (wave * 3);
         }
 
         function startGame() {
@@ -582,12 +661,14 @@
             score = 0;
             wave = 1;
             kills = 0;
-            waveEnemiesRemaining = 5;
+            waveEnemiesSpawned = 0;
+            maxEnemiesPerWave = 10;
 
             scoreDisplay.textContent = score;
             waveDisplay.textContent = wave;
             killsDisplay.textContent = kills;
             startScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
 
             // Reset hero position
             heroX = window.innerWidth / 2;
@@ -601,15 +682,24 @@
 
             updateHeroPosition();
 
-            const baseSpawnRate = 1200;
+            // Spawn enemies more frequently and continuously
+            const baseSpawnRate = 600;
             enemySpawnInterval = setInterval(() => {
-                if (waveEnemiesRemaining > 0) {
-                    createEnemy();
+                createEnemy();
+                waveEnemiesSpawned++;
+
+                if (waveEnemiesSpawned >= maxEnemiesPerWave) {
+                    nextWave();
                 }
-            }, Math.max(baseSpawnRate - (wave * 50), 400));
+            }, Math.max(baseSpawnRate - (wave * 30), 250));
         }
 
         startBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            startGame();
+        });
+
+        retryBtn.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             startGame();
         });
