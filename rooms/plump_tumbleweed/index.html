@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Bubble Pop!</title>
+    <title>Rail Shooter</title>
     <style>
         * {
             margin: 0;
@@ -15,7 +15,7 @@
             width: 100%;
             height: 100svh;
             overflow: hidden;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #1a1a2e;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
             touch-action: none;
             -webkit-user-select: none;
@@ -27,58 +27,171 @@
             height: 100%;
             position: relative;
             overflow: hidden;
+            background: linear-gradient(180deg, #0f3460 0%, #16213e 100%);
         }
 
-        #score-board {
+        #hud {
             position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.9);
-            padding: 12px 24px;
-            border-radius: 25px;
-            font-size: 24px;
-            font-weight: bold;
-            color: #667eea;
+            top: 10px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-around;
+            padding: 0 20px;
             z-index: 100;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
-        .bubble {
+        .hud-item {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #00ff88;
+            text-shadow: 0 0 10px #00ff88;
+            border: 2px solid #00ff88;
+        }
+
+        #game-area {
             position: absolute;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: inset -5px -5px 20px rgba(0, 0, 0, 0.1),
-                        inset 5px 5px 20px rgba(255, 255, 255, 0.3),
-                        0 5px 15px rgba(0, 0, 0, 0.2);
-            transition: transform 0.1s;
-            touch-action: none;
+            top: 60px;
+            left: 0;
+            right: 0;
+            bottom: 120px;
+            perspective: 1000px;
         }
 
-        .bubble:active {
+        .enemy {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #ff0844 0%, #ff6b6b 100%);
+            border-radius: 10px;
+            cursor: pointer;
+            touch-action: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 0 20px rgba(255, 8, 68, 0.6),
+                        inset 0 0 10px rgba(255, 255, 255, 0.3);
+            transition: transform 0.1s;
+        }
+
+        .enemy:active {
             transform: scale(0.9);
         }
 
-        .pop-effect {
+        .explosion {
             position: absolute;
             pointer-events: none;
-            font-size: 28px;
-            font-weight: bold;
-            color: white;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-            animation: pop-float 0.8s ease-out forwards;
+            font-size: 48px;
+            animation: explode 0.5s ease-out forwards;
             z-index: 50;
         }
 
-        @keyframes pop-float {
+        @keyframes explode {
+            0% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(3) rotate(180deg);
+            }
+        }
+
+        .hit-effect {
+            position: absolute;
+            pointer-events: none;
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff88;
+            text-shadow: 0 0 10px #00ff88;
+            animation: score-pop 0.6s ease-out forwards;
+            z-index: 60;
+        }
+
+        @keyframes score-pop {
             0% {
                 opacity: 1;
                 transform: translateY(0) scale(1);
             }
             100% {
                 opacity: 0;
-                transform: translateY(-50px) scale(1.5);
+                transform: translateY(-40px) scale(1.3);
             }
+        }
+
+        #position-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .position-btn {
+            width: 70px;
+            height: 70px;
+            background: rgba(0, 255, 136, 0.2);
+            border: 3px solid #00ff88;
+            border-radius: 50%;
+            color: #00ff88;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            touch-action: manipulation;
+            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .position-btn:active {
+            transform: scale(0.9);
+        }
+
+        .position-btn.active {
+            background: rgba(0, 255, 136, 0.5);
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.8);
+        }
+
+        #crosshair {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 3px solid #00ff88;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 90;
+            box-shadow: 0 0 20px #00ff88;
+            opacity: 0.8;
+        }
+
+        #crosshair::before,
+        #crosshair::after {
+            content: '';
+            position: absolute;
+            background: #00ff88;
+        }
+
+        #crosshair::before {
+            width: 20px;
+            height: 2px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #crosshair::after {
+            width: 2px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
 
         #start-screen {
@@ -91,35 +204,36 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.9);
             z-index: 200;
         }
 
         #start-screen h1 {
-            font-size: 48px;
-            color: white;
+            font-size: 42px;
+            color: #00ff88;
             margin-bottom: 20px;
-            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+            text-shadow: 0 0 20px #00ff88;
         }
 
         #start-screen p {
-            font-size: 20px;
+            font-size: 18px;
             color: white;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
             text-align: center;
             padding: 0 20px;
+            line-height: 1.6;
         }
 
         #start-btn {
             padding: 16px 48px;
             font-size: 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: linear-gradient(135deg, #00ff88 0%, #00d9ff 100%);
+            color: #1a1a2e;
             border: none;
             border-radius: 50px;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
             touch-action: manipulation;
             min-width: 200px;
             min-height: 60px;
@@ -128,61 +242,125 @@
         #start-btn:active {
             transform: scale(0.95);
         }
+
+        .muzzle-flash {
+            position: absolute;
+            pointer-events: none;
+            font-size: 40px;
+            animation: flash 0.15s ease-out forwards;
+            z-index: 80;
+        }
+
+        @keyframes flash {
+            0% {
+                opacity: 1;
+                transform: scale(0.5);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(1.5);
+            }
+        }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <div id="score-board">Score: <span id="score">0</span></div>
+        <div id="hud">
+            <div class="hud-item">SCORE: <span id="score">0</span></div>
+            <div class="hud-item">WAVE: <span id="wave">1</span></div>
+            <div class="hud-item">AMMO: <span id="ammo">∞</span></div>
+        </div>
+
+        <div id="game-area"></div>
+
+        <div id="crosshair"></div>
+
+        <div id="position-controls">
+            <button class="position-btn" data-pos="0">L</button>
+            <button class="position-btn active" data-pos="1">C</button>
+            <button class="position-btn" data-pos="2">R</button>
+        </div>
 
         <div id="start-screen">
-            <h1>🫧 Bubble Pop! 🫧</h1>
-            <p>Tap the bubbles before they float away!</p>
-            <button id="start-btn">Start Game</button>
+            <h1>⚡ RAIL SHOOTER ⚡</h1>
+            <p>Move between cover positions (L/C/R)<br>Tap enemies to shoot them down!<br>Survive the waves!</p>
+            <button id="start-btn">START MISSION</button>
         </div>
     </div>
 
     <script>
         const gameContainer = document.getElementById('game-container');
+        const gameArea = document.getElementById('game-area');
         const scoreDisplay = document.getElementById('score');
+        const waveDisplay = document.getElementById('wave');
         const startScreen = document.getElementById('start-screen');
         const startBtn = document.getElementById('start-btn');
+        const positionBtns = document.querySelectorAll('.position-btn');
+        const crosshair = document.getElementById('crosshair');
 
         let score = 0;
+        let wave = 1;
         let gameActive = false;
-        let bubbleInterval;
+        let currentPosition = 1; // 0=left, 1=center, 2=right
+        let enemySpawnInterval;
+        let waveEnemiesRemaining = 0;
 
-        const colors = [
-            '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A',
-            '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2'
+        const positions = [
+            { x: '15%', label: 'L' },
+            { x: '50%', label: 'C' },
+            { x: '85%', label: 'R' }
         ];
 
-        function createBubble() {
+        function updateCrosshairPosition() {
+            const pos = positions[currentPosition];
+            crosshair.style.left = pos.x;
+            crosshair.style.top = '50%';
+            crosshair.style.transform = 'translate(-50%, -50%)';
+        }
+
+        function setPosition(pos) {
+            currentPosition = pos;
+            positionBtns.forEach((btn, idx) => {
+                btn.classList.toggle('active', idx === pos);
+            });
+            updateCrosshairPosition();
+        }
+
+        positionBtns.forEach((btn, idx) => {
+            btn.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                if (gameActive) {
+                    setPosition(idx);
+                }
+            });
+        });
+
+        function createEnemy() {
             if (!gameActive) return;
 
-            const bubble = document.createElement('div');
-            bubble.className = 'bubble';
+            const enemy = document.createElement('div');
+            enemy.className = 'enemy';
+            enemy.textContent = '👾';
 
-            const size = Math.random() * 40 + 50; // 50-90px
-            bubble.style.width = size + 'px';
-            bubble.style.height = size + 'px';
-            bubble.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            const enemyPos = Math.floor(Math.random() * 3);
+            const startPos = positions[enemyPos];
 
-            const maxX = window.innerWidth - size;
-            const startX = Math.random() * maxX;
-            bubble.style.left = startX + 'px';
-            bubble.style.bottom = '-100px';
+            enemy.style.left = startPos.x;
+            enemy.style.top = '-80px';
+            enemy.style.transform = 'translateX(-50%)';
 
-            const duration = Math.random() * 3000 + 3000; // 3-6 seconds
-            const floatHeight = window.innerHeight + 100;
+            gameArea.appendChild(enemy);
 
-            gameContainer.appendChild(bubble);
+            const duration = Math.max(3000 - (wave * 100), 1500);
+            const targetY = window.innerHeight - 150;
 
             let startTime = Date.now();
             let animationFrame;
+            let destroyed = false;
 
             function animate() {
-                if (!gameActive) {
-                    bubble.remove();
+                if (!gameActive || destroyed) {
+                    if (!destroyed) enemy.remove();
                     return;
                 }
 
@@ -190,66 +368,105 @@
                 const progress = elapsed / duration;
 
                 if (progress >= 1) {
-                    bubble.remove();
+                    enemy.remove();
+                    // Enemy reached bottom - could add damage logic here
                     return;
                 }
 
-                const currentY = -100 + (floatHeight * progress);
-                bubble.style.bottom = currentY + 'px';
-
-                const wobble = Math.sin(elapsed / 200) * 15;
-                bubble.style.left = (startX + wobble) + 'px';
+                const currentY = -80 + (targetY * progress);
+                enemy.style.top = currentY + 'px';
 
                 animationFrame = requestAnimationFrame(animate);
             }
 
             animationFrame = requestAnimationFrame(animate);
 
-            bubble.addEventListener('pointerdown', (e) => {
+            enemy.addEventListener('pointerdown', (e) => {
                 e.preventDefault();
-                if (!gameActive) return;
+                if (!gameActive || destroyed) return;
 
+                destroyed = true;
                 cancelAnimationFrame(animationFrame);
 
-                score += 10;
+                // Check if enemy is in current position
+                const hitBonus = (enemyPos === currentPosition) ? 50 : 25;
+                score += hitBonus;
                 scoreDisplay.textContent = score;
 
-                const popEffect = document.createElement('div');
-                popEffect.className = 'pop-effect';
-                popEffect.textContent = '+10';
-                popEffect.style.left = bubble.style.left;
-                popEffect.style.bottom = bubble.style.bottom;
-                gameContainer.appendChild(popEffect);
+                // Muzzle flash
+                const flash = document.createElement('div');
+                flash.className = 'muzzle-flash';
+                flash.textContent = '💥';
+                flash.style.left = positions[currentPosition].x;
+                flash.style.bottom = '100px';
+                flash.style.transform = 'translateX(-50%)';
+                gameArea.appendChild(flash);
+                setTimeout(() => flash.remove(), 150);
 
-                setTimeout(() => popEffect.remove(), 800);
+                // Explosion
+                const explosion = document.createElement('div');
+                explosion.className = 'explosion';
+                explosion.textContent = '💥';
+                explosion.style.left = enemy.style.left;
+                explosion.style.top = enemy.style.top;
+                explosion.style.transform = 'translateX(-50%)';
+                gameArea.appendChild(explosion);
+                setTimeout(() => explosion.remove(), 500);
 
-                bubble.style.transition = 'opacity 0.2s, transform 0.2s';
-                bubble.style.opacity = '0';
-                bubble.style.transform = 'scale(1.5)';
+                // Score popup
+                const hitEffect = document.createElement('div');
+                hitEffect.className = 'hit-effect';
+                hitEffect.textContent = `+${hitBonus}`;
+                hitEffect.style.left = enemy.style.left;
+                hitEffect.style.top = enemy.style.top;
+                hitEffect.style.transform = 'translateX(-50%)';
+                gameArea.appendChild(hitEffect);
+                setTimeout(() => hitEffect.remove(), 600);
 
-                setTimeout(() => bubble.remove(), 200);
+                enemy.remove();
+
+                waveEnemiesRemaining--;
+                if (waveEnemiesRemaining <= 0) {
+                    nextWave();
+                }
             });
+        }
+
+        function nextWave() {
+            wave++;
+            waveDisplay.textContent = wave;
+            waveEnemiesRemaining = 5 + (wave * 2);
         }
 
         function startGame() {
             gameActive = true;
             score = 0;
+            wave = 1;
+            currentPosition = 1;
+            waveEnemiesRemaining = 5;
+
             scoreDisplay.textContent = score;
+            waveDisplay.textContent = wave;
             startScreen.style.display = 'none';
 
-            // Remove any existing bubbles
-            document.querySelectorAll('.bubble').forEach(b => b.remove());
+            setPosition(1);
 
-            // Create bubbles at random intervals
-            bubbleInterval = setInterval(() => {
-                createBubble();
-            }, 800);
+            document.querySelectorAll('.enemy').forEach(e => e.remove());
+
+            const baseSpawnRate = 1200;
+            enemySpawnInterval = setInterval(() => {
+                if (waveEnemiesRemaining > 0) {
+                    createEnemy();
+                }
+            }, Math.max(baseSpawnRate - (wave * 50), 400));
         }
 
         startBtn.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             startGame();
         });
+
+        updateCrosshairPosition();
     </script>
 </body>
 </html>
