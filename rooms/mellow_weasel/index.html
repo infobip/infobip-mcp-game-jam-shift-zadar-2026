@@ -133,11 +133,13 @@
         .scale-label {
             text-align: right;
             width: 70px;
+            position: absolute;
+            right: 0;
         }
 
         #thermometer {
             width: 60px;
-            height: 450px;
+            height: 500px;
             background: rgba(255,255,255,0.2);
             border: 4px solid white;
             border-radius: 30px;
@@ -183,19 +185,19 @@
         <div class="input-section">
             <label for="numberInput">Enter Number (1 - 5,000,000)</label>
             <input type="number" id="numberInput" min="1" max="5000000" value="1" placeholder="Enter number">
-            <div class="info">Logarithmic scale visualization</div>
+            <div class="info">Stretched logarithmic scale</div>
         </div>
 
         <div class="thermometer-container">
             <div class="scale-labels">
-                <div class="scale-label">5M</div>
-                <div class="scale-label">1M</div>
-                <div class="scale-label">100K</div>
-                <div class="scale-label">10K</div>
-                <div class="scale-label">1K</div>
-                <div class="scale-label">100</div>
-                <div class="scale-label">10</div>
-                <div class="scale-label">1</div>
+                <div class="scale-label" style="top: 0%">5M</div>
+                <div class="scale-label" style="top: 20%">1M</div>
+                <div class="scale-label" style="top: 45%">100K</div>
+                <div class="scale-label" style="top: 60%">10K</div>
+                <div class="scale-label" style="top: 73%">1K</div>
+                <div class="scale-label" style="top: 84%">100</div>
+                <div class="scale-label" style="top: 92%">10</div>
+                <div class="scale-label" style="top: 98%">1</div>
             </div>
             <div id="thermometer">
                 <div id="mercury"></div>
@@ -219,6 +221,36 @@
         const MIN_VALUE = 1;
         const MAX_VALUE = 5000000;
 
+        function getStretchedPosition(value) {
+            const ranges = [
+                { min: 1, max: 10, startPx: 0, endPx: 10 },
+                { min: 10, max: 100, startPx: 10, endPx: 40 },
+                { min: 100, max: 1000, startPx: 40, endPx: 80 },
+                { min: 1000, max: 10000, startPx: 80, endPx: 135 },
+                { min: 10000, max: 100000, startPx: 135, endPx: 200 },
+                { min: 100000, max: 1000000, startPx: 200, endPx: 275 },
+                { min: 1000000, max: 5000000, startPx: 275, endPx: 400 }
+            ];
+
+            const totalHeight = 400;
+
+            for (let range of ranges) {
+                if (value >= range.min && value <= range.max) {
+                    const minLog = Math.log10(range.min);
+                    const maxLog = Math.log10(range.max);
+                    const valueLog = Math.log10(value);
+
+                    const positionInRange = (valueLog - minLog) / (maxLog - minLog);
+                    const pixelsInRange = range.endPx - range.startPx;
+                    const pixels = range.startPx + (positionInRange * pixelsInRange);
+
+                    return (pixels / totalHeight) * 100;
+                }
+            }
+
+            return 0;
+        }
+
         function updateVisualization() {
             let value = parseInt(numberInput.value) || 1;
 
@@ -227,11 +259,7 @@
 
             numberInput.value = value;
 
-            const minLog = Math.log10(MIN_VALUE);
-            const maxLog = Math.log10(MAX_VALUE);
-            const valueLog = Math.log10(value);
-
-            const percentage = ((valueLog - minLog) / (maxLog - minLog)) * 100;
+            const percentage = getStretchedPosition(value);
 
             mercury.style.height = percentage + '%';
             currentMarker.style.bottom = percentage + '%';
