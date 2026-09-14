@@ -89,9 +89,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
-            font-weight: bold;
-            color: rgba(255, 255, 255, 0.8);
+            font-size: 40px;
         }
 
         @keyframes float {
@@ -223,6 +221,8 @@
             'rgba(132, 250, 176, 0.7)'
         ];
 
+        const smileys = ['😀', '😃', '😄', '😁', '😆', '😊', '😎', '🤩', '😍', '🥰', '😇', '🙂', '😋', '😜', '🤪'];
+
         function createBubble() {
             if (!gameActive) return;
 
@@ -240,6 +240,8 @@
             bubble.style.top = Math.random() * maxY + 100 + 'px';
 
             bubble.style.background = colors[Math.floor(Math.random() * colors.length)];
+
+            bubble.textContent = smileys[Math.floor(Math.random() * smileys.length)];
 
             gameContainer.appendChild(bubble);
 
