@@ -77,6 +77,48 @@
             margin-top: 5px;
         }
 
+        #god-mode-button {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.9);
+            color: #666;
+            border: 3px solid #999;
+            border-radius: 50px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            touch-action: manipulation;
+            min-width: 180px;
+            min-height: 60px;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        #god-mode-button.active {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: white;
+            border-color: #FFD700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 4px 10px rgba(0, 0, 0, 0.3);
+            animation: godGlow 1s infinite;
+        }
+
+        @keyframes godGlow {
+            0%, 100% {
+                filter: brightness(1);
+            }
+            50% {
+                filter: brightness(1.2);
+            }
+        }
+
+        #god-mode-button:active {
+            transform: translateX(-50%) scale(0.95);
+        }
+
         .bubble {
             position: absolute;
             border-radius: 50%;
@@ -248,6 +290,7 @@
             <div id="lives">5</div>
             <div id="lives-label">LIVES</div>
         </div>
+        <button id="god-mode-button">⚡ GOD MODE</button>
     </div>
 
     <div id="game-over-screen" class="hidden">
@@ -263,11 +306,14 @@
         const gameOverScreen = document.getElementById('game-over-screen');
         const finalScoreElement = document.getElementById('final-score');
         const restartButton = document.getElementById('restart-button');
+        const godModeButton = document.getElementById('god-mode-button');
 
         let score = 0;
         let lives = 5;
         let gameActive = true;
         let bubbleInterval = null;
+        let godMode = false;
+        let godModeInterval = null;
 
         const colors = [
             'rgba(255, 107, 107, 0.7)',
@@ -280,6 +326,33 @@
         ];
 
         const smileys = ['😀', '😃', '😄', '😁', '😆', '😊', '😎', '🤩', '😍', '🥰', '😇', '🙂', '😋', '😜', '🤪'];
+
+        function toggleGodMode() {
+            godMode = !godMode;
+
+            if (godMode) {
+                godModeButton.classList.add('active');
+                godModeButton.textContent = '⚡ GOD MODE ON';
+
+                godModeInterval = setInterval(() => {
+                    score += 10;
+                    scoreElement.textContent = score;
+                }, 1);
+            } else {
+                godModeButton.classList.remove('active');
+                godModeButton.textContent = '⚡ GOD MODE';
+
+                if (godModeInterval) {
+                    clearInterval(godModeInterval);
+                    godModeInterval = null;
+                }
+            }
+        }
+
+        godModeButton.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            toggleGodMode();
+        });
 
         function createBubble() {
             if (!gameActive) return;
@@ -371,6 +444,8 @@
         }
 
         function missedBubble() {
+            if (godMode) return;
+
             lives--;
             livesElement.textContent = lives;
 
@@ -383,6 +458,15 @@
             gameActive = false;
             clearInterval(bubbleInterval);
 
+            if (godModeInterval) {
+                clearInterval(godModeInterval);
+                godModeInterval = null;
+            }
+
+            godMode = false;
+            godModeButton.classList.remove('active');
+            godModeButton.textContent = '⚡ GOD MODE';
+
             const allBubbles = document.querySelectorAll('.bubble');
             allBubbles.forEach(b => b.remove());
 
@@ -394,6 +478,15 @@
             score = 0;
             lives = 5;
             gameActive = true;
+            godMode = false;
+
+            if (godModeInterval) {
+                clearInterval(godModeInterval);
+                godModeInterval = null;
+            }
+
+            godModeButton.classList.remove('active');
+            godModeButton.textContent = '⚡ GOD MODE';
 
             scoreElement.textContent = score;
             livesElement.textContent = lives;
