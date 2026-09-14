@@ -78,14 +78,12 @@
             background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
             border: 3px solid #fff;
             font-size: 40px;
-            animation: mowerMove 2s linear;
-            pointer-events: none;
-            cursor: default;
+            animation: pulse 1s infinite;
         }
 
-        @keyframes mowerMove {
-            0% { transform: translateX(-100px) rotate(0deg); }
-            100% { transform: translateX(100px) rotate(360deg); }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
 
         .frog {
@@ -181,7 +179,7 @@
 
         <div id="startScreen">
             <h1>Flower Rush!</h1>
-            <p class="instructions">Tap flowers before they wilt! DON'T tap the frogs! Watch the lawn mower clear flowers automatically!</p>
+            <p class="instructions">Tap flowers before they wilt! Tap lawn mower to clear all flowers! DON'T tap the frogs!</p>
             <button class="btn" id="startBtn">Start Game</button>
         </div>
 
@@ -334,6 +332,7 @@
 
             const circle = document.createElement('div');
             circle.className = 'circle lawn-mower';
+            circle.dataset.type = 'mower';
 
             const size = 90;
             circle.style.width = size + 'px';
@@ -348,14 +347,36 @@
             circle.style.top = (minY + Math.random() * (maxY - minY)) + 'px';
 
             gameContainer.appendChild(circle);
+            circles.push(circle);
 
             circle.style.opacity = '0';
+            circle.style.transform = 'scale(0)';
             setTimeout(() => {
-                circle.style.transition = 'opacity 0.3s';
+                circle.style.transition = 'opacity 0.3s, transform 0.3s';
                 circle.style.opacity = '1';
+                circle.style.transform = 'scale(1)';
             }, 10);
 
-            setTimeout(() => {
+            const timeoutId = setTimeout(() => {
+                if (circle.parentNode && gameActive) {
+                    circle.style.transition = 'opacity 0.3s, transform 0.3s';
+                    circle.style.opacity = '0';
+                    circle.style.transform = 'scale(0)';
+                    setTimeout(() => {
+                        if (circle.parentNode) {
+                            circle.remove();
+                        }
+                        circles = circles.filter(c => c !== circle);
+                    }, 300);
+                }
+            }, 3000);
+
+            circle.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                if (!gameActive) return;
+
+                clearTimeout(timeoutId);
+
                 const allFlowers = circles.filter(c => !c.dataset.type);
                 let clearedCount = 0;
 
@@ -373,23 +394,22 @@
                     }
                 });
 
-                circles = circles.filter(c => c.dataset.type === 'frog');
+                circles = circles.filter(c => c.dataset.type);
 
-                score += clearedCount * 3;
+                score += clearedCount * 5;
                 scoreDisplay.textContent = score;
-            }, 1000);
 
-            setTimeout(() => {
-                if (circle.parentNode) {
-                    circle.style.transition = 'opacity 0.3s';
-                    circle.style.opacity = '0';
-                    setTimeout(() => {
-                        if (circle.parentNode) {
-                            circle.remove();
-                        }
-                    }, 300);
-                }
-            }, 2500);
+                circle.style.transition = 'opacity 0.2s, transform 0.2s';
+                circle.style.opacity = '0';
+                circle.style.transform = 'scale(2) rotate(360deg)';
+
+                setTimeout(() => {
+                    if (circle.parentNode) {
+                        circle.remove();
+                    }
+                    circles = circles.filter(c => c !== circle);
+                }, 200);
+            });
         }
 
         function createCircle() {
