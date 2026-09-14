@@ -192,7 +192,7 @@
         #taps-per-second {
             color: rgba(255, 255, 255, 0.9);
             font-size: 20px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             text-align: center;
         }
 
@@ -267,25 +267,43 @@
         }
 
         #name-input-container {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             text-align: center;
+            width: 100%;
+            max-width: 380px;
+        }
+
+        #name-input-label {
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            display: block;
         }
 
         #name-input {
-            font-size: 18px;
-            padding: 10px 18px;
-            border: 3px solid white;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.9);
+            font-size: 20px;
+            padding: 14px 20px;
+            border: 4px solid white;
+            border-radius: 12px;
+            background: white;
             color: #19547b;
             font-weight: bold;
             text-align: center;
-            max-width: 250px;
+            max-width: 280px;
             width: 100%;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        #name-input:focus {
+            outline: none;
+            border-color: #f9d423;
+            box-shadow: 0 0 0 3px rgba(249, 212, 35, 0.3);
         }
 
         #name-input::placeholder {
-            color: rgba(25, 84, 123, 0.5);
+            color: rgba(25, 84, 123, 0.4);
         }
 
         .timer-warning {
@@ -344,7 +362,8 @@
             <div id="final-score">0 Taps</div>
             <div id="taps-per-second">0 taps/second</div>
             <div id="name-input-container">
-                <input type="text" id="name-input" placeholder="Enter your name" maxlength="15">
+                <label id="name-input-label">👤 Enter Your Name:</label>
+                <input type="text" id="name-input" placeholder="Your Name" maxlength="15">
             </div>
             <div id="leaderboard">
                 <h2>🏆 Leaderboard 🏆</h2>
@@ -511,6 +530,10 @@
 
             endScreen.style.display = 'flex';
             endScreen.scrollTop = 0;
+
+            setTimeout(() => {
+                nameInput.focus();
+            }, 300);
         }
 
         nameInput.addEventListener('input', () => {
@@ -524,10 +547,6 @@
                 saveLeaderboard(leaderboard);
                 displayLeaderboard(leaderboardList, currentGameId);
             }
-        });
-
-        nameInput.addEventListener('blur', () => {
-            window.scrollTo(0, 0);
         });
 
         startButton.addEventListener('click', () => {
