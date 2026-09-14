@@ -270,39 +270,76 @@
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
             }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
         }
 
         function playMeow() {
-            if (!audioContext) return;
+            try {
+                if (!audioContext) {
+                    initAudio();
+                }
+                if (!audioContext) return;
 
-            const now = audioContext.currentTime;
-            const duration = 0.25;
+                const now = audioContext.currentTime;
+                const duration = 0.35;
 
-            // Create oscillator for the meow sound
-            const osc = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
+                // Primary oscillator for main meow sound
+                const osc1 = audioContext.createOscillator();
+                const gain1 = audioContext.createGain();
 
-            // Connect nodes
-            osc.connect(gainNode);
-            gainNode.connect(audioContext.destination);
+                // Secondary oscillator for richness
+                const osc2 = audioContext.createOscillator();
+                const gain2 = audioContext.createGain();
 
-            // Set oscillator type
-            osc.type = 'sine';
+                // Master gain
+                const masterGain = audioContext.createGain();
 
-            // Create meow-like frequency envelope (pitch goes up then down)
-            osc.frequency.setValueAtTime(400, now);
-            osc.frequency.linearRampToValueAtTime(800, now + 0.08);
-            osc.frequency.linearRampToValueAtTime(600, now + 0.15);
-            osc.frequency.linearRampToValueAtTime(300, now + duration);
+                // Connect nodes
+                osc1.connect(gain1);
+                osc2.connect(gain2);
+                gain1.connect(masterGain);
+                gain2.connect(masterGain);
+                masterGain.connect(audioContext.destination);
 
-            // Volume envelope (quick attack, gradual decay)
-            gainNode.gain.setValueAtTime(0, now);
-            gainNode.gain.linearRampToValueAtTime(0.3, now + 0.01);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration);
+                // Set oscillator types
+                osc1.type = 'sine';
+                osc2.type = 'triangle';
 
-            // Play the sound
-            osc.start(now);
-            osc.stop(now + duration);
+                // Create meow-like frequency envelope (pitch goes up then down)
+                // Main oscillator
+                osc1.frequency.setValueAtTime(350, now);
+                osc1.frequency.linearRampToValueAtTime(900, now + 0.1);
+                osc1.frequency.linearRampToValueAtTime(650, now + 0.2);
+                osc1.frequency.linearRampToValueAtTime(300, now + duration);
+
+                // Secondary oscillator (slightly detuned)
+                osc2.frequency.setValueAtTime(360, now);
+                osc2.frequency.linearRampToValueAtTime(920, now + 0.1);
+                osc2.frequency.linearRampToValueAtTime(670, now + 0.2);
+                osc2.frequency.linearRampToValueAtTime(310, now + duration);
+
+                // Volume envelopes
+                gain1.gain.setValueAtTime(0, now);
+                gain1.gain.linearRampToValueAtTime(0.5, now + 0.02);
+                gain1.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+                gain2.gain.setValueAtTime(0, now);
+                gain2.gain.linearRampToValueAtTime(0.25, now + 0.02);
+                gain2.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+                // Master volume
+                masterGain.gain.setValueAtTime(0.8, now);
+
+                // Play the sound
+                osc1.start(now);
+                osc2.start(now);
+                osc1.stop(now + duration);
+                osc2.stop(now + duration);
+            } catch (err) {
+                console.log('Audio error:', err);
+            }
         }
 
         function updateComboDisplay() {
