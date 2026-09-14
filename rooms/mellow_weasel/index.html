@@ -189,8 +189,8 @@
             plane = {
                 x: width * 0.2,
                 y: height / 2,
-                width: 60,
-                height: 30,
+                width: 80,
+                height: 45,
                 velocity: 0
             };
             towers = [];
@@ -206,19 +206,60 @@
             const angle = Math.min(Math.max(plane.velocity * 0.05, -0.5), 0.5);
             ctx.rotate(angle);
 
-            ctx.fillStyle = '#FF6B6B';
-            ctx.fillRect(-plane.width / 2, -plane.height / 2, plane.width, plane.height);
+            const w = plane.width;
+            const h = plane.height;
+
+            ctx.fillStyle = '#E8E8E8';
+            ctx.fillRect(-w/2, -h/2 + 8, w * 0.85, h - 16);
+
+            ctx.fillStyle = '#F5F5F5';
+            ctx.beginPath();
+            ctx.ellipse(-w/2 + 12, 0, 12, h/2 - 4, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#D0D0D0';
+            ctx.fillRect(-w/2 + 5, -h/2 + 4, 25, h/2 - 2);
+
+            ctx.fillStyle = '#4A90E2';
+            ctx.fillRect(-w/2 + 8, h/4 - 2, w * 0.6, 3);
 
             ctx.fillStyle = '#E85555';
+            ctx.fillRect(-w/2 + 8, h/4 + 3, w * 0.6, 2);
+
+            ctx.fillStyle = '#D5D5D5';
+            ctx.fillRect(w/2 - 8, -h/2 + 8, 8, h - 16);
+
+            for (let i = 0; i < 8; i++) {
+                ctx.fillStyle = '#8BCDEB';
+                ctx.fillRect(-w/2 + 15 + i * 8, -h/2 + 12, 4, 6);
+            }
+
+            ctx.fillStyle = '#C8C8C8';
             ctx.beginPath();
-            ctx.moveTo(plane.width / 2, 0);
-            ctx.lineTo(plane.width / 2 + 15, -8);
-            ctx.lineTo(plane.width / 2 + 15, 8);
+            ctx.moveTo(-w/2 + 10, -h/2 - 2);
+            ctx.lineTo(w/4, -h/2 - 2);
+            ctx.lineTo(w/4 + 5, h/2 - 10);
+            ctx.lineTo(-w/2 + 10, h/2 - 10);
             ctx.closePath();
             ctx.fill();
 
-            ctx.fillStyle = '#FFD93D';
-            ctx.fillRect(-plane.width / 2 - 10, -3, 10, 6);
+            ctx.fillStyle = '#BFBFBF';
+            ctx.beginPath();
+            ctx.moveTo(-w/2 + 10, h/2 + 2);
+            ctx.lineTo(w/4, h/2 + 2);
+            ctx.lineTo(w/4 + 5, h/2 + 10);
+            ctx.lineTo(-w/2 + 10, h/2 + 10);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#A0A0A0';
+            ctx.beginPath();
+            ctx.moveTo(w/2 - 18, -h/2);
+            ctx.lineTo(w/2 - 5, -h/2);
+            ctx.lineTo(w/2 - 8, -h/2 - 12);
+            ctx.lineTo(w/2 - 15, -h/2 - 12);
+            ctx.closePath();
+            ctx.fill();
 
             ctx.restore();
         }
