@@ -13,7 +13,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #ff6ec7 0%, #ff9a9e 100%);
             height: 100dvh;
             display: flex;
             flex-direction: column;
@@ -22,9 +22,9 @@
         }
 
         .header {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 192, 203, 0.95);
             padding: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(255, 105, 180, 0.3);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -36,7 +36,7 @@
             gap: 15px;
             font-size: 16px;
             font-weight: 600;
-            color: #333;
+            color: #8b0052;
         }
 
         .stat-item {
@@ -68,23 +68,23 @@
         }
 
         .new-game {
-            background: #4CAF50;
+            background: #ff69b4;
             color: white;
         }
 
         .flag-toggle {
-            background: #ff9800;
+            background: #ff1493;
             color: white;
             position: relative;
         }
 
         .flag-toggle.active {
-            background: #f44336;
-            box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.3);
+            background: #c71585;
+            box-shadow: 0 0 0 3px rgba(199, 21, 133, 0.3);
         }
 
         .code-toggle {
-            background: #2196F3;
+            background: #ff85c1;
             color: white;
         }
 
@@ -101,7 +101,7 @@
             display: grid;
             grid-template-columns: repeat(8, 1fr);
             gap: 2px;
-            background: rgba(0,0,0,0.2);
+            background: rgba(255, 105, 180, 0.3);
             padding: 2px;
             border-radius: 8px;
             max-width: 100%;
@@ -110,7 +110,7 @@
 
         .cell {
             aspect-ratio: 1;
-            background: #ddd;
+            background: #ffb6d9;
             border: none;
             font-size: 18px;
             font-weight: bold;
@@ -127,24 +127,24 @@
         }
 
         .cell:active {
-            background: #bbb;
+            background: #ff99cc;
         }
 
         .cell.revealed {
-            background: #fff;
+            background: #ffe6f0;
             cursor: default;
         }
 
         .cell.revealed:active {
-            background: #fff;
+            background: #ffe6f0;
         }
 
         .cell.mine {
-            background: #f44336;
+            background: #ff1493;
         }
 
         .cell.flagged {
-            background: #ff9800;
+            background: #ff69b4;
         }
 
         .cell.flagged::before {
@@ -157,14 +157,14 @@
             font-size: 20px;
         }
 
-        .cell.number-1 { color: #0000ff; }
-        .cell.number-2 { color: #008000; }
-        .cell.number-3 { color: #ff0000; }
-        .cell.number-4 { color: #000080; }
-        .cell.number-5 { color: #800000; }
-        .cell.number-6 { color: #008080; }
-        .cell.number-7 { color: #000000; }
-        .cell.number-8 { color: #808080; }
+        .cell.number-1 { color: #c71585; }
+        .cell.number-2 { color: #ff1493; }
+        .cell.number-3 { color: #ff69b4; }
+        .cell.number-4 { color: #8b0052; }
+        .cell.number-5 { color: #db7093; }
+        .cell.number-6 { color: #c71585; }
+        .cell.number-7 { color: #8b0052; }
+        .cell.number-8 { color: #ff1493; }
 
         .modal {
             position: fixed;
@@ -172,7 +172,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.7);
+            background: rgba(255, 105, 180, 0.5);
             display: none;
             justify-content: center;
             align-items: center;
@@ -184,26 +184,28 @@
         }
 
         .modal-content {
-            background: white;
+            background: #ffe6f0;
             padding: 30px;
             border-radius: 16px;
             text-align: center;
             max-width: 90%;
+            border: 3px solid #ff69b4;
         }
 
         .modal-content h2 {
             font-size: 32px;
             margin-bottom: 15px;
+            color: #c71585;
         }
 
         .modal-content p {
             font-size: 18px;
             margin-bottom: 20px;
-            color: #666;
+            color: #8b0052;
         }
 
         .modal-content button {
-            background: #4CAF50;
+            background: #ff69b4;
             color: white;
             padding: 12px 24px;
             font-size: 18px;
@@ -215,7 +217,7 @@
             right: -100%;
             width: 100%;
             height: 100dvh;
-            background: #1e1e1e;
+            background: #2d1a2e;
             z-index: 2000;
             transition: right 0.3s ease;
             display: flex;
@@ -228,7 +230,7 @@
         }
 
         .code-panel-header {
-            background: #2d2d2d;
+            background: #3d2a3e;
             padding: 12px;
             display: flex;
             justify-content: space-between;
@@ -237,7 +239,7 @@
         }
 
         .code-panel-title {
-            color: white;
+            color: #ffb6d9;
             font-size: 18px;
             font-weight: 600;
         }
@@ -248,19 +250,19 @@
         }
 
         .apply-btn {
-            background: #4CAF50;
+            background: #ff69b4;
             color: white;
         }
 
         .close-btn {
-            background: #f44336;
+            background: #c71585;
             color: white;
         }
 
         .code-editor {
             flex: 1;
-            background: #1e1e1e;
-            color: #d4d4d4;
+            background: #2d1a2e;
+            color: #ffb6d9;
             border: none;
             padding: 16px;
             font-family: 'Courier New', monospace;
