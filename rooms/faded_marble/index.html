@@ -255,27 +255,25 @@
         const ROWS = 21;
         const BLOCK_SIZE = 24;
 
-        // 8-bit color palette
         const COLORS = [
-            '#000000', // empty
-            '#ff0000', // I
-            '#00ff00', // O
-            '#0000ff', // T
-            '#ffff00', // S
-            '#ff00ff', // Z
-            '#00ffff', // J
-            '#ff8800'  // L
+            '#000000',
+            '#ff0000',
+            '#00ff00',
+            '#0000ff',
+            '#ffff00',
+            '#ff00ff',
+            '#00ffff',
+            '#ff8800'
         ];
 
-        // Tetromino shapes
         const SHAPES = [
-            [[1,1,1,1]], // I
-            [[1,1],[1,1]], // O
-            [[0,1,0],[1,1,1]], // T
-            [[0,1,1],[1,1,0]], // S
-            [[1,1,0],[0,1,1]], // Z
-            [[1,0,0],[1,1,1]], // J
-            [[0,0,1],[1,1,1]]  // L
+            [[1,1,1,1]],
+            [[1,1],[1,1]],
+            [[0,1,0],[1,1,1]],
+            [[0,1,1],[1,1,0]],
+            [[1,1,0],[0,1,1]],
+            [[1,0,0],[1,1,1]],
+            [[0,0,1],[1,1,1]]
         ];
 
         let board = [];
@@ -286,13 +284,10 @@
         let dropInterval = 1000;
         let lastTime = 0;
         let gameRunning = true;
-
         let currentPiece = null;
         let nextPiece = null;
         let currentX = 0;
         let currentY = 0;
-
-        // Epic Space Music
         let audioContext = null;
         let musicStarted = false;
         let soundEnabled = true;
@@ -308,76 +303,40 @@
         function toggleSound() {
             soundEnabled = !soundEnabled;
             const btn = document.getElementById('sound-toggle');
-
             if (soundEnabled) {
                 btn.classList.remove('muted');
                 btn.textContent = '♪ SOUND';
-                if (masterGain) {
-                    masterGain.gain.setValueAtTime(1, audioContext.currentTime);
-                }
+                if (masterGain) masterGain.gain.setValueAtTime(1, audioContext.currentTime);
             } else {
                 btn.classList.add('muted');
                 btn.textContent = '♪ MUTED';
-                if (masterGain) {
-                    masterGain.gain.setValueAtTime(0, audioContext.currentTime);
-                }
+                if (masterGain) masterGain.gain.setValueAtTime(0, audioContext.currentTime);
             }
         }
 
         function playNote(frequency, startTime, duration, type = 'square', volume = 0.1) {
             if (!soundEnabled) return;
-
             const osc = audioContext.createOscillator();
             const gain = audioContext.createGain();
-
             osc.type = type;
             osc.frequency.setValueAtTime(frequency, startTime);
-
             gain.gain.setValueAtTime(0, startTime);
             gain.gain.linearRampToValueAtTime(volume, startTime + 0.02);
             gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-
             osc.connect(gain);
             gain.connect(masterGain);
-
             osc.start(startTime);
             osc.stop(startTime + duration);
         }
 
         function playChord(frequencies, startTime, duration, type = 'sawtooth') {
-            frequencies.forEach(freq => {
-                playNote(freq, startTime, duration, type, 0.06);
-            });
+            frequencies.forEach(freq => playNote(freq, startTime, duration, type, 0.06));
         }
 
         function playBassNote(frequency, startTime, duration) {
             if (!soundEnabled) return;
-
             const osc = audioContext.createOscillator();
             const gain = audioContext.createGain();
-
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(frequency, startTime);
-
-            gain.gain.setValueAtTime(0, startTime);
-            gain.gain.linearRampToValueAtTime(0.15, startTime + 0.01);
-            gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-
-            osc.connect(gain);
-            gain.connect(masterGain);
-
-            osc.start(startTime);
-            osc.stop(startTime + duration);
-        }
-
-        function startMusic() {
-            if (musicStarted || !audioContext) return;
-            musicStarted = true;
-
-            const bpm = 140;
-            const beatDuration = 60 / bpm;
-
-            // Epic heroic melody - Star Wars inspired
-            const melody = [
-                [392.00, 0.15], // G4
-                [392
+            gain.gain.setValueAtTime(0, startTime
