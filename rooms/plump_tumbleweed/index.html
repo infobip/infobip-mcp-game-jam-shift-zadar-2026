@@ -28,7 +28,58 @@
             height: 100%;
             position: relative;
             overflow: hidden;
-            background: linear-gradient(180deg, #2a1a3e 0%, #0d1117 50%, #1a0f1e 100%);
+            background: #1a0f1e;
+        }
+
+        #background-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background: linear-gradient(180deg, #4a3a5e 0%, #2a1a3e 50%, #1a0f1e 100%);
+        }
+
+        .env-object {
+            position: absolute;
+            pointer-events: none;
+            z-index: 2;
+            font-size: 60px;
+        }
+
+        .wall-section {
+            position: absolute;
+            background: linear-gradient(90deg, #3a2a4e 0%, #2a1a3e 50%, #3a2a4e 100%);
+            border: 3px solid #1a0a2e;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+        }
+
+        .window {
+            position: absolute;
+            background: linear-gradient(135deg, #1a3a5e 0%, #0a1a3e 100%);
+            border: 4px solid #2a2a4e;
+            box-shadow: inset 0 0 20px rgba(100, 150, 200, 0.3);
+            pointer-events: none;
+        }
+
+        .floor-tile {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 150px;
+            background: repeating-linear-gradient(
+                0deg,
+                #2a1a3e 0px,
+                #2a1a3e 10px,
+                #1a0a2e 10px,
+                #1a0a2e 20px
+            );
+            opacity: 0.6;
+            pointer-events: none;
+            z-index: 1;
+            transform-origin: bottom center;
         }
 
         #hud {
@@ -83,6 +134,7 @@
             bottom: 0;
             touch-action: none;
             cursor: none;
+            z-index: 10;
         }
 
         #crosshair {
@@ -144,6 +196,7 @@
                         inset 0 0 20px rgba(255, 255, 255, 0.2);
             transform: scale(0);
             animation: enemy-appear 0.3s ease-out forwards;
+            z-index: 20;
         }
 
         @keyframes enemy-appear {
@@ -213,7 +266,7 @@
             border-radius: 50%;
             pointer-events: none;
             opacity: 0.6;
-            z-index: 5;
+            z-index: 15;
         }
 
         #start-screen, #game-over-screen {
@@ -319,6 +372,10 @@
 </head>
 <body>
     <div id="game-container">
+        <div id="background-layer">
+            <div class="floor-tile"></div>
+        </div>
+
         <div id="hud">
             <div class="hud-item">SCORE: <span id="score">0</span></div>
             <div class="hud-item">WAVE: <span id="wave">1</span></div>
@@ -336,7 +393,7 @@
 
         <div id="start-screen">
             <h1>🎯 CRISIS ZONE 🎯</h1>
-            <p>Classic arcade rail shooter action!<br><br>Tap to aim and shoot enemies<br>Don't let them attack you!<br>Survive as long as you can!</p>
+            <p>Classic arcade rail shooter!<br><br>You're moving through enemy territory<br>Tap to aim and shoot enemies<br>Don't let them attack you!</p>
             <button class="game-btn" id="start-btn">Start Game</button>
         </div>
 
@@ -354,6 +411,7 @@
     <script>
         const gameContainer = document.getElementById('game-container');
         const gameArea = document.getElementById('game-area');
+        const backgroundLayer = document.getElementById('background-layer');
         const crosshair = document.getElementById('crosshair');
         const scoreDisplay = document.getElementById('score');
         const waveDisplay = document.getElementById('wave');
@@ -369,8 +427,10 @@
         let health = 100;
         let gameActive = false;
         let enemySpawnInterval;
+        let environmentInterval;
         let currentMouseX = window.innerWidth / 2;
         let currentMouseY = window.innerHeight / 2;
+        let scrollSpeed = 2;
 
         // Update crosshair position
         gameArea.addEventListener('pointermove', (e) => {
@@ -420,6 +480,109 @@
             setTimeout(() => hole.remove(), 3000);
         }
 
+        function createEnvironmentObject() {
+            if (!gameActive) return;
+
+            const type = Math.random();
+
+            if (type < 0.4) {
+                // Wall section
+                const wall = document.createElement('div');
+                wall.className = 'wall-section';
+                wall.style.width = (80 + Math.random() * 120) + 'px';
+                wall.style.height = (150 + Math.random() * 200) + 'px';
+                wall.style.left = (Math.random() > 0.5 ? -100 : window.innerWidth + 100) + 'px';
+                wall.style.top = (window.innerHeight * 0.2 + Math.random() * window.innerHeight * 0.3) + 'px';
+                wall.style.zIndex = '2';
+                backgroundLayer.appendChild(wall);
+
+                let position = parseFloat(wall.style.left);
+                const targetX = window.innerWidth / 2 + (Math.random() - 0.5) * 300;
+                const animSpeed = 3 + Math.random() * 2;
+
+                function animateWall() {
+                    if (!gameActive) {
+                        wall.remove();
+                        return;
+                    }
+
+                    position += (position < targetX) ? animSpeed : -animSpeed;
+                    wall.style.left = position + 'px';
+
+                    const currentTop = parseFloat(wall.style.top);
+                    wall.style.top = (currentTop + scrollSpeed) + 'px';
+
+                    if (currentTop > window.innerHeight) {
+                        wall.remove();
+                        return;
+                    }
+
+                    requestAnimationFrame(animateWall);
+                }
+                requestAnimationFrame(animateWall);
+
+            } else if (type < 0.7) {
+                // Window
+                const win = document.createElement('div');
+                win.className = 'window';
+                win.style.width = (60 + Math.random() * 80) + 'px';
+                win.style.height = (80 + Math.random() * 100) + 'px';
+                win.style.left = (Math.random() * (window.innerWidth - 150)) + 'px';
+                win.style.top = '-150px';
+                win.style.zIndex = '2';
+                backgroundLayer.appendChild(win);
+
+                let topPos = -150;
+                function animateWindow() {
+                    if (!gameActive) {
+                        win.remove();
+                        return;
+                    }
+
+                    topPos += scrollSpeed * 1.5;
+                    win.style.top = topPos + 'px';
+
+                    if (topPos > window.innerHeight) {
+                        win.remove();
+                        return;
+                    }
+
+                    requestAnimationFrame(animateWindow);
+                }
+                requestAnimationFrame(animateWindow);
+
+            } else {
+                // Environmental object
+                const objects = ['🚪', '📦', '🪟', '🗑️', '🛢️'];
+                const obj = document.createElement('div');
+                obj.className = 'env-object';
+                obj.textContent = objects[Math.floor(Math.random() * objects.length)];
+                obj.style.left = (Math.random() * (window.innerWidth - 100)) + 'px';
+                obj.style.top = '-100px';
+                obj.style.zIndex = '3';
+                backgroundLayer.appendChild(obj);
+
+                let topPos = -100;
+                function animateObject() {
+                    if (!gameActive) {
+                        obj.remove();
+                        return;
+                    }
+
+                    topPos += scrollSpeed * 2;
+                    obj.style.top = topPos + 'px';
+
+                    if (topPos > window.innerHeight) {
+                        obj.remove();
+                        return;
+                    }
+
+                    requestAnimationFrame(animateObject);
+                }
+                requestAnimationFrame(animateObject);
+            }
+        }
+
         function shootEnemy(enemy, x, y) {
             if (enemy.dataset.destroyed) return;
             enemy.dataset.destroyed = 'true';
@@ -462,17 +625,17 @@
             const types = ['👹', '👺', '🤖', '👻', '💀', '🧟'];
             enemy.textContent = types[Math.floor(Math.random() * types.length)];
 
-            // Spawn at random positions on screen
-            const positions = [
-                { x: Math.random() * (window.innerWidth - 100) + 50, y: 100 + Math.random() * 150 }, // Top
-                { x: 100 + Math.random() * 150, y: window.innerHeight / 2 + (Math.random() - 0.5) * 200 }, // Left
-                { x: window.innerWidth - 250 + Math.random() * 150, y: window.innerHeight / 2 + (Math.random() - 0.5) * 200 }, // Right
-                { x: window.innerWidth / 2 + (Math.random() - 0.5) * 300, y: window.innerHeight / 2 + (Math.random() - 0.5) * 200 } // Center
+            // Spawn along the path - left, right, or center
+            const lanes = [
+                window.innerWidth * 0.2,
+                window.innerWidth * 0.5,
+                window.innerWidth * 0.8
             ];
+            const lane = lanes[Math.floor(Math.random() * lanes.length)];
 
-            const pos = positions[Math.floor(Math.random() * positions.length)];
-            enemy.style.left = pos.x + 'px';
-            enemy.style.top = pos.y + 'px';
+            enemy.style.left = (lane + (Math.random() - 0.5) * 100) + 'px';
+            enemy.style.top = (100 + Math.random() * 200) + 'px';
+            enemy.style.zIndex = '20';
 
             gameArea.appendChild(enemy);
 
@@ -523,6 +686,7 @@
         function gameOver() {
             gameActive = false;
             clearInterval(enemySpawnInterval);
+            clearInterval(environmentInterval);
 
             document.getElementById('final-score').textContent = score;
             document.getElementById('final-wave').textContent = wave;
@@ -536,6 +700,7 @@
         function nextWave() {
             wave++;
             waveDisplay.textContent = wave;
+            scrollSpeed = Math.min(2 + (wave * 0.2), 5);
         }
 
         function startGame() {
@@ -544,6 +709,7 @@
             wave = 1;
             kills = 0;
             health = 100;
+            scrollSpeed = 2;
 
             scoreDisplay.textContent = score;
             waveDisplay.textContent = wave;
@@ -555,7 +721,12 @@
             crosshair.style.left = window.innerWidth / 2 + 'px';
             crosshair.style.top = window.innerHeight / 2 + 'px';
 
-            document.querySelectorAll('.enemy, .bullet-hole').forEach(e => e.remove());
+            document.querySelectorAll('.enemy, .bullet-hole, .env-object, .wall-section, .window').forEach(e => e.remove());
+
+            // Spawn environment continuously
+            environmentInterval = setInterval(() => {
+                createEnvironmentObject();
+            }, 800);
 
             // Spawn enemies in waves
             let enemiesThisWave = 0;
