@@ -77,13 +77,27 @@
         .lawn-mower {
             background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
             border: 3px solid #fff;
-            font-size: 32px;
-            animation: pulse 1s infinite;
+            font-size: 40px;
+            animation: mowerMove 2s linear;
+            pointer-events: none;
+            cursor: default;
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+        @keyframes mowerMove {
+            0% { transform: translateX(-100px) rotate(0deg); }
+            100% { transform: translateX(100px) rotate(360deg); }
+        }
+
+        .frog {
+            background: radial-gradient(circle, #90ee90 0%, #228b22 100%) !important;
+            border: 2px solid #006400;
+            font-size: 36px;
+            animation: frogHop 0.5s ease-in-out infinite;
+        }
+
+        @keyframes frogHop {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
 
         #startScreen, #gameOverScreen {
@@ -167,7 +181,7 @@
 
         <div id="startScreen">
             <h1>Flower Rush!</h1>
-            <p class="instructions">Tap flowers before they wilt! Rare flowers with more petals = more points! Watch for the green lawn mower to clear all flowers!</p>
+            <p class="instructions">Tap flowers before they wilt! DON'T tap the frogs! Watch the lawn mower clear flowers automatically!</p>
             <button class="btn" id="startBtn">Start Game</button>
         </div>
 
@@ -194,9 +208,9 @@
         let spawnInterval;
         let difficultyInterval;
         let lawnMowerInterval;
+        let frogInterval;
         let circles = [];
         let spawnRate = 800;
-        let flowersCollected = 0;
 
         function createFlowerSVG(petals, petalColor, centerColor) {
             const center = 50;
@@ -252,16 +266,17 @@
             }
         }
 
-        function createLawnMower() {
+        function createFrog() {
             if (!gameActive) return;
 
             const circle = document.createElement('div');
-            circle.className = 'circle lawn-mower';
+            circle.className = 'circle frog';
+            circle.dataset.type = 'frog';
 
-            const size = 80;
+            const size = 70;
             circle.style.width = size + 'px';
             circle.style.height = size + 'px';
-            circle.textContent = '🚜';
+            circle.textContent = '🐸';
 
             const maxX = window.innerWidth - size - 20;
             const maxY = window.innerHeight - size - 120;
@@ -281,7 +296,7 @@
                 circle.style.transform = 'scale(1)';
             }, 10);
 
-            const timeoutId = setTimeout(() => {
+            setTimeout(() => {
                 if (circle.parentNode && gameActive) {
                     circle.style.transition = 'opacity 0.3s, transform 0.3s';
                     circle.style.opacity = '0';
@@ -289,7 +304,6 @@
                     setTimeout(() => {
                         if (circle.parentNode) {
                             circle.remove();
-                            loseLife();
                         }
                         circles = circles.filter(c => c !== circle);
                     }, 300);
@@ -300,28 +314,11 @@
                 e.preventDefault();
                 if (!gameActive) return;
 
-                clearTimeout(timeoutId);
-
-                const allFlowers = circles.filter(c => !c.classList.contains('lawn-mower'));
-                allFlowers.forEach(flower => {
-                    if (flower.parentNode) {
-                        flower.style.transition = 'opacity 0.3s, transform 0.3s';
-                        flower.style.opacity = '0';
-                        flower.style.transform = 'scale(0)';
-                        setTimeout(() => {
-                            if (flower.parentNode) {
-                                flower.remove();
-                            }
-                        }, 300);
-                    }
-                });
-
-                score += allFlowers.length * 5;
-                scoreDisplay.textContent = score;
+                loseLife();
 
                 circle.style.transition = 'opacity 0.2s, transform 0.2s';
                 circle.style.opacity = '0';
-                circle.style.transform = 'scale(2) rotate(360deg)';
+                circle.style.transform = 'scale(2)';
 
                 setTimeout(() => {
                     if (circle.parentNode) {
@@ -330,6 +327,69 @@
                     circles = circles.filter(c => c !== circle);
                 }, 200);
             });
+        }
+
+        function createLawnMower() {
+            if (!gameActive) return;
+
+            const circle = document.createElement('div');
+            circle.className = 'circle lawn-mower';
+
+            const size = 90;
+            circle.style.width = size + 'px';
+            circle.style.height = size + 'px';
+            circle.textContent = '🚜';
+
+            const maxX = window.innerWidth - size - 20;
+            const maxY = window.innerHeight - size - 120;
+            const minY = 100;
+
+            circle.style.left = (20 + Math.random() * maxX) + 'px';
+            circle.style.top = (minY + Math.random() * (maxY - minY)) + 'px';
+
+            gameContainer.appendChild(circle);
+
+            circle.style.opacity = '0';
+            setTimeout(() => {
+                circle.style.transition = 'opacity 0.3s';
+                circle.style.opacity = '1';
+            }, 10);
+
+            setTimeout(() => {
+                const allFlowers = circles.filter(c => !c.dataset.type);
+                let clearedCount = 0;
+
+                allFlowers.forEach(flower => {
+                    if (flower.parentNode) {
+                        flower.style.transition = 'opacity 0.3s, transform 0.3s';
+                        flower.style.opacity = '0';
+                        flower.style.transform = 'scale(0)';
+                        clearedCount++;
+                        setTimeout(() => {
+                            if (flower.parentNode) {
+                                flower.remove();
+                            }
+                        }, 300);
+                    }
+                });
+
+                circles = circles.filter(c => c.dataset.type === 'frog');
+
+                score += clearedCount * 3;
+                scoreDisplay.textContent = score;
+            }, 1000);
+
+            setTimeout(() => {
+                if (circle.parentNode) {
+                    circle.style.transition = 'opacity 0.3s';
+                    circle.style.opacity = '0';
+                    setTimeout(() => {
+                        if (circle.parentNode) {
+                            circle.remove();
+                        }
+                    }, 300);
+                }
+            }, 2500);
         }
 
         function createCircle() {
@@ -387,7 +447,6 @@
                 if (!gameActive) return;
 
                 clearTimeout(timeoutId);
-                flowersCollected++;
 
                 score += points;
                 scoreDisplay.textContent = score;
@@ -408,7 +467,6 @@
         function startGame() {
             score = 0;
             lives = 5;
-            flowersCollected = 0;
             spawnRate = 800;
             gameActive = true;
 
@@ -435,7 +493,13 @@
                 if (gameActive) {
                     createLawnMower();
                 }
-            }, 15000);
+            }, 20000);
+
+            frogInterval = setInterval(() => {
+                if (gameActive && Math.random() > 0.3) {
+                    createFrog();
+                }
+            }, 8000);
         }
 
         function endGame() {
@@ -443,6 +507,7 @@
             clearInterval(spawnInterval);
             clearInterval(difficultyInterval);
             clearInterval(lawnMowerInterval);
+            clearInterval(frogInterval);
 
             circles.forEach(circle => {
                 if (circle.parentNode) {
