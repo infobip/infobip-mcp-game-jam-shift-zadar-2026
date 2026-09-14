@@ -39,6 +39,7 @@
             justify-content: space-around;
             padding: 0 20px;
             z-index: 100;
+            pointer-events: none;
         }
 
         .hud-item {
@@ -54,11 +55,28 @@
 
         #game-area {
             position: absolute;
-            top: 60px;
+            top: 0;
             left: 0;
             right: 0;
-            bottom: 120px;
+            bottom: 0;
             perspective: 1000px;
+            touch-action: none;
+        }
+
+        #hero {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            font-size: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+            z-index: 70;
+            filter: drop-shadow(0 0 10px #00ff88);
         }
 
         .enemy {
@@ -123,75 +141,15 @@
             }
         }
 
-        #position-controls {
+        .bullet {
             position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 12px;
-            z-index: 100;
-        }
-
-        .position-btn {
-            width: 70px;
-            height: 70px;
-            background: rgba(0, 255, 136, 0.2);
-            border: 3px solid #00ff88;
-            border-radius: 50%;
-            color: #00ff88;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            touch-action: manipulation;
-            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .position-btn:active {
-            transform: scale(0.9);
-        }
-
-        .position-btn.active {
-            background: rgba(0, 255, 136, 0.5);
-            box-shadow: 0 0 30px rgba(0, 255, 136, 0.8);
-        }
-
-        #crosshair {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            border: 3px solid #00ff88;
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 90;
-            box-shadow: 0 0 20px #00ff88;
-            opacity: 0.8;
-        }
-
-        #crosshair::before,
-        #crosshair::after {
-            content: '';
-            position: absolute;
-            background: #00ff88;
-        }
-
-        #crosshair::before {
-            width: 20px;
-            height: 2px;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        #crosshair::after {
-            width: 2px;
+            width: 6px;
             height: 20px;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            background: linear-gradient(180deg, #00ff88 0%, #00d9ff 100%);
+            border-radius: 3px;
+            pointer-events: none;
+            box-shadow: 0 0 10px #00ff88;
+            z-index: 60;
         }
 
         #start-screen {
@@ -246,7 +204,7 @@
         .muzzle-flash {
             position: absolute;
             pointer-events: none;
-            font-size: 40px;
+            font-size: 30px;
             animation: flash 0.15s ease-out forwards;
             z-index: 80;
         }
@@ -268,22 +226,16 @@
         <div id="hud">
             <div class="hud-item">SCORE: <span id="score">0</span></div>
             <div class="hud-item">WAVE: <span id="wave">1</span></div>
-            <div class="hud-item">AMMO: <span id="ammo">∞</span></div>
+            <div class="hud-item">KILLS: <span id="kills">0</span></div>
         </div>
 
-        <div id="game-area"></div>
-
-        <div id="crosshair"></div>
-
-        <div id="position-controls">
-            <button class="position-btn" data-pos="0">L</button>
-            <button class="position-btn active" data-pos="1">C</button>
-            <button class="position-btn" data-pos="2">R</button>
+        <div id="game-area">
+            <div id="hero">🚀</div>
         </div>
 
         <div id="start-screen">
             <h1>⚡ RAIL SHOOTER ⚡</h1>
-            <p>Move between cover positions (L/C/R)<br>Tap enemies to shoot them down!<br>Survive the waves!</p>
+            <p>Drag to move your ship<br>Tap anywhere to shoot!<br>Destroy the alien invaders!</p>
             <button id="start-btn">START MISSION</button>
         </div>
     </div>
@@ -291,49 +243,205 @@
     <script>
         const gameContainer = document.getElementById('game-container');
         const gameArea = document.getElementById('game-area');
+        const hero = document.getElementById('hero');
         const scoreDisplay = document.getElementById('score');
         const waveDisplay = document.getElementById('wave');
+        const killsDisplay = document.getElementById('kills');
         const startScreen = document.getElementById('start-screen');
         const startBtn = document.getElementById('start-btn');
-        const positionBtns = document.querySelectorAll('.position-btn');
-        const crosshair = document.getElementById('crosshair');
 
         let score = 0;
         let wave = 1;
+        let kills = 0;
         let gameActive = false;
-        let currentPosition = 1; // 0=left, 1=center, 2=right
         let enemySpawnInterval;
         let waveEnemiesRemaining = 0;
 
-        const positions = [
-            { x: '15%', label: 'L' },
-            { x: '50%', label: 'C' },
-            { x: '85%', label: 'R' }
-        ];
+        // Hero movement
+        let heroX = window.innerWidth / 2;
+        let heroY = window.innerHeight - 80;
+        let heroVelX = 0;
+        let heroVelY = 0;
+        let targetX = heroX;
+        let targetY = heroY;
+        let isDragging = false;
 
-        function updateCrosshairPosition() {
-            const pos = positions[currentPosition];
-            crosshair.style.left = pos.x;
-            crosshair.style.top = '50%';
-            crosshair.style.transform = 'translate(-50%, -50%)';
+        const ACCELERATION = 0.8;
+        const FRICTION = 0.85;
+        const MAX_SPEED = 15;
+
+        function updateHeroPosition() {
+            if (!gameActive) return;
+
+            // Calculate distance to target
+            const dx = targetX - heroX;
+            const dy = targetY - heroY;
+
+            // Apply acceleration towards target
+            heroVelX += dx * ACCELERATION * 0.01;
+            heroVelY += dy * ACCELERATION * 0.01;
+
+            // Apply friction
+            heroVelX *= FRICTION;
+            heroVelY *= FRICTION;
+
+            // Limit speed
+            const speed = Math.sqrt(heroVelX * heroVelX + heroVelY * heroVelY);
+            if (speed > MAX_SPEED) {
+                heroVelX = (heroVelX / speed) * MAX_SPEED;
+                heroVelY = (heroVelY / speed) * MAX_SPEED;
+            }
+
+            // Update position
+            heroX += heroVelX;
+            heroY += heroVelY;
+
+            // Keep hero in bounds
+            const margin = 25;
+            heroX = Math.max(margin, Math.min(window.innerWidth - margin, heroX));
+            heroY = Math.max(80, Math.min(window.innerHeight - margin, heroY));
+
+            // Update DOM
+            hero.style.left = heroX + 'px';
+            hero.style.bottom = (window.innerHeight - heroY) + 'px';
+            hero.style.transform = 'translateX(-50%)';
+
+            requestAnimationFrame(updateHeroPosition);
         }
 
-        function setPosition(pos) {
-            currentPosition = pos;
-            positionBtns.forEach((btn, idx) => {
-                btn.classList.toggle('active', idx === pos);
-            });
-            updateCrosshairPosition();
-        }
-
-        positionBtns.forEach((btn, idx) => {
-            btn.addEventListener('pointerdown', (e) => {
-                e.preventDefault();
-                if (gameActive) {
-                    setPosition(idx);
-                }
-            });
+        // Touch/pointer handling
+        gameArea.addEventListener('pointermove', (e) => {
+            if (!gameActive) return;
+            e.preventDefault();
+            targetX = e.clientX;
+            targetY = e.clientY;
+            isDragging = true;
         });
+
+        gameArea.addEventListener('pointerdown', (e) => {
+            if (!gameActive) return;
+            e.preventDefault();
+
+            targetX = e.clientX;
+            targetY = e.clientY;
+            isDragging = true;
+
+            // Check if tapped on enemy
+            const target = e.target;
+            if (target.classList.contains('enemy')) {
+                return; // Enemy click handler will handle this
+            }
+
+            // Otherwise shoot
+            shootBullet();
+        });
+
+        gameArea.addEventListener('pointerup', (e) => {
+            isDragging = false;
+        });
+
+        function shootBullet() {
+            const bullet = document.createElement('div');
+            bullet.className = 'bullet';
+            bullet.style.left = heroX + 'px';
+            bullet.style.bottom = (window.innerHeight - heroY + 25) + 'px';
+            bullet.style.transform = 'translateX(-50%)';
+            gameArea.appendChild(bullet);
+
+            // Muzzle flash
+            const flash = document.createElement('div');
+            flash.className = 'muzzle-flash';
+            flash.textContent = '💥';
+            flash.style.left = heroX + 'px';
+            flash.style.bottom = (window.innerHeight - heroY + 20) + 'px';
+            flash.style.transform = 'translateX(-50%)';
+            gameArea.appendChild(flash);
+            setTimeout(() => flash.remove(), 150);
+
+            let bulletY = heroY + 25;
+            const bulletSpeed = 12;
+            let animFrame;
+
+            function moveBullet() {
+                if (!gameActive) {
+                    bullet.remove();
+                    return;
+                }
+
+                bulletY += bulletSpeed;
+                bullet.style.bottom = (window.innerHeight - bulletY) + 'px';
+
+                // Check collision with enemies
+                const enemies = document.querySelectorAll('.enemy');
+                const bulletRect = bullet.getBoundingClientRect();
+
+                enemies.forEach(enemy => {
+                    if (enemy.dataset.destroyed) return;
+
+                    const enemyRect = enemy.getBoundingClientRect();
+                    if (rectsIntersect(bulletRect, enemyRect)) {
+                        destroyEnemy(enemy);
+                        bullet.remove();
+                        cancelAnimationFrame(animFrame);
+                    }
+                });
+
+                if (bulletY > window.innerHeight) {
+                    bullet.remove();
+                    cancelAnimationFrame(animFrame);
+                    return;
+                }
+
+                animFrame = requestAnimationFrame(moveBullet);
+            }
+
+            animFrame = requestAnimationFrame(moveBullet);
+        }
+
+        function rectsIntersect(r1, r2) {
+            return !(r2.left > r1.right ||
+                     r2.right < r1.left ||
+                     r2.top > r1.bottom ||
+                     r2.bottom < r1.top);
+        }
+
+        function destroyEnemy(enemy) {
+            if (enemy.dataset.destroyed) return;
+            enemy.dataset.destroyed = 'true';
+
+            score += 50;
+            kills++;
+            scoreDisplay.textContent = score;
+            killsDisplay.textContent = kills;
+
+            // Explosion
+            const rect = enemy.getBoundingClientRect();
+            const explosion = document.createElement('div');
+            explosion.className = 'explosion';
+            explosion.textContent = '💥';
+            explosion.style.left = rect.left + rect.width / 2 + 'px';
+            explosion.style.top = rect.top + 'px';
+            explosion.style.transform = 'translateX(-50%)';
+            gameArea.appendChild(explosion);
+            setTimeout(() => explosion.remove(), 500);
+
+            // Score popup
+            const hitEffect = document.createElement('div');
+            hitEffect.className = 'hit-effect';
+            hitEffect.textContent = '+50';
+            hitEffect.style.left = rect.left + rect.width / 2 + 'px';
+            hitEffect.style.top = rect.top + 'px';
+            hitEffect.style.transform = 'translateX(-50%)';
+            gameArea.appendChild(hitEffect);
+            setTimeout(() => hitEffect.remove(), 600);
+
+            enemy.remove();
+
+            waveEnemiesRemaining--;
+            if (waveEnemiesRemaining <= 0) {
+                nextWave();
+            }
+        }
 
         function createEnemy() {
             if (!gameActive) return;
@@ -342,25 +450,21 @@
             enemy.className = 'enemy';
             enemy.textContent = '👾';
 
-            const enemyPos = Math.floor(Math.random() * 3);
-            const startPos = positions[enemyPos];
-
-            enemy.style.left = startPos.x;
+            const startX = Math.random() * (window.innerWidth - 60) + 30;
+            enemy.style.left = startX + 'px';
             enemy.style.top = '-80px';
-            enemy.style.transform = 'translateX(-50%)';
 
             gameArea.appendChild(enemy);
 
             const duration = Math.max(3000 - (wave * 100), 1500);
-            const targetY = window.innerHeight - 150;
+            const targetY = window.innerHeight + 80;
 
             let startTime = Date.now();
             let animationFrame;
-            let destroyed = false;
 
             function animate() {
-                if (!gameActive || destroyed) {
-                    if (!destroyed) enemy.remove();
+                if (!gameActive || enemy.dataset.destroyed) {
+                    if (!enemy.dataset.destroyed) enemy.remove();
                     return;
                 }
 
@@ -369,7 +473,6 @@
 
                 if (progress >= 1) {
                     enemy.remove();
-                    // Enemy reached bottom - could add damage logic here
                     return;
                 }
 
@@ -381,54 +484,13 @@
 
             animationFrame = requestAnimationFrame(animate);
 
+            // Allow tapping enemies directly too
             enemy.addEventListener('pointerdown', (e) => {
                 e.preventDefault();
-                if (!gameActive || destroyed) return;
-
-                destroyed = true;
+                e.stopPropagation();
+                if (!gameActive || enemy.dataset.destroyed) return;
+                destroyEnemy(enemy);
                 cancelAnimationFrame(animationFrame);
-
-                // Check if enemy is in current position
-                const hitBonus = (enemyPos === currentPosition) ? 50 : 25;
-                score += hitBonus;
-                scoreDisplay.textContent = score;
-
-                // Muzzle flash
-                const flash = document.createElement('div');
-                flash.className = 'muzzle-flash';
-                flash.textContent = '💥';
-                flash.style.left = positions[currentPosition].x;
-                flash.style.bottom = '100px';
-                flash.style.transform = 'translateX(-50%)';
-                gameArea.appendChild(flash);
-                setTimeout(() => flash.remove(), 150);
-
-                // Explosion
-                const explosion = document.createElement('div');
-                explosion.className = 'explosion';
-                explosion.textContent = '💥';
-                explosion.style.left = enemy.style.left;
-                explosion.style.top = enemy.style.top;
-                explosion.style.transform = 'translateX(-50%)';
-                gameArea.appendChild(explosion);
-                setTimeout(() => explosion.remove(), 500);
-
-                // Score popup
-                const hitEffect = document.createElement('div');
-                hitEffect.className = 'hit-effect';
-                hitEffect.textContent = `+${hitBonus}`;
-                hitEffect.style.left = enemy.style.left;
-                hitEffect.style.top = enemy.style.top;
-                hitEffect.style.transform = 'translateX(-50%)';
-                gameArea.appendChild(hitEffect);
-                setTimeout(() => hitEffect.remove(), 600);
-
-                enemy.remove();
-
-                waveEnemiesRemaining--;
-                if (waveEnemiesRemaining <= 0) {
-                    nextWave();
-                }
             });
         }
 
@@ -442,16 +504,25 @@
             gameActive = true;
             score = 0;
             wave = 1;
-            currentPosition = 1;
+            kills = 0;
             waveEnemiesRemaining = 5;
 
             scoreDisplay.textContent = score;
             waveDisplay.textContent = wave;
+            killsDisplay.textContent = kills;
             startScreen.style.display = 'none';
 
-            setPosition(1);
+            // Reset hero position
+            heroX = window.innerWidth / 2;
+            heroY = window.innerHeight - 80;
+            targetX = heroX;
+            targetY = heroY;
+            heroVelX = 0;
+            heroVelY = 0;
 
-            document.querySelectorAll('.enemy').forEach(e => e.remove());
+            document.querySelectorAll('.enemy, .bullet').forEach(e => e.remove());
+
+            updateHeroPosition();
 
             const baseSpawnRate = 1200;
             enemySpawnInterval = setInterval(() => {
@@ -465,8 +536,6 @@
             e.preventDefault();
             startGame();
         });
-
-        updateCrosshairPosition();
     </script>
 </body>
 </html>
