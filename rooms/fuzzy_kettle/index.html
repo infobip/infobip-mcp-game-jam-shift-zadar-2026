@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Space Invaders</title>
+    <title>Logo Guesser</title>
     <style>
         * {
             margin: 0;
@@ -14,12 +14,13 @@
 
         body {
             width: 100%;
+            max-width: 100%;
             height: 100dvh;
             overflow: hidden;
-            background: linear-gradient(to bottom, #0a0e27 0%, #1a1e3e 100%);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-            touch-action: none;
             overflow-x: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            touch-action: manipulation;
         }
 
         #game-container {
@@ -27,503 +28,503 @@
             height: 100dvh;
             position: relative;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        #score-display {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #0f0;
-            font-size: 24px;
-            font-weight: bold;
-            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
-            z-index: 100;
-        }
-
-        #player {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            font-size: 36px;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            touch-action: none;
-        }
-
-        .invader {
-            position: absolute;
-            width: 32px;
-            height: 32px;
-            font-size: 28px;
-            pointer-events: none;
-        }
-
-        .bullet {
-            position: absolute;
-            width: 4px;
-            height: 16px;
-            background: #0f0;
-            box-shadow: 0 0 8px rgba(0, 255, 0, 0.8);
-            pointer-events: none;
-        }
-
-        .enemy-bullet {
-            position: absolute;
-            width: 4px;
-            height: 16px;
-            background: #f00;
-            box-shadow: 0 0 8px rgba(255, 0, 0, 0.8);
-            pointer-events: none;
-        }
-
-        #controls {
-            position: absolute;
-            bottom: 10px;
-            left: 0;
-            width: 100%;
-            height: 60px;
+        #header {
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            color: white;
             display: flex;
             justify-content: space-between;
-            padding: 0 10px;
-            z-index: 100;
+            align-items: center;
         }
 
-        .control-btn {
-            background: rgba(0, 255, 0, 0.2);
-            border: 2px solid #0f0;
-            border-radius: 8px;
-            color: #0f0;
-            font-size: 28px;
+        #score {
+            font-size: 20px;
             font-weight: bold;
-            min-width: 60px;
-            min-height: 60px;
-            touch-action: manipulation;
-            cursor: pointer;
+        }
+
+        #progress {
+            font-size: 18px;
+        }
+
+        #logo-container {
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+            padding: 20px;
+            position: relative;
         }
 
-        .control-btn:active {
-            background: rgba(0, 255, 0, 0.4);
+        #logo-display {
+            width: 100%;
+            max-width: 300px;
+            height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        #choices-container {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .choice-btn {
+            background: white;
+            border: none;
+            border-radius: 15px;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            touch-action: manipulation;
+            min-height: 70px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: transform 0.1s;
+        }
+
+        .choice-btn:active {
             transform: scale(0.95);
         }
 
-        #shoot-btn {
-            background: rgba(255, 0, 0, 0.2);
-            border-color: #f00;
-            color: #f00;
-            min-width: 80px;
-            box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+        .choice-btn.correct {
+            background: #4caf50;
+            color: white;
         }
 
-        #shoot-btn:active {
-            background: rgba(255, 0, 0, 0.4);
+        .choice-btn.wrong {
+            background: #f44336;
+            color: white;
         }
 
-        #start-screen, #game-over-screen {
+        #start-screen, #end-screen {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100dvh;
-            background: rgba(10, 14, 39, 0.95);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 200;
-            padding: 20px;
+            padding: 30px;
         }
 
-        #game-over-screen {
+        #end-screen {
             display: none;
         }
 
         h1 {
-            color: #0f0;
-            font-size: 42px;
+            color: white;
+            font-size: 40px;
             margin-bottom: 20px;
-            text-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
             text-align: center;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
 
         .instruction {
-            color: #fff;
+            color: white;
             font-size: 18px;
             text-align: center;
             margin-bottom: 30px;
-            line-height: 1.5;
+            line-height: 1.6;
         }
 
-        .button {
-            background: linear-gradient(to bottom, #0f0, #0a0);
-            color: #0a0e27;
+        .start-btn {
+            background: white;
+            color: #667eea;
             font-size: 24px;
             font-weight: bold;
-            padding: 15px 40px;
+            padding: 18px 50px;
             border: none;
             border-radius: 50px;
             cursor: pointer;
             touch-action: manipulation;
-            min-width: 200px;
-            min-height: 60px;
-            box-shadow: 0 4px 12px rgba(0, 255, 0, 0.4);
+            min-width: 220px;
+            min-height: 65px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
         }
 
-        .button:active {
+        .start-btn:active {
             transform: scale(0.95);
         }
 
         #final-score {
-            color: #0f0;
-            font-size: 36px;
-            margin-bottom: 20px;
+            color: white;
+            font-size: 32px;
+            margin-bottom: 30px;
+            text-align: center;
         }
 
-        .explosion {
+        .mcdonalds { background: #fff; }
+        .mcdonalds::before,
+        .mcdonalds::after {
+            content: '';
             position: absolute;
-            font-size: 40px;
-            pointer-events: none;
-            animation: explode 0.5s forwards;
+            width: 80px;
+            height: 140px;
+            background: #FFC72C;
+            border-radius: 80px 80px 0 0;
+            filter: blur(3px);
+        }
+        .mcdonalds::before { transform: translateX(-25px); }
+        .mcdonalds::after { transform: translateX(25px); }
+
+        .apple {
+            background: #fff;
+            position: relative;
+        }
+        .apple::before {
+            content: '';
+            position: absolute;
+            width: 120px;
+            height: 140px;
+            background: #555;
+            border-radius: 50% 50% 50% 50%;
+            filter: blur(2px);
+        }
+        .apple::after {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: #fff;
+            border-radius: 50%;
+            top: 50%;
+            right: 30%;
+            filter: blur(2px);
         }
 
-        @keyframes explode {
-            0% { opacity: 1; transform: scale(1); }
-            100% { opacity: 0; transform: scale(2); }
+        .nike {
+            background: #fff;
+        }
+        .nike::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 150px solid transparent;
+            border-bottom: 80px solid #000;
+            transform: skewX(-20deg);
+            filter: blur(2px);
+        }
+
+        .adidas {
+            background: #fff;
+            gap: 15px;
+        }
+        .adidas::before,
+        .adidas::after {
+            content: '';
+            position: absolute;
+            width: 100px;
+            height: 15px;
+            background: #000;
+            filter: blur(2px);
+        }
+        .adidas::before { transform: translateY(-25px) rotate(15deg); }
+        .adidas::after { transform: translateY(25px) rotate(15deg); }
+
+        .target {
+            background: #fff;
+        }
+        .target::before {
+            content: '';
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            background:
+                radial-gradient(circle, transparent 20%, #CC0000 20%, #CC0000 35%, #fff 35%, #fff 50%, #CC0000 50%, #CC0000 65%, #fff 65%);
+            border-radius: 50%;
+            filter: blur(3px);
+        }
+
+        .starbucks {
+            background: #00704A;
+        }
+        .starbucks::before {
+            content: '';
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background: #fff;
+            border-radius: 50%;
+            filter: blur(4px);
+        }
+
+        .amazon {
+            background: #fff;
+        }
+        .amazon::before {
+            content: '';
+            position: absolute;
+            width: 120px;
+            height: 80px;
+            background: #000;
+            border-radius: 10px;
+            filter: blur(2px);
+        }
+        .amazon::after {
+            content: '';
+            position: absolute;
+            width: 100px;
+            height: 8px;
+            background: #FF9900;
+            bottom: 40px;
+            border-radius: 4px 4px 8px 8px;
+            filter: blur(1px);
+        }
+
+        .google {
+            background: #fff;
+        }
+        .google::before {
+            content: 'G';
+            font-size: 120px;
+            font-weight: bold;
+            background: linear-gradient(to right, #4285F4 0%, #EA4335 25%, #FBBC05 50%, #34A853 75%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: blur(3px);
+        }
+
+        .twitter {
+            background: #fff;
+        }
+        .twitter::before {
+            content: '';
+            position: absolute;
+            width: 100px;
+            height: 80px;
+            background: #1DA1F2;
+            border-radius: 50% 50% 0 50%;
+            transform: rotate(-30deg);
+            filter: blur(3px);
+        }
+
+        .pepsi {
+            background: #fff;
+        }
+        .pepsi::before {
+            content: '';
+            position: absolute;
+            width: 130px;
+            height: 130px;
+            background: radial-gradient(circle at center, #fff 0%, #fff 35%, #E32934 35%, #E32934 50%, #004B93 50%);
+            border-radius: 50%;
+            filter: blur(3px);
         }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <div id="score-display">Score: 0</div>
+        <div id="header">
+            <div id="score">Score: 0</div>
+            <div id="progress">1/10</div>
+        </div>
 
-        <div id="player">🚀</div>
+        <div id="logo-container">
+            <div id="logo-display">
+                <div class="logo mcdonalds"></div>
+            </div>
+        </div>
 
-        <div id="controls">
-            <button class="control-btn" id="left-btn">◀</button>
-            <button class="control-btn" id="shoot-btn">🔥</button>
-            <button class="control-btn" id="right-btn">▶</button>
+        <div id="choices-container">
+            <button class="choice-btn">McDonald's</button>
+            <button class="choice-btn">Burger King</button>
+            <button class="choice-btn">Wendy's</button>
+            <button class="choice-btn">KFC</button>
         </div>
 
         <div id="start-screen">
-            <h1>👾 SPACE INVADERS 👾</h1>
-            <p class="instruction">Use ◀ ▶ to move<br>Tap 🔥 to shoot<br>Destroy all invaders!</p>
-            <button class="button" id="start-button">Start Game</button>
+            <h1>🎨 Logo Guesser 🎨</h1>
+            <p class="instruction">Can you identify famous brand logos<br>from their altered versions?<br><br>Tap the correct answer!</p>
+            <button class="start-btn" id="start-button">Start Game</button>
         </div>
 
-        <div id="game-over-screen">
-            <h1>Game Over!</h1>
-            <div id="final-score">Score: 0</div>
-            <button class="button" id="restart-button">Play Again</button>
+        <div id="end-screen">
+            <h1>Game Complete!</h1>
+            <div id="final-score">Score: 0/10</div>
+            <button class="start-btn" id="restart-button">Play Again</button>
         </div>
     </div>
 
     <script>
-        const gameContainer = document.getElementById('game-container');
-        const player = document.getElementById('player');
-        const scoreDisplay = document.getElementById('score-display');
+        const logos = [
+            {
+                class: 'mcdonalds',
+                correct: "McDonald's",
+                choices: ["McDonald's", "Burger King", "Wendy's", "KFC"]
+            },
+            {
+                class: 'apple',
+                correct: 'Apple',
+                choices: ['Apple', 'Microsoft', 'Samsung', 'Google']
+            },
+            {
+                class: 'nike',
+                correct: 'Nike',
+                choices: ['Nike', 'Adidas', 'Puma', 'Reebok']
+            },
+            {
+                class: 'adidas',
+                correct: 'Adidas',
+                choices: ['Adidas', 'Nike', 'Under Armour', 'Puma']
+            },
+            {
+                class: 'target',
+                correct: 'Target',
+                choices: ['Target', 'Walmart', 'Costco', 'Kmart']
+            },
+            {
+                class: 'starbucks',
+                correct: 'Starbucks',
+                choices: ['Starbucks', 'Dunkin', 'Costa Coffee', 'Tim Hortons']
+            },
+            {
+                class: 'amazon',
+                correct: 'Amazon',
+                choices: ['Amazon', 'eBay', 'Alibaba', 'Walmart']
+            },
+            {
+                class: 'google',
+                correct: 'Google',
+                choices: ['Google', 'Yahoo', 'Bing', 'Firefox']
+            },
+            {
+                class: 'twitter',
+                correct: 'Twitter',
+                choices: ['Twitter', 'Facebook', 'Instagram', 'LinkedIn']
+            },
+            {
+                class: 'pepsi',
+                correct: 'Pepsi',
+                choices: ['Pepsi', 'Coca-Cola', '7UP', 'Sprite']
+            }
+        ];
+
+        const scoreDisplay = document.getElementById('score');
+        const progressDisplay = document.getElementById('progress');
+        const logoDisplay = document.getElementById('logo-display');
+        const choicesContainer = document.getElementById('choices-container');
         const startScreen = document.getElementById('start-screen');
-        const gameOverScreen = document.getElementById('game-over-screen');
+        const endScreen = document.getElementById('end-screen');
         const startButton = document.getElementById('start-button');
         const restartButton = document.getElementById('restart-button');
         const finalScoreDisplay = document.getElementById('final-score');
-        const leftBtn = document.getElementById('left-btn');
-        const rightBtn = document.getElementById('right-btn');
-        const shootBtn = document.getElementById('shoot-btn');
 
         let score = 0;
+        let currentQuestion = 0;
         let gameActive = false;
-        let invaders = [];
-        let bullets = [];
-        let enemyBullets = [];
-        let playerX = window.innerWidth / 2;
-        let animationId;
-        let invaderDirection = 1;
-        let invaderSpeed = 1;
-        let lastShootTime = 0;
-        let moveLeftPressed = false;
-        let moveRightPressed = false;
+        let shuffledLogos = [];
 
-        const playerWidth = 40;
-        const playerHeight = 40;
-        const invaderSize = 32;
-        const bulletSpeed = 8;
-        const enemyBulletSpeed = 4;
-        const shootCooldown = 300;
-
-        function updatePlayerPosition() {
-            playerX = Math.max(playerWidth / 2, Math.min(window.innerWidth - playerWidth / 2, playerX));
-            player.style.left = playerX + 'px';
+        function shuffle(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
         }
 
-        leftBtn.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            moveLeftPressed = true;
-        });
+        function displayQuestion() {
+            if (currentQuestion >= shuffledLogos.length) {
+                endGame();
+                return;
+            }
 
-        leftBtn.addEventListener('pointerup', (e) => {
-            e.preventDefault();
-            moveLeftPressed = false;
-        });
+            const question = shuffledLogos[currentQuestion];
 
-        leftBtn.addEventListener('pointerleave', (e) => {
-            moveLeftPressed = false;
-        });
+            logoDisplay.innerHTML = `<div class="logo ${question.class}"></div>`;
 
-        rightBtn.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            moveRightPressed = true;
-        });
+            const shuffledChoices = shuffle(question.choices);
+            choicesContainer.innerHTML = '';
 
-        rightBtn.addEventListener('pointerup', (e) => {
-            e.preventDefault();
-            moveRightPressed = false;
-        });
+            shuffledChoices.forEach(choice => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.textContent = choice;
+                btn.addEventListener('click', () => handleAnswer(choice, btn));
+                choicesContainer.appendChild(btn);
+            });
 
-        rightBtn.addEventListener('pointerleave', (e) => {
-            moveRightPressed = false;
-        });
+            progressDisplay.textContent = `${currentQuestion + 1}/${shuffledLogos.length}`;
+        }
 
-        shootBtn.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            shoot();
-        });
-
-        function shoot() {
+        function handleAnswer(selected, btn) {
             if (!gameActive) return;
 
-            const now = Date.now();
-            if (now - lastShootTime < shootCooldown) return;
+            gameActive = false;
 
-            lastShootTime = now;
+            const question = shuffledLogos[currentQuestion];
+            const allButtons = choicesContainer.querySelectorAll('.choice-btn');
 
-            const bullet = document.createElement('div');
-            bullet.className = 'bullet';
-            bullet.style.left = (playerX - 2) + 'px';
-            bullet.style.bottom = '120px';
-
-            gameContainer.appendChild(bullet);
-            bullets.push({
-                element: bullet,
-                x: playerX,
-                y: window.innerHeight - 120
-            });
-        }
-
-        function createInvaders() {
-            const rows = 4;
-            const cols = Math.min(6, Math.floor(window.innerWidth / 50));
-            const startX = (window.innerWidth - (cols * 50)) / 2;
-            const startY = 60;
-
-            for (let row = 0; row < rows; row++) {
-                for (let col = 0; col < cols; col++) {
-                    const invader = document.createElement('div');
-                    invader.className = 'invader';
-                    invader.textContent = '👾';
-
-                    const x = startX + col * 50;
-                    const y = startY + row * 45;
-
-                    invader.style.left = x + 'px';
-                    invader.style.top = y + 'px';
-
-                    gameContainer.appendChild(invader);
-                    invaders.push({
-                        element: invader,
-                        x: x,
-                        y: y
-                    });
-                }
-            }
-        }
-
-        function updateInvaders() {
-            let hitEdge = false;
-
-            for (let invader of invaders) {
-                invader.x += invaderDirection * invaderSpeed;
-
-                if (invader.x <= 0 || invader.x >= window.innerWidth - invaderSize) {
-                    hitEdge = true;
-                }
-            }
-
-            if (hitEdge) {
-                invaderDirection *= -1;
-                for (let invader of invaders) {
-                    invader.y += 20;
-                }
-            }
-
-            for (let invader of invaders) {
-                invader.element.style.left = invader.x + 'px';
-                invader.element.style.top = invader.y + 'px';
-
-                if (invader.y > window.innerHeight - 150) {
-                    endGame();
-                    return;
-                }
-            }
-        }
-
-        function updateBullets() {
-            for (let i = bullets.length - 1; i >= 0; i--) {
-                const bullet = bullets[i];
-                bullet.y -= bulletSpeed;
-                bullet.element.style.bottom = (window.innerHeight - bullet.y) + 'px';
-
-                if (bullet.y < 0) {
-                    bullet.element.remove();
-                    bullets.splice(i, 1);
-                    continue;
-                }
-
-                for (let j = invaders.length - 1; j >= 0; j--) {
-                    const invader = invaders[j];
-                    if (bullet.x >= invader.x && bullet.x <= invader.x + invaderSize &&
-                        bullet.y >= invader.y && bullet.y <= invader.y + invaderSize) {
-
-                        createExplosion(invader.x + invaderSize / 2, invader.y + invaderSize / 2);
-
-                        invader.element.remove();
-                        invaders.splice(j, 1);
-
-                        bullet.element.remove();
-                        bullets.splice(i, 1);
-
-                        score += 10;
-                        scoreDisplay.textContent = 'Score: ' + score;
-
-                        if (invaders.length === 0) {
-                            setTimeout(() => {
-                                if (gameActive) {
-                                    createInvaders();
-                                    invaderSpeed += 0.5;
-                                }
-                            }, 1000);
-                        }
-                        break;
+            if (selected === question.correct) {
+                score++;
+                btn.classList.add('correct');
+                scoreDisplay.textContent = `Score: ${score}`;
+            } else {
+                btn.classList.add('wrong');
+                allButtons.forEach(button => {
+                    if (button.textContent === question.correct) {
+                        button.classList.add('correct');
                     }
-                }
-            }
-        }
-
-        function enemyShoot() {
-            if (invaders.length === 0 || Math.random() > 0.02) return;
-
-            const randomInvader = invaders[Math.floor(Math.random() * invaders.length)];
-
-            const bullet = document.createElement('div');
-            bullet.className = 'enemy-bullet';
-            bullet.style.left = (randomInvader.x + invaderSize / 2) + 'px';
-            bullet.style.top = (randomInvader.y + invaderSize) + 'px';
-
-            gameContainer.appendChild(bullet);
-            enemyBullets.push({
-                element: bullet,
-                x: randomInvader.x + invaderSize / 2,
-                y: randomInvader.y + invaderSize
-            });
-        }
-
-        function updateEnemyBullets() {
-            for (let i = enemyBullets.length - 1; i >= 0; i--) {
-                const bullet = enemyBullets[i];
-                bullet.y += enemyBulletSpeed;
-                bullet.element.style.top = bullet.y + 'px';
-
-                if (bullet.y > window.innerHeight) {
-                    bullet.element.remove();
-                    enemyBullets.splice(i, 1);
-                    continue;
-                }
-
-                const playerBottom = window.innerHeight - 80;
-                const playerTop = playerBottom - playerHeight;
-
-                if (bullet.y >= playerTop && bullet.y <= playerBottom &&
-                    bullet.x >= playerX - playerWidth / 2 && bullet.x <= playerX + playerWidth / 2) {
-                    endGame();
-                    return;
-                }
-            }
-        }
-
-        function createExplosion(x, y) {
-            const explosion = document.createElement('div');
-            explosion.className = 'explosion';
-            explosion.textContent = '💥';
-            explosion.style.left = (x - 20) + 'px';
-            explosion.style.top = (y - 20) + 'px';
-            gameContainer.appendChild(explosion);
-
-            setTimeout(() => explosion.remove(), 500);
-        }
-
-        function updateGame() {
-            if (!gameActive) return;
-
-            if (moveLeftPressed) {
-                playerX -= 5;
-                updatePlayerPosition();
-            }
-            if (moveRightPressed) {
-                playerX += 5;
-                updatePlayerPosition();
+                });
             }
 
-            updateInvaders();
-            updateBullets();
-            updateEnemyBullets();
-            enemyShoot();
-
-            animationId = requestAnimationFrame(updateGame);
+            setTimeout(() => {
+                currentQuestion++;
+                gameActive = true;
+                displayQuestion();
+            }, 1500);
         }
 
         function startGame() {
             score = 0;
-            invaders = [];
-            bullets = [];
-            enemyBullets = [];
+            currentQuestion = 0;
             gameActive = true;
-            invaderDirection = 1;
-            invaderSpeed = 1;
-            moveLeftPressed = false;
-            moveRightPressed = false;
+            shuffledLogos = shuffle(logos);
 
             scoreDisplay.textContent = 'Score: 0';
             startScreen.style.display = 'none';
-            gameOverScreen.style.display = 'none';
+            endScreen.style.display = 'none';
 
-            document.querySelectorAll('.invader, .bullet, .enemy-bullet, .explosion').forEach(el => el.remove());
-
-            playerX = window.innerWidth / 2;
-            updatePlayerPosition();
-
-            createInvaders();
-
-            animationId = requestAnimationFrame(updateGame);
+            displayQuestion();
         }
 
         function endGame() {
             gameActive = false;
-            cancelAnimationFrame(animationId);
-            moveLeftPressed = false;
-            moveRightPressed = false;
-
-            finalScoreDisplay.textContent = 'Score: ' + score;
-            gameOverScreen.style.display = 'flex';
+            finalScoreDisplay.textContent = `Score: ${score}/${shuffledLogos.length}`;
+            endScreen.style.display = 'flex';
         }
 
         startButton.addEventListener('click', startGame);
         restartButton.addEventListener('click', startGame);
-
-        updatePlayerPosition();
     </script>
 </body>
 </html>
