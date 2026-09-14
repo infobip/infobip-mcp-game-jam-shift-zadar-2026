@@ -132,6 +132,42 @@
         #restartBtn:active {
             transform: scale(0.95);
         }
+
+        #comboDisplay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: bold;
+            pointer-events: none;
+            opacity: 0;
+            text-shadow: 0 0 20px rgba(255,255,255,0.8);
+        }
+
+        #comboDisplay.show {
+            animation: comboPopup 0.6s ease-out;
+        }
+
+        @keyframes comboPopup {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: particleFly 0.8s ease-out forwards;
+        }
+
+        @keyframes particleFly {
+            0% { opacity: 1; transform: translate(0, 0) scale(1); }
+            100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0); }
+        }
     </style>
 </head>
 <body>
@@ -139,6 +175,7 @@
         <h1>🎯 Color Rush</h1>
         <div id="stats">
             <div>Score: <span id="score">0</span></div>
+            <div>Combo: <span id="combo">0</span>x</div>
             <div>Level: <span id="level">1</span></div>
         </div>
     </div>
@@ -147,7 +184,9 @@
         Tap: <div id="targetColor"></div>
     </div>
 
-    <div id="gameArea"></div>
+    <div id="gameArea">
+        <div id="comboDisplay"></div>
+    </div>
 
     <div id="timeBar">
         <div id="timeProgress"></div>
@@ -168,6 +207,7 @@
 
         let score = 0;
         let level = 1;
+        let combo = 0;
         let targetColor = '';
         let timeLeft = 100;
         let gameInterval;
@@ -177,18 +217,21 @@
         const gameArea = document.getElementById('gameArea');
         const scoreEl = document.getElementById('score');
         const levelEl = document.getElementById('level');
+        const comboEl = document.getElementById('combo');
         const targetColorEl = document.getElementById('targetColor');
         const timeProgress = document.getElementById('timeProgress');
         const gameOverEl = document.getElementById('gameOver');
         const finalScoreEl = document.getElementById('finalScore');
         const restartBtn = document.getElementById('restartBtn');
+        const comboDisplay = document.getElementById('comboDisplay');
 
         function startGame() {
             score = 0;
             level = 1;
+            combo = 0;
             timeLeft = 100;
             circles = [];
-            gameArea.innerHTML = '';
+            gameArea.innerHTML = '<div id="comboDisplay"></div>';
             gameOverEl.classList.remove('show');
             updateUI();
             pickNewTarget();
@@ -227,7 +270,7 @@
 
             circle.addEventListener('pointerdown', (e) => {
                 e.preventDefault();
-                handleCircleClick(circle, isTarget);
+                handleCircleClick(circle, isTarget, e.clientX, e.clientY);
             });
 
             gameArea.appendChild(circle);
@@ -248,12 +291,55 @@
             }
         }
 
-        function handleCircleClick(circle, isTarget) {
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 8; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.backgroundColor = color;
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+
+                const angle = (Math.PI * 2 * i) / 8;
+                const distance = 50 + Math.random() * 30;
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance;
+
+                particle.style.setProperty('--tx', tx + 'px');
+                particle.style.setProperty('--ty', ty + 'px');
+
+                gameArea.appendChild(particle);
+
+                setTimeout(() => particle.remove(), 800);
+            }
+        }
+
+        function showComboText(comboCount) {
+            const display = document.getElementById('comboDisplay');
+            if (!display) return;
+
+            display.textContent = comboCount + 'x COMBO!';
+            display.className = 'show';
+
+            setTimeout(() => {
+                display.className = '';
+            }, 600);
+        }
+
+        function handleCircleClick(circle, isTarget, x, y) {
             if (isTarget) {
-                score += 10 * level;
+                combo++;
+                const points = 10 * level * combo;
+                score += points;
                 timeLeft = Math.min(100, timeLeft + 5);
+
+                createParticles(x, y, targetColor);
+
                 circle.style.transform = 'scale(1.3)';
                 circle.style.opacity = '0';
+
+                if (combo >= 3) {
+                    showComboText(combo);
+                }
 
                 if (score > 0 && score % 100 === 0) {
                     level++;
@@ -261,6 +347,7 @@
                     spawnInterval = setInterval(spawnCircle, Math.max(400, 800 - level * 50));
                 }
             } else {
+                combo = 0;
                 timeLeft = Math.max(0, timeLeft - 10);
                 circle.style.transform = 'scale(0.5)';
             }
@@ -278,6 +365,7 @@
         function updateUI() {
             scoreEl.textContent = score;
             levelEl.textContent = level;
+            comboEl.textContent = combo;
         }
 
         function endGame() {
