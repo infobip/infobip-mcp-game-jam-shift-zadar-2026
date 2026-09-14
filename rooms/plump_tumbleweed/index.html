@@ -77,6 +77,7 @@
             pointer-events: none;
             z-index: 70;
             filter: drop-shadow(0 0 10px #00ff88);
+            transition: transform 0.1s;
         }
 
         .enemy {
@@ -143,13 +144,23 @@
 
         .bullet {
             position: absolute;
-            width: 6px;
-            height: 20px;
-            background: linear-gradient(180deg, #00ff88 0%, #00d9ff 100%);
-            border-radius: 3px;
+            width: 8px;
+            height: 8px;
+            background: radial-gradient(circle, #00ff88 0%, #00d9ff 100%);
+            border-radius: 50%;
             pointer-events: none;
-            box-shadow: 0 0 10px #00ff88;
+            box-shadow: 0 0 15px #00ff88;
             z-index: 60;
+        }
+
+        .aim-line {
+            position: absolute;
+            pointer-events: none;
+            height: 2px;
+            background: linear-gradient(90deg, rgba(0, 255, 136, 0.5), transparent);
+            transform-origin: left center;
+            z-index: 65;
+            opacity: 0.6;
         }
 
         #start-screen {
@@ -234,8 +245,8 @@
         </div>
 
         <div id="start-screen">
-            <h1>⚡ RAIL SHOOTER ⚡</h1>
-            <p>Drag to move your ship<br>Tap anywhere to shoot!<br>Destroy the alien invaders!</p>
+            <h1>⚡ 360° SHOOTER ⚡</h1>
+            <p>Drag to move your ship<br>Tap anywhere to shoot in that direction!<br>Full 360° aiming - you can't miss!</p>
             <button id="start-btn">START MISSION</button>
         </div>
     </div>
@@ -322,8 +333,11 @@
             if (!gameActive) return;
             e.preventDefault();
 
-            targetX = e.clientX;
-            targetY = e.clientY;
+            const tapX = e.clientX;
+            const tapY = e.clientY;
+
+            targetX = tapX;
+            targetY = tapY;
             isDragging = true;
 
             // Check if tapped on enemy
@@ -332,34 +346,64 @@
                 return; // Enemy click handler will handle this
             }
 
-            // Otherwise shoot
-            shootBullet();
+            // Shoot toward tap position
+            shootBullet(tapX, tapY);
         });
 
         gameArea.addEventListener('pointerup', (e) => {
             isDragging = false;
         });
 
-        function shootBullet() {
+        function shootBullet(targetTapX, targetTapY) {
+            // Calculate direction from hero to tap position
+            const dx = targetTapX - heroX;
+            const dy = targetTapY - heroY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < 10) return; // Too close, don't shoot
+
+            // Normalize direction
+            const dirX = dx / distance;
+            const dirY = dy / distance;
+
+            // Calculate angle for rotation
+            const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+            // Show aim line briefly
+            const aimLine = document.createElement('div');
+            aimLine.className = 'aim-line';
+            aimLine.style.left = heroX + 'px';
+            aimLine.style.top = heroY + 'px';
+            aimLine.style.width = Math.min(distance, 200) + 'px';
+            aimLine.style.transform = `rotate(${angle}deg)`;
+            gameArea.appendChild(aimLine);
+            setTimeout(() => aimLine.remove(), 100);
+
             const bullet = document.createElement('div');
             bullet.className = 'bullet';
             bullet.style.left = heroX + 'px';
-            bullet.style.bottom = (window.innerHeight - heroY + 25) + 'px';
-            bullet.style.transform = 'translateX(-50%)';
+            bullet.style.top = heroY + 'px';
             gameArea.appendChild(bullet);
 
-            // Muzzle flash
+            // Muzzle flash at hero position, rotated toward target
             const flash = document.createElement('div');
             flash.className = 'muzzle-flash';
             flash.textContent = '💥';
             flash.style.left = heroX + 'px';
-            flash.style.bottom = (window.innerHeight - heroY + 20) + 'px';
-            flash.style.transform = 'translateX(-50%)';
+            flash.style.top = heroY + 'px';
+            flash.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
             gameArea.appendChild(flash);
             setTimeout(() => flash.remove(), 150);
 
-            let bulletY = heroY + 25;
-            const bulletSpeed = 12;
+            // Rotate hero briefly toward shot direction
+            hero.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+            setTimeout(() => {
+                hero.style.transform = 'translateX(-50%)';
+            }, 200);
+
+            let bulletX = heroX;
+            let bulletY = heroY;
+            const bulletSpeed = 18;
             let animFrame;
 
             function moveBullet() {
@@ -368,8 +412,11 @@
                     return;
                 }
 
-                bulletY += bulletSpeed;
-                bullet.style.bottom = (window.innerHeight - bulletY) + 'px';
+                bulletX += dirX * bulletSpeed;
+                bulletY += dirY * bulletSpeed;
+
+                bullet.style.left = bulletX + 'px';
+                bullet.style.top = bulletY + 'px';
 
                 // Check collision with enemies
                 const enemies = document.querySelectorAll('.enemy');
@@ -386,7 +433,9 @@
                     }
                 });
 
-                if (bulletY > window.innerHeight) {
+                // Check if bullet is out of bounds
+                if (bulletX < -50 || bulletX > window.innerWidth + 50 ||
+                    bulletY < -50 || bulletY > window.innerHeight + 50) {
                     bullet.remove();
                     cancelAnimationFrame(animFrame);
                     return;
@@ -450,17 +499,42 @@
             enemy.className = 'enemy';
             enemy.textContent = '👾';
 
-            const startX = Math.random() * (window.innerWidth - 60) + 30;
+            // Spawn from random edges of screen
+            const edge = Math.floor(Math.random() * 4);
+            let startX, startY;
+
+            switch(edge) {
+                case 0: // Top
+                    startX = Math.random() * window.innerWidth;
+                    startY = -80;
+                    break;
+                case 1: // Right
+                    startX = window.innerWidth + 80;
+                    startY = Math.random() * window.innerHeight;
+                    break;
+                case 2: // Bottom
+                    startX = Math.random() * window.innerWidth;
+                    startY = window.innerHeight + 80;
+                    break;
+                case 3: // Left
+                    startX = -80;
+                    startY = Math.random() * window.innerHeight;
+                    break;
+            }
+
             enemy.style.left = startX + 'px';
-            enemy.style.top = '-80px';
+            enemy.style.top = startY + 'px';
 
             gameArea.appendChild(enemy);
 
-            const duration = Math.max(3000 - (wave * 100), 1500);
-            const targetY = window.innerHeight + 80;
+            const duration = Math.max(4000 - (wave * 150), 2000);
 
             let startTime = Date.now();
             let animationFrame;
+
+            // Move toward center of screen
+            const targetCenterX = window.innerWidth / 2;
+            const targetCenterY = window.innerHeight / 2;
 
             function animate() {
                 if (!gameActive || enemy.dataset.destroyed) {
@@ -476,7 +550,10 @@
                     return;
                 }
 
-                const currentY = -80 + (targetY * progress);
+                const currentX = startX + (targetCenterX - startX) * progress;
+                const currentY = startY + (targetCenterY - startY) * progress;
+
+                enemy.style.left = currentX + 'px';
                 enemy.style.top = currentY + 'px';
 
                 animationFrame = requestAnimationFrame(animate);
@@ -514,7 +591,7 @@
 
             // Reset hero position
             heroX = window.innerWidth / 2;
-            heroY = window.innerHeight - 80;
+            heroY = window.innerHeight / 2;
             targetX = heroX;
             targetY = heroY;
             heroVelX = 0;
