@@ -47,11 +47,46 @@
             letter-spacing: 3px;
         }
 
+        #play-area {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+
         #canvas {
             border: 4px solid #00ff00;
             box-shadow: 0 0 20px #00ff00;
             background: #000;
             display: block;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        #side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #next-panel {
+            border: 3px solid #00ff00;
+            box-shadow: 0 0 15px #00ff00;
+            background: #000;
+            padding: 10px;
+            text-align: center;
+        }
+
+        #next-panel h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 8px #00ff00;
+        }
+
+        #next-canvas {
+            border: 2px solid #003300;
+            background: #000;
+            display: block;
+            margin: 0 auto;
             image-rendering: pixelated;
             image-rendering: crisp-edges;
         }
@@ -131,6 +166,21 @@
             margin-top: 20px;
             width: 100%;
         }
+
+        @media (max-width: 480px) {
+            #play-area {
+                flex-direction: column;
+                align-items: center;
+            }
+            #side-panel {
+                flex-direction: row;
+                width: 100%;
+                max-width: 300px;
+            }
+            #next-panel {
+                flex: 1;
+            }
+        }
     </style>
 </head>
 <body>
@@ -142,7 +192,15 @@
             <div>LEVEL: <span id="level">1</span></div>
         </div>
 
-        <canvas id="canvas" width="300" height="540"></canvas>
+        <div id="play-area">
+            <canvas id="canvas" width="300" height="540"></canvas>
+            <div id="side-panel">
+                <div id="next-panel">
+                    <h3>NEXT</h3>
+                    <canvas id="next-canvas" width="120" height="120"></canvas>
+                </div>
+            </div>
+        </div>
 
         <div id="controls">
             <button class="btn" id="rotate">ROTATE</button>
@@ -161,6 +219,8 @@
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
+        const nextCanvas = document.getElementById('next-canvas');
+        const nextCtx = nextCanvas.getContext('2d');
 
         const COLS = 10;
         const ROWS = 18;
@@ -199,6 +259,7 @@
         let gameRunning = true;
 
         let currentPiece = null;
+        let nextPiece = null;
         let currentX = 0;
         let currentY = 0;
 
@@ -355,12 +416,12 @@
             board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
         }
 
-        function drawBlock(x, y, colorIndex) {
-            ctx.fillStyle = COLORS[colorIndex];
-            ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-            ctx.strokeStyle = '#003300';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+        function drawBlock(x, y, colorIndex, context = ctx, blockSize = BLOCK_SIZE) {
+            context.fillStyle = COLORS[colorIndex];
+            context.fillRect(x * blockSize, y * blockSize, blockSize, blockSize);
+            context.strokeStyle = '#003300';
+            context.lineWidth = 2;
+            context.strokeRect(x * blockSize, y * blockSize, blockSize, blockSize);
         }
 
         function drawBoard() {
@@ -386,14 +447,45 @@
             }
         }
 
-        function newPiece() {
+        function drawNextPiece() {
+            nextCtx.fillStyle = '#000';
+            nextCtx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+
+            if (nextPiece) {
+                const blockSize = 24;
+                const offsetX = (nextCanvas.width - nextPiece.shape[0].length * blockSize) / 2 / blockSize;
+                const offsetY = (nextCanvas.height - nextPiece.shape.length * blockSize) / 2 / blockSize;
+
+                for (let y = 0; y < nextPiece.shape.length; y++) {
+                    for (let x = 0; x < nextPiece.shape[y].length; x++) {
+                        if (nextPiece.shape[y][x]) {
+                            drawBlock(offsetX + x, offsetY + y, nextPiece.color, nextCtx, blockSize);
+                        }
+                    }
+                }
+            }
+        }
+
+        function generatePiece() {
             const shapeIndex = Math.floor(Math.random() * SHAPES.length);
-            currentPiece = {
+            return {
                 shape: SHAPES[shapeIndex],
                 color: shapeIndex + 1
             };
+        }
+
+        function newPiece() {
+            if (!nextPiece) {
+                nextPiece = generatePiece();
+            }
+
+            currentPiece = nextPiece;
+            nextPiece = generatePiece();
+
             currentX = Math.floor(COLS / 2) - Math.floor(currentPiece.shape[0].length / 2);
             currentY = 0;
+
+            drawNextPiece();
 
             if (collision()) {
                 gameOver();
@@ -467,8 +559,9 @@
                 merge();
                 clearLines();
                 newPiece();
+            } else {
+                dropCounter = 0;
             }
-            dropCounter = 0;
         }
 
         function hardDrop() {
@@ -519,6 +612,7 @@
             level = 1;
             dropInterval = 1000;
             gameRunning = true;
+            nextPiece = null;
 
             document.getElementById('score').textContent = score;
             document.getElementById('lines').textContent = lines;
@@ -549,33 +643,40 @@
             startMusic();
         }
 
-        // Touch controls
+        // Touch controls with preventDefault to ensure DOWN works
         document.getElementById('rotate').addEventListener('pointerdown', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             startGameWithMusic();
             if (gameRunning) rotate();
         });
 
         document.getElementById('left').addEventListener('pointerdown', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             startGameWithMusic();
             if (gameRunning) moveLeft();
         });
 
         document.getElementById('right').addEventListener('pointerdown', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             startGameWithMusic();
             if (gameRunning) moveRight();
         });
 
         document.getElementById('down').addEventListener('pointerdown', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             startGameWithMusic();
-            if (gameRunning) moveDown();
+            if (gameRunning) {
+                moveDown();
+            }
         });
 
         document.getElementById('restart').addEventListener('pointerdown', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             restartGame();
         });
 
@@ -605,8 +706,8 @@
             }
         });
 
-        // Start music on first interaction
-        document.body.addEventListener('pointerdown', startGameWithMusic, { once: true });
+        // Start music on first interaction (not on DOWN button to avoid conflict)
+        canvas.addEventListener('pointerdown', startGameWithMusic, { once: true });
 
         // Initialize game
         initBoard();
