@@ -202,6 +202,114 @@
         let currentX = 0;
         let currentY = 0;
 
+        // 80s Synth Music
+        let audioContext = null;
+        let musicStarted = false;
+
+        function initAudio() {
+            if (audioContext) return;
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function playNote(frequency, startTime, duration, type = 'square') {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+
+            osc.type = type;
+            osc.frequency.setValueAtTime(frequency, startTime);
+
+            gain.gain.setValueAtTime(0, startTime);
+            gain.gain.linearRampToValueAtTime(0.08, startTime + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        }
+
+        function playBassNote(frequency, startTime, duration) {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(frequency, startTime);
+
+            gain.gain.setValueAtTime(0, startTime);
+            gain.gain.linearRampToValueAtTime(0.12, startTime + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        }
+
+        function startMusic() {
+            if (musicStarted || !audioContext) return;
+            musicStarted = true;
+
+            const bpm = 130;
+            const beatDuration = 60 / bpm;
+            const barDuration = beatDuration * 4;
+
+            // 80s synth melody pattern (in Hz)
+            const melody = [
+                [523.25, 0.3], // C5
+                [587.33, 0.3], // D5
+                [659.25, 0.3], // E5
+                [783.99, 0.3], // G5
+                [659.25, 0.3], // E5
+                [587.33, 0.3], // D5
+                [523.25, 0.6], // C5
+                [0, 0.2],
+                [587.33, 0.3], // D5
+                [659.25, 0.3], // E5
+                [587.33, 0.3], // D5
+                [523.25, 0.6], // C5
+            ];
+
+            const bassLine = [
+                [130.81, 0.5], // C3
+                [0, 0.5],
+                [164.81, 0.5], // E3
+                [0, 0.5],
+                [146.83, 0.5], // D3
+                [0, 0.5],
+                [196.00, 0.5], // G3
+                [0, 0.5]
+            ];
+
+            function scheduleLoop() {
+                const now = audioContext.currentTime;
+                let time = now;
+
+                // Schedule melody
+                melody.forEach(([freq, duration]) => {
+                    if (freq > 0) {
+                        playNote(freq, time, duration, 'square');
+                    }
+                    time += duration;
+                });
+
+                // Schedule bass
+                let bassTime = now;
+                bassLine.forEach(([freq, duration]) => {
+                    if (freq > 0) {
+                        playBassNote(freq, bassTime, duration);
+                    }
+                    bassTime += duration;
+                });
+
+                const loopDuration = melody.reduce((sum, [_, dur]) => sum + dur, 0);
+                setTimeout(scheduleLoop, loopDuration * 1000 - 100);
+            }
+
+            scheduleLoop();
+        }
+
         function initBoard() {
             board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
         }
@@ -395,24 +503,33 @@
             requestAnimationFrame(update);
         }
 
+        function startGameWithMusic() {
+            initAudio();
+            startMusic();
+        }
+
         // Touch controls
         document.getElementById('rotate').addEventListener('pointerdown', (e) => {
             e.preventDefault();
+            startGameWithMusic();
             if (gameRunning) rotate();
         });
 
         document.getElementById('left').addEventListener('pointerdown', (e) => {
             e.preventDefault();
+            startGameWithMusic();
             if (gameRunning) moveLeft();
         });
 
         document.getElementById('right').addEventListener('pointerdown', (e) => {
             e.preventDefault();
+            startGameWithMusic();
             if (gameRunning) moveRight();
         });
 
         document.getElementById('down').addEventListener('pointerdown', (e) => {
             e.preventDefault();
+            startGameWithMusic();
             if (gameRunning) moveDown();
         });
 
@@ -423,6 +540,7 @@
 
         // Keyboard controls
         document.addEventListener('keydown', (e) => {
+            startGameWithMusic();
             if (!gameRunning) return;
 
             switch(e.key) {
@@ -445,6 +563,9 @@
                     break;
             }
         });
+
+        // Start music on first interaction
+        document.body.addEventListener('pointerdown', startGameWithMusic, { once: true });
 
         // Initialize game
         initBoard();
