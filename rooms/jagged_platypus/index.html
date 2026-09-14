@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Bubble Pop!</title>
+    <title>Brew Master!</title>
     <style>
         * {
             margin: 0;
@@ -14,7 +14,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
             color: white;
             overflow: hidden;
             touch-action: none;
@@ -35,104 +35,89 @@
             top: 0;
             left: 0;
             right: 0;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.4);
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 100;
-            flex-wrap: wrap;
         }
 
         #score {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: bold;
         }
 
         #timer {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: bold;
         }
 
-        #combo-display {
+        #equipment-area {
             position: absolute;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%);
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 140px;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 10px;
+            gap: 8px;
+            z-index: 50;
+        }
+
+        .equipment-slot {
+            flex: 1;
+            max-width: 110px;
+            height: 110px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             font-size: 32px;
+            transition: all 0.2s;
+        }
+
+        .equipment-slot.highlight {
+            background: rgba(255, 215, 0, 0.3);
+            border-color: #ffd700;
+            transform: scale(1.05);
+        }
+
+        .equipment-slot .label {
+            font-size: 11px;
+            margin-top: 5px;
+            text-align: center;
             font-weight: bold;
-            color: #ffd700;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.5);
-            animation: combo-pulse 0.3s ease-out;
-            pointer-events: none;
-            z-index: 150;
         }
 
-        @keyframes combo-pulse {
-            0% {
-                transform: translateX(-50%) scale(0.8);
-                opacity: 0;
-            }
-            50% {
-                transform: translateX(-50%) scale(1.2);
-            }
-            100% {
-                transform: translateX(-50%) scale(1);
-                opacity: 1;
-            }
-        }
-
-        .bubble {
+        .ingredient {
             position: absolute;
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.9);
             border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3),
-                        inset 0 -10px 20px rgba(0, 0, 0, 0.2),
-                        inset 0 10px 20px rgba(255, 255, 255, 0.5);
-            animation: bubble-appear 0.3s ease-out, bubble-float 3s ease-in-out infinite;
-            touch-action: none;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
-            font-weight: bold;
-            color: rgba(255, 255, 255, 0.9);
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            font-size: 36px;
+            cursor: grab;
+            touch-action: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: transform 0.1s;
+            z-index: 10;
         }
 
-        @keyframes bubble-appear {
-            from {
-                transform: scale(0);
-                opacity: 0;
-            }
-            to {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        @keyframes bubble-float {
-            0%, 100% {
-                transform: translateY(0) scale(1);
-            }
-            50% {
-                transform: translateY(-15px) scale(1.05);
-            }
-        }
-
-        @keyframes bubble-pop {
-            0% {
-                transform: scale(1);
-                opacity: 1;
-            }
-            100% {
-                transform: scale(1.5);
-                opacity: 0;
-            }
-        }
-
-        .bubble.popping {
-            animation: bubble-pop 0.3s ease-out forwards;
+        .ingredient.dragging {
+            cursor: grabbing;
+            transform: scale(1.15);
+            z-index: 200;
+            opacity: 0.9;
         }
 
         .score-popup {
@@ -143,7 +128,7 @@
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
             pointer-events: none;
             animation: score-float 1s ease-out forwards;
-            z-index: 200;
+            z-index: 300;
         }
 
         @keyframes score-float {
@@ -163,7 +148,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -179,16 +164,17 @@
         }
 
         p {
-            font-size: 18px;
-            margin-bottom: 30px;
+            font-size: 16px;
+            margin-bottom: 25px;
             text-align: center;
             line-height: 1.5;
+            max-width: 90%;
         }
 
         button {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
             border: none;
-            color: white;
+            color: #8B4513;
             font-size: 24px;
             font-weight: bold;
             padding: 18px 48px;
@@ -202,7 +188,7 @@
 
         button:active {
             transform: scale(0.95);
-            background: linear-gradient(135deg, #e083eb 0%, #e5475c 100%);
+            background: linear-gradient(135deg, #EEC700 0%, #EE9500 100%);
         }
 
         #final-score {
@@ -221,20 +207,39 @@
     <div id="game-container">
         <div id="header" class="hidden">
             <div id="score">Score: 0</div>
-            <div id="timer">Time: 30</div>
+            <div id="timer">Time: 60</div>
+        </div>
+
+        <div id="equipment-area" class="hidden">
+            <div class="equipment-slot" data-type="malt">
+                <div>🌾</div>
+                <div class="label">Malt</div>
+            </div>
+            <div class="equipment-slot" data-type="hops">
+                <div>🌿</div>
+                <div class="label">Hops</div>
+            </div>
+            <div class="equipment-slot" data-type="yeast">
+                <div>🧫</div>
+                <div class="label">Yeast</div>
+            </div>
+            <div class="equipment-slot" data-type="water">
+                <div>💧</div>
+                <div class="label">Water</div>
+            </div>
         </div>
 
         <div id="start-screen">
-            <h1>🫧 Bubble Pop!</h1>
-            <p>Tap the bubbles as fast as you can!<br>Build combos for bonus points!<br>You have 30 seconds to get the highest score!</p>
-            <button id="start-btn">Start Game</button>
+            <h1>🍺 Brew Master!</h1>
+            <p>Catch falling ingredients and drag them to the matching equipment!<br><br>🌾 Malt  •  🌿 Hops  •  🧫 Yeast  •  💧 Water<br><br>Match them correctly to brew the perfect beer!</p>
+            <button id="start-btn">Start Brewing</button>
         </div>
 
         <div id="end-screen" class="hidden">
-            <h1>Game Over!</h1>
+            <h1>Brewery Closed!</h1>
             <div id="final-score">0</div>
-            <p>Great job popping bubbles!</p>
-            <button id="restart-btn">Play Again</button>
+            <p>Great brewing session!</p>
+            <button id="restart-btn">Brew Again</button>
         </div>
     </div>
 
@@ -243,28 +248,31 @@
         const header = document.getElementById('header');
         const scoreEl = document.getElementById('score');
         const timerEl = document.getElementById('timer');
+        const equipmentArea = document.getElementById('equipment-area');
         const startScreen = document.getElementById('start-screen');
         const endScreen = document.getElementById('end-screen');
         const finalScoreEl = document.getElementById('final-score');
         const startBtn = document.getElementById('start-btn');
         const restartBtn = document.getElementById('restart-btn');
+        const equipmentSlots = document.querySelectorAll('.equipment-slot');
 
         let score = 0;
-        let timeLeft = 30;
+        let timeLeft = 60;
         let gameActive = false;
         let gameInterval = null;
-        let bubbleInterval = null;
-        let combo = 0;
-        let comboMultiplier = 1;
-        let comboTimeout = null;
-        let comboDisplay = null;
+        let spawnInterval = null;
         let audioContext = null;
 
-        const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#f0932b', '#eb4d4b', '#6c5ce7', '#a29bfe'];
+        let draggedElement = null;
+        let touchOffsetX = 0;
+        let touchOffsetY = 0;
 
-        function getRandomColor() {
-            return colors[Math.floor(Math.random() * colors.length)];
-        }
+        const ingredients = [
+            { emoji: '🌾', type: 'malt', name: 'Malt' },
+            { emoji: '🌿', type: 'hops', name: 'Hops' },
+            { emoji: '🧫', type: 'yeast', name: 'Yeast' },
+            { emoji: '💧', type: 'water', name: 'Water' }
+        ];
 
         function initAudio() {
             if (!audioContext) {
@@ -275,235 +283,262 @@
             }
         }
 
-        function playMeow() {
+        function playSound(frequency, duration) {
             try {
-                if (!audioContext) {
-                    initAudio();
-                }
                 if (!audioContext) return;
 
                 const now = audioContext.currentTime;
-                const duration = 0.35;
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
 
-                // Primary oscillator for main meow sound
-                const osc1 = audioContext.createOscillator();
-                const gain1 = audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
 
-                // Secondary oscillator for richness
-                const osc2 = audioContext.createOscillator();
-                const gain2 = audioContext.createGain();
+                osc.frequency.setValueAtTime(frequency, now);
+                osc.type = 'sine';
 
-                // Master gain
-                const masterGain = audioContext.createGain();
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
 
-                // Connect nodes
-                osc1.connect(gain1);
-                osc2.connect(gain2);
-                gain1.connect(masterGain);
-                gain2.connect(masterGain);
-                masterGain.connect(audioContext.destination);
-
-                // Set oscillator types
-                osc1.type = 'sine';
-                osc2.type = 'triangle';
-
-                // Create meow-like frequency envelope (pitch goes up then down)
-                // Main oscillator
-                osc1.frequency.setValueAtTime(350, now);
-                osc1.frequency.linearRampToValueAtTime(900, now + 0.1);
-                osc1.frequency.linearRampToValueAtTime(650, now + 0.2);
-                osc1.frequency.linearRampToValueAtTime(300, now + duration);
-
-                // Secondary oscillator (slightly detuned)
-                osc2.frequency.setValueAtTime(360, now);
-                osc2.frequency.linearRampToValueAtTime(920, now + 0.1);
-                osc2.frequency.linearRampToValueAtTime(670, now + 0.2);
-                osc2.frequency.linearRampToValueAtTime(310, now + duration);
-
-                // Volume envelopes
-                gain1.gain.setValueAtTime(0, now);
-                gain1.gain.linearRampToValueAtTime(0.5, now + 0.02);
-                gain1.gain.exponentialRampToValueAtTime(0.01, now + duration);
-
-                gain2.gain.setValueAtTime(0, now);
-                gain2.gain.linearRampToValueAtTime(0.25, now + 0.02);
-                gain2.gain.exponentialRampToValueAtTime(0.01, now + duration);
-
-                // Master volume
-                masterGain.gain.setValueAtTime(0.8, now);
-
-                // Play the sound
-                osc1.start(now);
-                osc2.start(now);
-                osc1.stop(now + duration);
-                osc2.stop(now + duration);
+                osc.start(now);
+                osc.stop(now + duration);
             } catch (err) {
                 console.log('Audio error:', err);
             }
         }
 
-        function updateComboDisplay() {
-            if (comboDisplay) {
-                comboDisplay.remove();
-                comboDisplay = null;
-            }
-
-            if (combo >= 2) {
-                comboDisplay = document.createElement('div');
-                comboDisplay.id = 'combo-display';
-                comboDisplay.textContent = `${combo}x COMBO! 🔥`;
-                gameContainer.appendChild(comboDisplay);
-            }
+        function playCorrectSound() {
+            playSound(600, 0.15);
+            setTimeout(() => playSound(800, 0.15), 80);
         }
 
-        function resetCombo() {
-            combo = 0;
-            comboMultiplier = 1;
-            if (comboDisplay) {
-                comboDisplay.remove();
-                comboDisplay = null;
-            }
+        function playWrongSound() {
+            playSound(200, 0.3);
         }
 
-        function showScorePopup(x, y, points) {
+        function showScorePopup(x, y, text, isCorrect) {
             const popup = document.createElement('div');
             popup.className = 'score-popup';
-            popup.textContent = '+' + points;
+            popup.textContent = text;
             popup.style.left = x + 'px';
             popup.style.top = y + 'px';
+            popup.style.color = isCorrect ? '#ffd700' : '#ff4444';
             gameContainer.appendChild(popup);
 
             setTimeout(() => popup.remove(), 1000);
         }
 
-        function handleBubblePop(bubble, basePoints, size) {
-            if (!gameActive || bubble.classList.contains('popping')) return;
-
-            bubble.classList.add('popping');
-
-            // Play meow sound
-            playMeow();
-
-            // Update combo
-            combo++;
-            comboMultiplier = Math.min(Math.floor(combo / 3) + 1, 5); // Max 5x multiplier
-
-            const finalPoints = basePoints * comboMultiplier;
-            score += finalPoints;
-            scoreEl.textContent = 'Score: ' + score;
-
-            // Show score popup
-            const bubbleRect = bubble.getBoundingClientRect();
-            showScorePopup(bubbleRect.left + size / 2 - 20, bubbleRect.top, finalPoints);
-
-            // Update combo display
-            updateComboDisplay();
-
-            // Reset combo timeout
-            clearTimeout(comboTimeout);
-            comboTimeout = setTimeout(resetCombo, 1500); // 1.5 seconds to keep combo
-
-            setTimeout(() => {
-                if (bubble.parentNode) {
-                    bubble.remove();
-                }
-            }, 300);
-        }
-
-        function createBubble() {
+        function createIngredient() {
             if (!gameActive) return;
 
-            const bubble = document.createElement('div');
-            bubble.className = 'bubble';
+            const ingredient = ingredients[Math.floor(Math.random() * ingredients.length)];
+            const element = document.createElement('div');
+            element.className = 'ingredient';
+            element.textContent = ingredient.emoji;
+            element.dataset.type = ingredient.type;
 
-            const size = Math.random() * 40 + 60; // 60-100px
-            bubble.style.width = size + 'px';
-            bubble.style.height = size + 'px';
-            bubble.style.backgroundColor = getRandomColor();
+            const startX = Math.random() * (window.innerWidth - 70);
+            element.style.left = startX + 'px';
+            element.style.top = '-70px';
 
-            const maxX = window.innerWidth - size - 20;
-            const maxY = window.innerHeight - size - 100;
-            const x = Math.random() * maxX + 10;
-            const y = Math.random() * (maxY - 100) + 100;
+            gameContainer.appendChild(element);
 
-            bubble.style.left = x + 'px';
-            bubble.style.top = y + 'px';
+            // Falling animation
+            const fallSpeed = 2 + Math.random() * 2; // pixels per frame
+            let currentY = -70;
 
-            const basePoints = Math.floor(110 - size);
-            bubble.textContent = basePoints;
-
-            gameContainer.appendChild(bubble);
-
-            const lifetime = Math.random() * 1000 + 2000; // 2-3 seconds
-            const removeTimer = setTimeout(() => {
-                if (bubble.parentNode && !bubble.classList.contains('popping')) {
-                    bubble.remove();
+            const fallInterval = setInterval(() => {
+                if (!gameActive || element.classList.contains('dragging')) {
+                    clearInterval(fallInterval);
+                    return;
                 }
-            }, lifetime);
 
-            // Use touchstart for better mobile support
-            bubble.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                clearTimeout(removeTimer);
-                handleBubblePop(bubble, basePoints, size);
-            }, { passive: false });
+                currentY += fallSpeed;
+                element.style.top = currentY + 'px';
 
-            // Also support mouse clicks for desktop
-            bubble.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                clearTimeout(removeTimer);
-                handleBubblePop(bubble, basePoints, size);
+                // Remove if it falls past the equipment area
+                if (currentY > window.innerHeight - 140) {
+                    clearInterval(fallInterval);
+                    if (element.parentNode) {
+                        element.remove();
+                    }
+                }
+            }, 16);
+
+            // Store the interval so we can clear it if needed
+            element.dataset.fallInterval = fallInterval;
+
+            // Touch events for dragging
+            element.addEventListener('touchstart', handleTouchStart, { passive: false });
+            element.addEventListener('mousedown', handleMouseDown);
+        }
+
+        function handleTouchStart(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            startDrag(e.target, touch.clientX, touch.clientY);
+        }
+
+        function handleMouseDown(e) {
+            e.preventDefault();
+            startDrag(e.target, e.clientX, e.clientY);
+        }
+
+        function startDrag(element, clientX, clientY) {
+            if (!gameActive) return;
+
+            draggedElement = element;
+            const rect = element.getBoundingClientRect();
+            touchOffsetX = clientX - rect.left;
+            touchOffsetY = clientY - rect.top;
+
+            element.classList.add('dragging');
+
+            // Stop falling animation
+            if (element.dataset.fallInterval) {
+                clearInterval(parseInt(element.dataset.fallInterval));
+            }
+
+            // Add move and end listeners
+            document.addEventListener('touchmove', handleTouchMove, { passive: false });
+            document.addEventListener('touchend', handleTouchEnd, { passive: false });
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault();
+            if (!draggedElement) return;
+
+            const touch = e.touches[0];
+            moveDraggedElement(touch.clientX, touch.clientY);
+        }
+
+        function handleMouseMove(e) {
+            if (!draggedElement) return;
+            moveDraggedElement(e.clientX, e.clientY);
+        }
+
+        function moveDraggedElement(clientX, clientY) {
+            const x = clientX - touchOffsetX;
+            const y = clientY - touchOffsetY;
+
+            draggedElement.style.left = x + 'px';
+            draggedElement.style.top = y + 'px';
+
+            // Highlight matching slot
+            let foundMatch = false;
+            equipmentSlots.forEach(slot => {
+                const slotRect = slot.getBoundingClientRect();
+                const ingredientRect = draggedElement.getBoundingClientRect();
+
+                const isOver = !(ingredientRect.right < slotRect.left ||
+                               ingredientRect.left > slotRect.right ||
+                               ingredientRect.bottom < slotRect.top ||
+                               ingredientRect.top > slotRect.bottom);
+
+                if (isOver && slot.dataset.type === draggedElement.dataset.type) {
+                    slot.classList.add('highlight');
+                    foundMatch = true;
+                } else {
+                    slot.classList.remove('highlight');
+                }
             });
         }
 
+        function handleTouchEnd(e) {
+            e.preventDefault();
+            endDrag();
+        }
+
+        function handleMouseUp(e) {
+            endDrag();
+        }
+
+        function endDrag() {
+            if (!draggedElement) return;
+
+            const ingredientRect = draggedElement.getBoundingClientRect();
+            const ingredientType = draggedElement.dataset.type;
+            let matched = false;
+
+            equipmentSlots.forEach(slot => {
+                slot.classList.remove('highlight');
+                const slotRect = slot.getBoundingClientRect();
+
+                const isOver = !(ingredientRect.right < slotRect.left ||
+                               ingredientRect.left > slotRect.right ||
+                               ingredientRect.bottom < slotRect.top ||
+                               ingredientRect.top > slotRect.bottom);
+
+                if (isOver && slot.dataset.type === ingredientType) {
+                    matched = true;
+                    score += 100;
+                    scoreEl.textContent = 'Score: ' + score;
+                    playCorrectSound();
+                    showScorePopup(
+                        ingredientRect.left + 35,
+                        ingredientRect.top,
+                        '+100',
+                        true
+                    );
+                } else if (isOver && slot.dataset.type !== ingredientType) {
+                    matched = true;
+                    score = Math.max(0, score - 25);
+                    scoreEl.textContent = 'Score: ' + score;
+                    playWrongSound();
+                    showScorePopup(
+                        ingredientRect.left + 35,
+                        ingredientRect.top,
+                        '-25',
+                        false
+                    );
+                }
+            });
+
+            draggedElement.remove();
+            draggedElement = null;
+
+            // Remove listeners
+            document.removeEventListener('touchmove', handleTouchMove);
+            document.removeEventListener('touchend', handleTouchEnd);
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        }
+
         function cleanupGame() {
-            // Clear all intervals and timeouts
             if (gameInterval) {
                 clearInterval(gameInterval);
                 gameInterval = null;
             }
-            if (bubbleInterval) {
-                clearInterval(bubbleInterval);
-                bubbleInterval = null;
-            }
-            if (comboTimeout) {
-                clearTimeout(comboTimeout);
-                comboTimeout = null;
+            if (spawnInterval) {
+                clearInterval(spawnInterval);
+                spawnInterval = null;
             }
 
-            // Remove all game elements
-            document.querySelectorAll('.bubble').forEach(b => b.remove());
+            document.querySelectorAll('.ingredient').forEach(ing => ing.remove());
             document.querySelectorAll('.score-popup').forEach(p => p.remove());
-            resetCombo();
+            equipmentSlots.forEach(slot => slot.classList.remove('highlight'));
         }
 
         function startGame() {
-            // Initialize audio on first user interaction
             initAudio();
-
-            // Clean up any existing game state
             cleanupGame();
 
-            // Reset game variables
             score = 0;
-            timeLeft = 30;
+            timeLeft = 60;
             gameActive = true;
-            combo = 0;
-            comboMultiplier = 1;
 
-            // Update UI
             scoreEl.textContent = 'Score: 0';
-            timerEl.textContent = 'Time: 30';
+            timerEl.textContent = 'Time: 60';
 
-            // Show/hide screens
             startScreen.classList.add('hidden');
             endScreen.classList.add('hidden');
             header.classList.remove('hidden');
+            equipmentArea.classList.remove('hidden');
 
-            // Create bubbles at intervals
-            bubbleInterval = setInterval(createBubble, 800);
+            // Spawn ingredients
+            spawnInterval = setInterval(createIngredient, 1500);
 
             // Start countdown
             gameInterval = setInterval(() => {
@@ -522,44 +557,35 @@
 
             finalScoreEl.textContent = score;
             header.classList.add('hidden');
+            equipmentArea.classList.add('hidden');
             endScreen.classList.remove('hidden');
         }
 
-        // Button event handlers
         startBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            e.stopPropagation();
             startGame();
         }, { passive: false });
 
         startBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            e.stopPropagation();
             startGame();
         });
 
         restartBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            e.stopPropagation();
             startGame();
         }, { passive: false });
 
         restartBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            e.stopPropagation();
             startGame();
         });
 
-        // Prevent page scrolling and zooming
         document.addEventListener('touchmove', (e) => {
-            if (e.target.closest('.bubble') || gameActive) {
+            if (gameActive) {
                 e.preventDefault();
             }
         }, { passive: false });
-
-        document.addEventListener('gesturestart', (e) => {
-            e.preventDefault();
-        });
     </script>
 </body>
 </html>
