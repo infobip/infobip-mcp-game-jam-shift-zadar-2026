@@ -115,6 +115,43 @@
             transition: width 0.1s linear;
         }
 
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #startScreen.hide {
+            display: none;
+        }
+
+        #startBtn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: 3px solid white;
+            padding: 20px 50px;
+            font-size: 32px;
+            border-radius: 50px;
+            cursor: pointer;
+            touch-action: manipulation;
+            min-width: 250px;
+            min-height: 80px;
+            margin: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        #startBtn:active {
+            transform: scale(0.95);
+        }
+
         #gameOver {
             position: absolute;
             top: 0;
@@ -277,6 +314,13 @@
             justify-content: center;
             margin-top: 60px;
         }
+
+        .instructions {
+            text-align: center;
+            font-size: 18px;
+            margin: 20px;
+            line-height: 1.6;
+        }
     </style>
 </head>
 <body>
@@ -300,6 +344,16 @@
 
     <div id="timeBar">
         <div id="timeProgress"></div>
+    </div>
+
+    <div id="startScreen">
+        <h2 style="font-size: 36px; margin-bottom: 20px;">🎯 Color Rush</h2>
+        <div class="instructions">
+            Tap circles that match<br>the target color!<br><br>
+            Build combos for bonus points<br>
+            Unlock t-shirts as you score!
+        </div>
+        <button id="startBtn">START GAME</button>
     </div>
 
     <div id="gameOver">
@@ -353,6 +407,8 @@
         const comboEl = document.getElementById('combo');
         const targetColorEl = document.getElementById('targetColor');
         const timeProgress = document.getElementById('timeProgress');
+        const startScreen = document.getElementById('startScreen');
+        const startBtn = document.getElementById('startBtn');
         const gameOverEl = document.getElementById('gameOver');
         const finalScoreEl = document.getElementById('finalScore');
         const restartBtn = document.getElementById('restartBtn');
@@ -371,6 +427,7 @@
             circles = [];
             newlyUnlocked = [];
             gameArea.innerHTML = '<div id="comboDisplay"></div>';
+            startScreen.classList.add('hide');
             gameOverEl.classList.remove('show');
             updateUI();
             pickNewTarget();
@@ -567,6 +624,11 @@
             gameOverEl.classList.add('show');
         }
 
+        startBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            startGame();
+        });
+
         restartBtn.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             startGame();
@@ -589,8 +651,6 @@
             e.preventDefault();
             rewardScreen.classList.remove('show');
         });
-
-        startGame();
     </script>
 </body>
 </html>
