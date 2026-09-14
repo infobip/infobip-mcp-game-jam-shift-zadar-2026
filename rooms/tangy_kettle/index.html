@@ -281,7 +281,7 @@
                 circle.style.transform = 'scale(1)';
             }, 10);
 
-            setTimeout(() => {
+            const timeoutId = setTimeout(() => {
                 if (circle.parentNode && gameActive) {
                     circle.style.transition = 'opacity 0.3s, transform 0.3s';
                     circle.style.opacity = '0';
@@ -289,6 +289,7 @@
                     setTimeout(() => {
                         if (circle.parentNode) {
                             circle.remove();
+                            loseLife();
                         }
                         circles = circles.filter(c => c !== circle);
                     }, 300);
@@ -298,6 +299,8 @@
             circle.addEventListener('pointerdown', (e) => {
                 e.preventDefault();
                 if (!gameActive) return;
+
+                clearTimeout(timeoutId);
 
                 const allFlowers = circles.filter(c => !c.classList.contains('lawn-mower'));
                 allFlowers.forEach(flower => {
