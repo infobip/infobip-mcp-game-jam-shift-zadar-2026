@@ -20,6 +20,7 @@
             touch-action: none;
             height: 100dvh;
             width: 100vw;
+            position: fixed;
         }
 
         #game-container {
@@ -201,6 +202,7 @@
 
         button:active {
             transform: scale(0.95);
+            background: linear-gradient(135deg, #e083eb 0%, #e5475c 100%);
         }
 
         #final-score {
@@ -296,6 +298,37 @@
             setTimeout(() => popup.remove(), 1000);
         }
 
+        function handleBubblePop(bubble, basePoints, size) {
+            if (!gameActive || bubble.classList.contains('popping')) return;
+
+            bubble.classList.add('popping');
+
+            // Update combo
+            combo++;
+            comboMultiplier = Math.min(Math.floor(combo / 3) + 1, 5); // Max 5x multiplier
+
+            const finalPoints = basePoints * comboMultiplier;
+            score += finalPoints;
+            scoreEl.textContent = 'Score: ' + score;
+
+            // Show score popup
+            const bubbleRect = bubble.getBoundingClientRect();
+            showScorePopup(bubbleRect.left + size / 2 - 20, bubbleRect.top, finalPoints);
+
+            // Update combo display
+            updateComboDisplay();
+
+            // Reset combo timeout
+            clearTimeout(comboTimeout);
+            comboTimeout = setTimeout(resetCombo, 1500); // 1.5 seconds to keep combo
+
+            setTimeout(() => {
+                if (bubble.parentNode) {
+                    bubble.remove();
+                }
+            }, 300);
+        }
+
         function createBubble() {
             if (!gameActive) return;
 
@@ -327,33 +360,18 @@
                 }
             }, lifetime);
 
-            bubble.addEventListener('pointerdown', (e) => {
+            // Use touchstart for better mobile support
+            bubble.addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                if (gameActive && !bubble.classList.contains('popping')) {
-                    bubble.classList.add('popping');
+                clearTimeout(removeTimer);
+                handleBubblePop(bubble, basePoints, size);
+            }, { passive: false });
 
-                    // Update combo
-                    combo++;
-                    comboMultiplier = Math.min(Math.floor(combo / 3) + 1, 5); // Max 5x multiplier
-
-                    const finalPoints = basePoints * comboMultiplier;
-                    score += finalPoints;
-                    scoreEl.textContent = 'Score: ' + score;
-
-                    // Show score popup
-                    const bubbleRect = bubble.getBoundingClientRect();
-                    showScorePopup(bubbleRect.left + size / 2 - 20, bubbleRect.top, finalPoints);
-
-                    // Update combo display
-                    updateComboDisplay();
-
-                    // Reset combo timeout
-                    clearTimeout(comboTimeout);
-                    comboTimeout = setTimeout(resetCombo, 1500); // 1.5 seconds to keep combo
-
-                    clearTimeout(removeTimer);
-                    setTimeout(() => bubble.remove(), 300);
-                }
+            // Also support mouse clicks for desktop
+            bubble.addEventListener('click', (e) => {
+                e.preventDefault();
+                clearTimeout(removeTimer);
+                handleBubblePop(bubble, basePoints, size);
             });
         }
 
@@ -406,20 +424,28 @@
             endScreen.classList.remove('hidden');
         }
 
-        startBtn.addEventListener('pointerdown', (e) => {
+        // Button event handlers with multiple event types for compatibility
+        function handleStartGame(e) {
             e.preventDefault();
             startGame();
-        });
+        }
 
-        restartBtn.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            startGame();
-        });
+        startBtn.addEventListener('touchstart', handleStartGame, { passive: false });
+        startBtn.addEventListener('click', handleStartGame);
 
-        // Prevent default touch behaviors
+        restartBtn.addEventListener('touchstart', handleStartGame, { passive: false });
+        restartBtn.addEventListener('click', handleStartGame);
+
+        // Prevent page scrolling and zooming
         document.addEventListener('touchmove', (e) => {
-            e.preventDefault();
+            if (e.target.closest('.bubble') || gameActive) {
+                e.preventDefault();
+            }
         }, { passive: false });
+
+        document.addEventListener('gesturestart', (e) => {
+            e.preventDefault();
+        });
     </script>
 </body>
 </html>
