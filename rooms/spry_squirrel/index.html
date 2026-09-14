@@ -202,6 +202,48 @@
             filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.8));
         }
 
+        .bubble.blue-orb {
+            background: radial-gradient(circle, rgba(100, 200, 255, 0.95) 0%, rgba(0, 100, 255, 0.85) 100%) !important;
+            box-shadow: inset -5px -5px 30px rgba(0, 50, 150, 0.6),
+                        inset 5px 5px 30px rgba(150, 220, 255, 0.6),
+                        0 0 40px rgba(0, 150, 255, 0.9),
+                        0 0 80px rgba(0, 150, 255, 0.6);
+            animation: float 3s ease-in-out, orbPulse 1.5s infinite, orbRotate 4s linear infinite;
+            filter: drop-shadow(0 0 25px rgba(0, 150, 255, 1));
+        }
+
+        @keyframes orbPulse {
+            0%, 100% {
+                transform: scale(1);
+                filter: brightness(1) drop-shadow(0 0 25px rgba(0, 150, 255, 1));
+            }
+            50% {
+                transform: scale(1.15);
+                filter: brightness(1.5) drop-shadow(0 0 40px rgba(100, 200, 255, 1));
+            }
+        }
+
+        @keyframes orbRotate {
+            0% {
+                box-shadow: inset -5px -5px 30px rgba(0, 50, 150, 0.6),
+                            inset 5px 5px 30px rgba(150, 220, 255, 0.6),
+                            0 0 40px rgba(0, 150, 255, 0.9),
+                            0 0 80px rgba(0, 150, 255, 0.6);
+            }
+            50% {
+                box-shadow: inset 5px 5px 30px rgba(0, 50, 150, 0.6),
+                            inset -5px -5px 30px rgba(150, 220, 255, 0.6),
+                            0 0 40px rgba(0, 150, 255, 0.9),
+                            0 0 80px rgba(0, 150, 255, 0.6);
+            }
+            100% {
+                box-shadow: inset -5px -5px 30px rgba(0, 50, 150, 0.6),
+                            inset 5px 5px 30px rgba(150, 220, 255, 0.6),
+                            0 0 40px rgba(0, 150, 255, 0.9),
+                            0 0 80px rgba(0, 150, 255, 0.6);
+            }
+        }
+
         @keyframes float {
             0% {
                 transform: translateY(0) scale(0) rotate(0deg);
@@ -264,6 +306,10 @@
 
         .bubble.bomb.popping {
             animation: explode 0.5s ease-out forwards;
+        }
+
+        .bubble.blue-orb.popping {
+            animation: explode 0.7s ease-out forwards;
         }
 
         #game-over-screen {
@@ -331,6 +377,12 @@
             pointer-events: none;
             z-index: 150;
             animation: floatUp 1.5s ease-out forwards;
+        }
+
+        .reward-popup.blue {
+            color: #00BFFF;
+            font-size: 36px;
+            text-shadow: 0 0 30px rgba(0, 191, 255, 1);
         }
 
         @keyframes floatUp {
@@ -416,9 +468,9 @@
                 godModeButton.textContent = '⚡ DEMON MODE ON';
 
                 godModeInterval = setInterval(() => {
-                    score += 10000;
+                    score += 100;
                     scoreElement.textContent = score;
-                }, 1);
+                }, 1000);
             } else {
                 godModeButton.classList.remove('active');
                 godModeButton.textContent = '⚡ DEMON MODE';
@@ -441,9 +493,11 @@
             const bubble = document.createElement('div');
             bubble.className = 'bubble';
 
-            const isBomb = Math.random() < 0.15;
+            const rand = Math.random();
+            const isBlueOrb = rand < 0.05;
+            const isBomb = !isBlueOrb && rand < 0.2;
 
-            const size = Math.random() * 40 + 50;
+            const size = isBlueOrb ? 70 : Math.random() * 40 + 50;
             bubble.style.width = size + 'px';
             bubble.style.height = size + 'px';
 
@@ -453,7 +507,11 @@
             bubble.style.left = Math.random() * maxX + 'px';
             bubble.style.top = Math.random() * maxY + 100 + 'px';
 
-            if (isBomb) {
+            if (isBlueOrb) {
+                bubble.classList.add('blue-orb');
+                bubble.textContent = '🔮';
+                bubble.dataset.isBlueOrb = 'true';
+            } else if (isBomb) {
                 bubble.classList.add('bomb');
                 bubble.textContent = '💣';
                 bubble.dataset.isBomb = 'true';
@@ -470,7 +528,9 @@
                 e.preventDefault();
                 if (!popped) {
                     popped = true;
-                    if (isBomb) {
+                    if (isBlueOrb) {
+                        popBlueOrb(bubble);
+                    } else if (isBomb) {
                         popBomb(bubble);
                     } else {
                         popBubble(bubble);
@@ -524,6 +584,30 @@
             }, 500);
         }
 
+        function popBlueOrb(bubble) {
+            if (bubble.classList.contains('popping')) return;
+
+            bubble.classList.add('popping');
+            score += 7000000000000000000;
+            scoreElement.textContent = score.toExponential(2);
+
+            const rect = bubble.getBoundingClientRect();
+            const rewardPopup = document.createElement('div');
+            rewardPopup.className = 'reward-popup blue';
+            rewardPopup.textContent = '🔮 COSMIC ORB! +7 QUINTILLION';
+            rewardPopup.style.left = rect.left + rect.width / 2 - 150 + 'px';
+            rewardPopup.style.top = rect.top + 'px';
+            gameContainer.appendChild(rewardPopup);
+
+            setTimeout(() => {
+                rewardPopup.remove();
+            }, 1500);
+
+            setTimeout(() => {
+                bubble.remove();
+            }, 700);
+        }
+
         function missedBubble() {
             if (godMode) return;
 
@@ -556,7 +640,7 @@
             const allBubbles = document.querySelectorAll('.bubble');
             allBubbles.forEach(b => b.remove());
 
-            finalScoreElement.textContent = 'Souls: ' + score;
+            finalScoreElement.textContent = 'Souls: ' + (score >= 1000000 ? score.toExponential(2) : score);
             gameOverScreen.classList.remove('hidden');
         }
 
