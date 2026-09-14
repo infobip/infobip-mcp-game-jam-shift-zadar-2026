@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Tap Rush!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+            width: 100vw;
+            height: 100dvh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            touch-action: none;
+            user-select: none;
+        }
+
+        #gameContainer {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #header {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 10;
+        }
+
+        .stat {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 12px 20px;
+            border-radius: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .circle {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            touch-action: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            transition: transform 0.1s;
+        }
+
+        .circle:active {
+            transform: scale(0.9);
+        }
+
+        #startScreen, #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+        }
+
+        #gameOverScreen {
+            display: none;
+        }
+
+        h1 {
+            color: white;
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 18px 48px;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            touch-action: manipulation;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            min-width: 200px;
+            min-height: 60px;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        #finalScore {
+            color: #ffd700;
+            font-size: 36px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .instructions {
+            color: white;
+            font-size: 18px;
+            margin-bottom: 30px;
+            text-align: center;
+            padding: 0 20px;
+            max-width: 400px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="header">
+            <div class="stat">Score: <span id="score">0</span></div>
+            <div class="stat">Time: <span id="timer">30</span>s</div>
+        </div>
+
+        <div id="startScreen">
+            <h1>Tap Rush!</h1>
+            <p class="instructions">Tap the circles before they disappear! The faster you tap, the higher your score!</p>
+            <button class="btn" id="startBtn">Start Game</button>
+        </div>
+
+        <div id="gameOverScreen">
+            <h1>Game Over!</h1>
+            <div id="finalScore">Score: 0</div>
+            <button class="btn" id="restartBtn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        const gameContainer = document.getElementById('gameContainer');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const startBtn = document.getElementById('startBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const scoreDisplay = document.getElementById('score');
+        const timerDisplay = document.getElementById('timer');
+        const finalScoreDisplay = document.getElementById('finalScore');
+
+        let score = 0;
+        let timeLeft = 30;
+        let gameActive = false;
+        let spawnInterval;
+        let timerInterval;
+        let circles = [];
+
+        const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#ff9ff3', '#54a0ff', '#48dbfb', '#1dd1a1'];
+
+        function getRandomColor() {
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        function createCircle() {
+            if (!gameActive) return;
+
+            const circle = document.createElement('div');
+            circle.className = 'circle';
+
+            const size = 60 + Math.random() * 40; // 60-100px
+            circle.style.width = size + 'px';
+            circle.style.height = size + 'px';
+            circle.style.backgroundColor = getRandomColor();
+
+            const maxX = window.innerWidth - size - 20;
+            const maxY = window.innerHeight - size - 120;
+            const minY = 100;
+
+            circle.style.left = (20 + Math.random() * maxX) + 'px';
+            circle.style.top = (minY + Math.random() * (maxY - minY)) + 'px';
+
+            const points = Math.floor(size / 10);
+            circle.textContent = points;
+
+            gameContainer.appendChild(circle);
+            circles.push(circle);
+
+            // Animate circle appearing
+            circle.style.opacity = '0';
+            circle.style.transform = 'scale(0)';
+            setTimeout(() => {
+                circle.style.transition = 'opacity 0.3s, transform 0.3s';
+                circle.style.opacity = '1';
+                circle.style.transform = 'scale(1)';
+            }, 10);
+
+            // Remove circle after delay
+            const lifetime = 1500 - Math.min(score * 5, 500); // Gets faster as score increases
+            setTimeout(() => {
+                if (circle.parentNode && gameActive) {
+                    circle.style.transition = 'opacity 0.3s, transform 0.3s';
+                    circle.style.opacity = '0';
+                    circle.style.transform = 'scale(0)';
+                    setTimeout(() => {
+                        if (circle.parentNode) {
+                            circle.remove();
+                        }
+                        circles = circles.filter(c => c !== circle);
+                    }, 300);
+                }
+            }, lifetime);
+
+            circle.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                if (!gameActive) return;
+
+                score += points;
+                scoreDisplay.textContent = score;
+
+                // Tap animation
+                circle.style.transition = 'opacity 0.2s, transform 0.2s';
+                circle.style.opacity = '0';
+                circle.style.transform = 'scale(1.5)';
+
+                setTimeout(() => {
+                    if (circle.parentNode) {
+                        circle.remove();
+                    }
+                    circles = circles.filter(c => c !== circle);
+                }, 200);
+            });
+        }
+
+        function startGame() {
+            score = 0;
+            timeLeft = 30;
+            gameActive = true;
+
+            scoreDisplay.textContent = score;
+            timerDisplay.textContent = timeLeft;
+
+            startScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+
+            // Clear any existing circles
+            circles.forEach(circle => circle.remove());
+            circles = [];
+
+            // Spawn circles
+            spawnInterval = setInterval(createCircle, 800);
+
+            // Timer
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            gameActive = false;
+            clearInterval(spawnInterval);
+            clearInterval(timerInterval);
+
+            // Remove remaining circles
+            circles.forEach(circle => {
+                if (circle.parentNode) {
+                    circle.remove();
+                }
+            });
+            circles = [];
+
+            finalScoreDisplay.textContent = 'Score: ' + score;
+            gameOverScreen.style.display = 'flex';
+        }
+
+        startBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            startGame();
+        });
+
+        restartBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            startGame();
+        });
+    </script>
+</body>
+</html>
