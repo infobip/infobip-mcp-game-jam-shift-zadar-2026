@@ -53,6 +53,30 @@
             margin-top: 5px;
         }
 
+        #lives-board {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            text-align: center;
+        }
+
+        #lives {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        #lives-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
         .bubble {
             position: absolute;
             border-radius: 50%;
@@ -105,6 +129,57 @@
         .bubble.popping {
             animation: pop 0.3s ease-out forwards;
         }
+
+        #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100dvh;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 20px;
+        }
+
+        #game-over-screen h1 {
+            font-size: 48px;
+            color: #ff6b6b;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        #final-score {
+            font-size: 36px;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        #restart-button {
+            padding: 20px 50px;
+            font-size: 24px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            touch-action: manipulation;
+            min-width: 200px;
+            min-height: 60px;
+        }
+
+        #restart-button:active {
+            transform: scale(0.95);
+        }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -113,13 +188,28 @@
             <div id="score">0</div>
             <div id="score-label">SCORE</div>
         </div>
+        <div id="lives-board">
+            <div id="lives">5</div>
+            <div id="lives-label">LIVES</div>
+        </div>
+    </div>
+
+    <div id="game-over-screen" class="hidden">
+        <h1>Game Over!</h1>
+        <div id="final-score">Score: 0</div>
+        <button id="restart-button">Play Again</button>
     </div>
 
     <script>
         const gameContainer = document.getElementById('game-container');
         const scoreElement = document.getElementById('score');
+        const livesElement = document.getElementById('lives');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const finalScoreElement = document.getElementById('final-score');
+        const restartButton = document.getElementById('restart-button');
 
         let score = 0;
+        let lives = 5;
         let gameActive = true;
         let bubbleInterval = null;
 
@@ -153,14 +243,22 @@
 
             gameContainer.appendChild(bubble);
 
+            let popped = false;
+
             bubble.addEventListener('pointerdown', (e) => {
                 e.preventDefault();
-                popBubble(bubble);
+                if (!popped) {
+                    popped = true;
+                    popBubble(bubble);
+                }
             });
 
             setTimeout(() => {
                 if (bubble.parentNode && !bubble.classList.contains('popping')) {
                     bubble.remove();
+                    if (!popped) {
+                        missedBubble();
+                    }
                 }
             }, 3000);
         }
@@ -176,6 +274,48 @@
                 bubble.remove();
             }, 300);
         }
+
+        function missedBubble() {
+            lives--;
+            livesElement.textContent = lives;
+
+            if (lives <= 0) {
+                gameOver();
+            }
+        }
+
+        function gameOver() {
+            gameActive = false;
+            clearInterval(bubbleInterval);
+
+            const allBubbles = document.querySelectorAll('.bubble');
+            allBubbles.forEach(b => b.remove());
+
+            finalScoreElement.textContent = 'Score: ' + score;
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        function restartGame() {
+            score = 0;
+            lives = 5;
+            gameActive = true;
+
+            scoreElement.textContent = score;
+            livesElement.textContent = lives;
+
+            gameOverScreen.classList.add('hidden');
+
+            bubbleInterval = setInterval(() => {
+                createBubble();
+            }, 800);
+
+            createBubble();
+        }
+
+        restartButton.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            restartGame();
+        });
 
         bubbleInterval = setInterval(() => {
             createBubble();
