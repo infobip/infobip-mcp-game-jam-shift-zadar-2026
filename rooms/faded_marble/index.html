@@ -22,27 +22,28 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
+            padding-top: 10px;
         }
 
         #game-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
             max-width: 100%;
             padding: 10px;
         }
 
         #score-panel {
             text-align: center;
-            font-size: 16px;
+            font-size: 14px;
             text-shadow: 0 0 10px #00ff00;
         }
 
         #score-panel h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
+            font-size: 20px;
+            margin-bottom: 8px;
             letter-spacing: 3px;
         }
 
@@ -62,6 +63,7 @@
             width: 100%;
             max-width: 320px;
             touch-action: none;
+            margin-bottom: 20px;
         }
 
         .btn {
@@ -69,10 +71,10 @@
             border: 3px solid #00ff00;
             color: #00ff00;
             font-family: 'Courier New', monospace;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
-            padding: 20px;
-            min-height: 60px;
+            padding: 15px;
+            min-height: 55px;
             cursor: pointer;
             touch-action: none;
             user-select: none;
@@ -140,7 +142,7 @@
             <div>LEVEL: <span id="level">1</span></div>
         </div>
 
-        <canvas id="canvas" width="300" height="630"></canvas>
+        <canvas id="canvas" width="300" height="540"></canvas>
 
         <div id="controls">
             <button class="btn" id="rotate">ROTATE</button>
@@ -161,7 +163,7 @@
         const ctx = canvas.getContext('2d');
 
         const COLS = 10;
-        const ROWS = 21;
+        const ROWS = 18;
         const BLOCK_SIZE = 30;
 
         // 8-bit color palette
