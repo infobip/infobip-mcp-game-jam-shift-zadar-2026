@@ -133,8 +133,9 @@
             align-items: center;
             justify-content: flex-start;
             z-index: 200;
-            padding: 30px 20px;
+            padding: 20px;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         #end-screen {
@@ -143,18 +144,17 @@
 
         h1 {
             color: white;
-            font-size: 42px;
-            margin-bottom: 20px;
-            margin-top: 20px;
+            font-size: 38px;
+            margin: 15px 0;
             text-align: center;
             text-shadow: 0 3px 15px rgba(0, 0, 0, 0.3);
         }
 
         .instruction {
             color: white;
-            font-size: 20px;
+            font-size: 18px;
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
             line-height: 1.8;
             text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
@@ -162,17 +162,18 @@
         .start-btn {
             background: linear-gradient(145deg, #f9d423 0%, #ff4e50 100%);
             color: white;
-            font-size: 28px;
+            font-size: 24px;
             font-weight: bold;
-            padding: 20px 60px;
+            padding: 18px 50px;
             border: none;
             border-radius: 50px;
             cursor: pointer;
             touch-action: manipulation;
-            min-width: 240px;
-            min-height: 70px;
+            min-width: 220px;
+            min-height: 65px;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
             text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
         }
 
         .start-btn:active {
@@ -181,8 +182,8 @@
 
         #final-score {
             color: white;
-            font-size: 42px;
-            margin-bottom: 10px;
+            font-size: 38px;
+            margin-bottom: 8px;
             text-align: center;
             font-weight: bold;
             text-shadow: 0 3px 15px rgba(0, 0, 0, 0.3);
@@ -190,25 +191,27 @@
 
         #taps-per-second {
             color: rgba(255, 255, 255, 0.9);
-            font-size: 24px;
-            margin-bottom: 30px;
+            font-size: 20px;
+            margin-bottom: 20px;
             text-align: center;
         }
 
         #leaderboard {
             width: 100%;
-            max-width: 400px;
+            max-width: 380px;
             background: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 30px;
+            padding: 15px;
+            margin-bottom: 20px;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            max-height: 300px;
+            overflow-y: auto;
         }
 
         #leaderboard h2 {
             color: #19547b;
-            font-size: 28px;
-            margin-bottom: 15px;
+            font-size: 24px;
+            margin-bottom: 12px;
             text-align: center;
             text-shadow: none;
         }
@@ -217,11 +220,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 15px;
-            margin-bottom: 8px;
+            padding: 10px 12px;
+            margin-bottom: 6px;
             background: rgba(25, 84, 123, 0.1);
             border-radius: 8px;
-            font-size: 18px;
+            font-size: 16px;
         }
 
         .leaderboard-entry.current {
@@ -232,8 +235,9 @@
 
         .leaderboard-rank {
             font-weight: bold;
-            margin-right: 10px;
+            margin-right: 8px;
             color: #19547b;
+            min-width: 35px;
         }
 
         .leaderboard-entry.current .leaderboard-rank {
@@ -243,6 +247,9 @@
         .leaderboard-name {
             flex: 1;
             color: #333;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .leaderboard-entry.current .leaderboard-name {
@@ -252,6 +259,7 @@
         .leaderboard-score {
             font-weight: bold;
             color: #19547b;
+            margin-left: 10px;
         }
 
         .leaderboard-entry.current .leaderboard-score {
@@ -259,13 +267,13 @@
         }
 
         #name-input-container {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             text-align: center;
         }
 
         #name-input {
-            font-size: 20px;
-            padding: 12px 20px;
+            font-size: 18px;
+            padding: 10px 18px;
             border: 3px solid white;
             border-radius: 10px;
             background: rgba(255, 255, 255, 0.9);
@@ -291,18 +299,20 @@
 
         #leaderboard-start {
             width: 100%;
-            max-width: 400px;
+            max-width: 380px;
             background: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
-            padding: 20px;
-            margin-top: 30px;
+            padding: 15px;
+            margin-top: 25px;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            max-height: 280px;
+            overflow-y: auto;
         }
 
         #leaderboard-start h2 {
             color: #19547b;
-            font-size: 24px;
-            margin-bottom: 15px;
+            font-size: 22px;
+            margin-bottom: 12px;
             text-align: center;
             text-shadow: none;
         }
@@ -410,7 +420,7 @@
 
                 const scoreSpan = document.createElement('span');
                 scoreSpan.className = 'leaderboard-score';
-                scoreSpan.textContent = entry.score + ' taps';
+                scoreSpan.textContent = entry.score;
 
                 div.appendChild(rank);
                 div.appendChild(name);
@@ -500,6 +510,7 @@
             displayLeaderboard(leaderboardList, currentGameId);
 
             endScreen.style.display = 'flex';
+            endScreen.scrollTop = 0;
         }
 
         nameInput.addEventListener('input', () => {
@@ -515,8 +526,17 @@
             }
         });
 
-        startButton.addEventListener('click', startGame);
-        restartButton.addEventListener('click', startGame);
+        nameInput.addEventListener('blur', () => {
+            window.scrollTo(0, 0);
+        });
+
+        startButton.addEventListener('click', () => {
+            startGame();
+        });
+
+        restartButton.addEventListener('click', () => {
+            startGame();
+        });
 
         displayLeaderboard(leaderboardStartList);
     </script>
