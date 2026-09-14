@@ -81,6 +81,13 @@
             animation: pulse 1s infinite;
         }
 
+        .fertilizer {
+            background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%) !important;
+            border: 3px solid #fff;
+            font-size: 40px;
+            animation: pulse 1s infinite;
+        }
+
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.1); }
@@ -110,6 +117,7 @@
             align-items: center;
             background: rgba(0, 0, 0, 0.8);
             z-index: 100;
+            overflow-y: auto;
         }
 
         #gameOverScreen {
@@ -166,6 +174,53 @@
         .heart {
             font-size: 24px;
         }
+
+        #multiplierDisplay {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(142, 68, 173, 0.95);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            display: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .leaderboard {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            min-width: 300px;
+            max-width: 400px;
+        }
+
+        .leaderboard h2 {
+            color: white;
+            font-size: 24px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .leaderboard-entry {
+            color: white;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 18px;
+        }
+
+        .leaderboard-entry.current {
+            background: rgba(255, 215, 0, 0.3);
+            border: 2px solid #ffd700;
+        }
     </style>
 </head>
 <body>
@@ -177,15 +232,21 @@
             </div>
         </div>
 
+        <div id="multiplierDisplay">🌱 Fertilizer x<span id="multiplierValue">2</span></div>
+
         <div id="startScreen">
             <h1>Flower Rush!</h1>
-            <p class="instructions">Tap flowers before they wilt! Tap lawn mower to clear all flowers! DON'T tap the frogs!</p>
+            <p class="instructions">Tap flowers before they wilt! Tap lawn mower to clear all flowers! Tap fertilizer to multiply flowers! DON'T tap the frogs!</p>
             <button class="btn" id="startBtn">Start Game</button>
         </div>
 
         <div id="gameOverScreen">
             <h1>Game Over!</h1>
             <div id="finalScore">Score: 0</div>
+            <div class="leaderboard" id="leaderboard">
+                <h2>🏆 Leaderboard</h2>
+                <div id="leaderboardEntries"></div>
+            </div>
             <button class="btn" id="restartBtn">Play Again</button>
         </div>
     </div>
@@ -199,6 +260,9 @@
         const scoreDisplay = document.getElementById('score');
         const livesDisplay = document.getElementById('lives');
         const finalScoreDisplay = document.getElementById('finalScore');
+        const multiplierDisplay = document.getElementById('multiplierDisplay');
+        const multiplierValue = document.getElementById('multiplierValue');
+        const leaderboardEntries = document.getElementById('leaderboardEntries');
 
         let score = 0;
         let lives = 5;
@@ -207,9 +271,12 @@
         let difficultyInterval;
         let lawnMowerInterval;
         let frogInterval;
+        let fertilizerInterval;
         let circles = [];
-        let spawnRate = 800;
+        let spawnRate = 1000;
         let flowersPerSpawn = 1;
+        let frogsPerSpawn = 1;
+        let fertilizerMultiplier = 1;
 
         function createFlowerSVG(petals, petalColor, centerColor) {
             const center = 50;
@@ -257,12 +324,114 @@
             }
         }
 
+        function updateMultiplierDisplay() {
+            if (fertilizerMultiplier > 1) {
+                multiplierDisplay.style.display = 'block';
+                multiplierValue.textContent = fertilizerMultiplier;
+            } else {
+                multiplierDisplay.style.display = 'none';
+            }
+        }
+
         function loseLife() {
             lives--;
             updateLivesDisplay();
             if (lives <= 0) {
                 endGame();
             }
+        }
+
+        function saveScore(newScore) {
+            let scores = JSON.parse(localStorage.getItem('flowerRushScores') || '[]');
+            scores.push({ score: newScore, date: Date.now() });
+            scores.sort((a, b) => b.score - a.score);
+            scores = scores.slice(0, 10);
+            localStorage.setItem('flowerRushScores', JSON.stringify(scores));
+            return scores;
+        }
+
+        function displayLeaderboard(currentScore) {
+            const scores = JSON.parse(localStorage.getItem('flowerRushScores') || '[]');
+            leaderboardEntries.innerHTML = '';
+
+            scores.forEach((entry, index) => {
+                const div = document.createElement('div');
+                div.className = 'leaderboard-entry';
+                if (entry.score === currentScore && entry.date === scores.find(s => s.score === currentScore).date) {
+                    div.classList.add('current');
+                }
+                div.innerHTML = `<span>#${index + 1}</span><span>${entry.score} pts</span>`;
+                leaderboardEntries.appendChild(div);
+            });
+        }
+
+        function createFertilizer() {
+            if (!gameActive) return;
+
+            const circle = document.createElement('div');
+            circle.className = 'circle fertilizer';
+            circle.dataset.type = 'fertilizer';
+
+            const size = 85;
+            circle.style.width = size + 'px';
+            circle.style.height = size + 'px';
+            circle.textContent = '🌱';
+
+            const maxX = window.innerWidth - size - 20;
+            const maxY = window.innerHeight - size - 120;
+            const minY = 100;
+
+            circle.style.left = (20 + Math.random() * maxX) + 'px';
+            circle.style.top = (minY + Math.random() * (maxY - minY)) + 'px';
+
+            gameContainer.appendChild(circle);
+            circles.push(circle);
+
+            circle.style.opacity = '0';
+            circle.style.transform = 'scale(0)';
+            setTimeout(() => {
+                circle.style.transition = 'opacity 0.3s, transform 0.3s';
+                circle.style.opacity = '1';
+                circle.style.transform = 'scale(1)';
+            }, 10);
+
+            const timeoutId = setTimeout(() => {
+                if (circle.parentNode && gameActive) {
+                    circle.style.transition = 'opacity 0.3s, transform 0.3s';
+                    circle.style.opacity = '0';
+                    circle.style.transform = 'scale(0)';
+                    setTimeout(() => {
+                        if (circle.parentNode) {
+                            circle.remove();
+                        }
+                        circles = circles.filter(c => c !== circle);
+                    }, 300);
+                }
+            }, 4000);
+
+            circle.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                if (!gameActive) return;
+
+                clearTimeout(timeoutId);
+
+                fertilizerMultiplier *= 2;
+                updateMultiplierDisplay();
+
+                score += 10;
+                scoreDisplay.textContent = score;
+
+                circle.style.transition = 'opacity 0.2s, transform 0.2s';
+                circle.style.opacity = '0';
+                circle.style.transform = 'scale(2) rotate(360deg)';
+
+                setTimeout(() => {
+                    if (circle.parentNode) {
+                        circle.remove();
+                    }
+                    circles = circles.filter(c => c !== circle);
+                }, 200);
+            });
         }
 
         function createFrog() {
@@ -328,6 +497,12 @@
             });
         }
 
+        function spawnFrogs() {
+            for (let i = 0; i < frogsPerSpawn; i++) {
+                setTimeout(() => createFrog(), i * 150);
+            }
+        }
+
         function createLawnMower() {
             if (!gameActive) return;
 
@@ -370,7 +545,7 @@
                         circles = circles.filter(c => c !== circle);
                     }, 300);
                 }
-            }, 3000);
+            }, 3500);
 
             circle.addEventListener('pointerdown', (e) => {
                 e.preventDefault();
@@ -447,7 +622,7 @@
                 circle.style.transform = 'scale(1)';
             }, 10);
 
-            const lifetime = 2500;
+            const lifetime = 2800;
             const timeoutId = setTimeout(() => {
                 if (circle.parentNode && gameActive) {
                     circle.style.transition = 'opacity 0.3s, transform 0.3s';
@@ -472,6 +647,12 @@
                 score += points;
                 scoreDisplay.textContent = score;
 
+                if (fertilizerMultiplier > 1) {
+                    for (let i = 0; i < fertilizerMultiplier - 1; i++) {
+                        setTimeout(() => createCircle(), i * 100);
+                    }
+                }
+
                 circle.style.transition = 'opacity 0.2s, transform 0.2s';
                 circle.style.opacity = '0';
                 circle.style.transform = 'scale(1.5) rotate(180deg)';
@@ -494,12 +675,15 @@
         function startGame() {
             score = 0;
             lives = 5;
-            spawnRate = 800;
+            spawnRate = 1000;
             flowersPerSpawn = 1;
+            frogsPerSpawn = 1;
+            fertilizerMultiplier = 1;
             gameActive = true;
 
             scoreDisplay.textContent = score;
             updateLivesDisplay();
+            updateMultiplierDisplay();
 
             startScreen.style.display = 'none';
             gameOverScreen.style.display = 'none';
@@ -510,28 +694,38 @@
             spawnInterval = setInterval(spawnFlowers, spawnRate);
 
             difficultyInterval = setInterval(() => {
-                if (spawnRate > 400) {
+                if (spawnRate > 500) {
                     spawnRate -= 50;
                     clearInterval(spawnInterval);
                     spawnInterval = setInterval(spawnFlowers, spawnRate);
                 }
 
-                if (flowersPerSpawn < 5) {
+                if (flowersPerSpawn < 4) {
                     flowersPerSpawn++;
                 }
-            }, 10000);
+
+                if (frogsPerSpawn < 3) {
+                    frogsPerSpawn++;
+                }
+            }, 15000);
 
             lawnMowerInterval = setInterval(() => {
                 if (gameActive) {
                     createLawnMower();
                 }
-            }, 20000);
+            }, 22000);
 
             frogInterval = setInterval(() => {
                 if (gameActive && Math.random() > 0.3) {
-                    createFrog();
+                    spawnFrogs();
                 }
-            }, 8000);
+            }, 10000);
+
+            fertilizerInterval = setInterval(() => {
+                if (gameActive) {
+                    createFertilizer();
+                }
+            }, 25000);
         }
 
         function endGame() {
@@ -540,6 +734,7 @@
             clearInterval(difficultyInterval);
             clearInterval(lawnMowerInterval);
             clearInterval(frogInterval);
+            clearInterval(fertilizerInterval);
 
             circles.forEach(circle => {
                 if (circle.parentNode) {
@@ -549,6 +744,8 @@
             circles = [];
 
             finalScoreDisplay.textContent = 'Score: ' + score;
+            saveScore(score);
+            displayLeaderboard(score);
             gameOverScreen.style.display = 'flex';
         }
 
