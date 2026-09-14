@@ -63,6 +63,18 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
 
+        #difficulty {
+            position: absolute;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #FFD700;
+            font-size: 18px;
+            font-weight: bold;
+            z-index: 100;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
         #game-over {
             position: absolute;
             top: 50%;
@@ -134,6 +146,7 @@
 <body>
     <div id="game-container">
         <div id="score">Score: 0</div>
+        <div id="difficulty">Level 1</div>
         <div id="game-over">
             <h1>Game Over!</h1>
             <p id="final-score">Final Score: 0</p>
@@ -144,6 +157,7 @@
     <script>
         const container = document.getElementById('game-container');
         const scoreDisplay = document.getElementById('score');
+        const difficultyDisplay = document.getElementById('difficulty');
         const gameOverScreen = document.getElementById('game-over');
         const finalScoreDisplay = document.getElementById('final-score');
         const restartBtn = document.getElementById('restart-btn');
@@ -153,6 +167,8 @@
         let bubbles = [];
         let spawnInterval;
         let updateInterval;
+        let currentSpawnRate = 1000;
+        let difficultyLevel = 1;
 
         const colors = [
             '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A',
@@ -167,7 +183,9 @@
                 this.size = 50 + Math.random() * 40;
                 this.x = Math.random() * (window.innerWidth - this.size);
                 this.y = window.innerHeight;
-                this.speed = 1 + Math.random() * 2;
+
+                const speedMultiplier = 1 + (difficultyLevel - 1) * 0.3;
+                this.speed = (1 + Math.random() * 2) * speedMultiplier;
                 this.color = colors[Math.floor(Math.random() * colors.length)];
 
                 this.element.style.width = this.size + 'px';
@@ -212,6 +230,8 @@
                 score += 10;
                 scoreDisplay.textContent = 'Score: ' + score;
 
+                updateDifficulty();
+
                 this.createPopEffect();
 
                 this.element.remove();
@@ -249,6 +269,18 @@
             }
         }
 
+        function updateDifficulty() {
+            const newLevel = Math.floor(score / 100) + 1;
+            if (newLevel !== difficultyLevel) {
+                difficultyLevel = newLevel;
+                difficultyDisplay.textContent = 'Level ' + difficultyLevel;
+
+                clearInterval(spawnInterval);
+                currentSpawnRate = Math.max(300, 1000 - (difficultyLevel - 1) * 100);
+                spawnInterval = setInterval(spawnBubble, currentSpawnRate);
+            }
+        }
+
         function spawnBubble() {
             if (!gameRunning) return;
             bubbles.push(new Bubble());
@@ -269,14 +301,17 @@
 
         function startGame() {
             score = 0;
+            difficultyLevel = 1;
+            currentSpawnRate = 1000;
             scoreDisplay.textContent = 'Score: 0';
+            difficultyDisplay.textContent = 'Level 1';
             gameOverScreen.style.display = 'none';
             gameRunning = true;
 
             bubbles.forEach(b => b.remove());
             bubbles = [];
 
-            spawnInterval = setInterval(spawnBubble, 1000);
+            spawnInterval = setInterval(spawnBubble, currentSpawnRate);
             updateInterval = setInterval(updateGame, 1000 / 60);
         }
 
