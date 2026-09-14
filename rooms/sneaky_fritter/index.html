@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Bubble Pop!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            width: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #1a1a2e, #16213e, #0f3460);
+            font-family: Arial, sans-serif;
+            touch-action: none;
+            position: relative;
+        }
+
+        #game-container {
+            width: 100%;
+            height: 100dvh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            touch-action: none;
+            transition: transform 0.1s ease;
+            box-shadow: inset -10px -10px 20px rgba(0,0,0,0.2),
+                        inset 5px 5px 10px rgba(255,255,255,0.3),
+                        0 0 20px rgba(255,255,255,0.2);
+        }
+
+        .bubble::before {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 20%;
+            width: 30%;
+            height: 30%;
+            background: rgba(255,255,255,0.5);
+            border-radius: 50%;
+        }
+
+        #score {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            z-index: 100;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            color: white;
+            display: none;
+            z-index: 200;
+            max-width: 90%;
+        }
+
+        #game-over h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        #game-over p {
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+
+        #restart-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            touch-action: manipulation;
+            min-width: 44px;
+            min-height: 44px;
+        }
+
+        #restart-btn:active {
+            transform: scale(0.95);
+        }
+
+        .pop-effect {
+            position: absolute;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .pop-particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pop-out 0.5s ease-out forwards;
+        }
+
+        @keyframes pop-out {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(0);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="score">Score: 0</div>
+        <div id="game-over">
+            <h1>Game Over!</h1>
+            <p id="final-score">Final Score: 0</p>
+            <button id="restart-btn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        const container = document.getElementById('game-container');
+        const scoreDisplay = document.getElementById('score');
+        const gameOverScreen = document.getElementById('game-over');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const restartBtn = document.getElementById('restart-btn');
+
+        let score = 0;
+        let gameRunning = false;
+        let bubbles = [];
+        let spawnInterval;
+        let updateInterval;
+
+        const colors = [
+            '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A',
+            '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2',
+            '#F8B500', '#FF1493', '#00CED1', '#FF69B4'
+        ];
+
+        class Bubble {
+            constructor() {
+                this.element = document.createElement('div');
+                this.element.className = 'bubble';
+                this.size = 50 + Math.random() * 40;
+                this.x = Math.random() * (window.innerWidth - this.size);
+                this.y = window.innerHeight;
+                this.speed = 1 + Math.random() * 2;
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+
+                this.element.style.width = this.size + 'px';
+                this.element.style.height = this.size + 'px';
+                this.element.style.left = this.x + 'px';
+                this.element.style.top = this.y + 'px';
+                this.element.style.background = `radial-gradient(circle at 30% 30%, ${this.color}, ${this.adjustBrightness(this.color, -30)})`;
+
+                this.element.addEventListener('pointerdown', (e) => {
+                    e.preventDefault();
+                    this.pop();
+                });
+
+                container.appendChild(this.element);
+            }
+
+            adjustBrightness(color, percent) {
+                const num = parseInt(color.replace('#', ''), 16);
+                const amt = Math.round(2.55 * percent);
+                const R = (num >> 16) + amt;
+                const G = (num >> 8 & 0x00FF) + amt;
+                const B = (num & 0x0000FF) + amt;
+                return '#' + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+                    (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+                    (B < 255 ? B < 1 ? 0 : B : 255))
+                    .toString(16).slice(1);
+            }
+
+            update() {
+                this.y -= this.speed;
+                this.element.style.top = this.y + 'px';
+
+                if (this.y + this.size < 0) {
+                    return false;
+                }
+                return true;
+            }
+
+            pop() {
+                if (!gameRunning) return;
+
+                score += 10;
+                scoreDisplay.textContent = 'Score: ' + score;
+
+                this.createPopEffect();
+
+                this.element.remove();
+                const index = bubbles.indexOf(this);
+                if (index > -1) {
+                    bubbles.splice(index, 1);
+                }
+            }
+
+            createPopEffect() {
+                const particleCount = 8;
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'pop-particle';
+                    particle.style.background = this.color;
+                    particle.style.left = (this.x + this.size / 2) + 'px';
+                    particle.style.top = (this.y + this.size / 2) + 'px';
+
+                    const angle = (Math.PI * 2 * i) / particleCount;
+                    const distance = 50 + Math.random() * 30;
+                    const tx = Math.cos(angle) * distance;
+                    const ty = Math.sin(angle) * distance;
+
+                    particle.style.setProperty('--tx', tx + 'px');
+                    particle.style.setProperty('--ty', ty + 'px');
+
+                    container.appendChild(particle);
+
+                    setTimeout(() => particle.remove(), 500);
+                }
+            }
+
+            remove() {
+                this.element.remove();
+            }
+        }
+
+        function spawnBubble() {
+            if (!gameRunning) return;
+            bubbles.push(new Bubble());
+        }
+
+        function updateGame() {
+            if (!gameRunning) return;
+
+            for (let i = bubbles.length - 1; i >= 0; i--) {
+                const bubble = bubbles[i];
+                if (!bubble.update()) {
+                    bubble.remove();
+                    bubbles.splice(i, 1);
+                    endGame();
+                }
+            }
+        }
+
+        function startGame() {
+            score = 0;
+            scoreDisplay.textContent = 'Score: 0';
+            gameOverScreen.style.display = 'none';
+            gameRunning = true;
+
+            bubbles.forEach(b => b.remove());
+            bubbles = [];
+
+            spawnInterval = setInterval(spawnBubble, 1000);
+            updateInterval = setInterval(updateGame, 1000 / 60);
+        }
+
+        function endGame() {
+            gameRunning = false;
+            clearInterval(spawnInterval);
+            clearInterval(updateInterval);
+
+            finalScoreDisplay.textContent = 'Final Score: ' + score;
+            gameOverScreen.style.display = 'block';
+        }
+
+        restartBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            startGame();
+        });
+
+        startGame();
+    </script>
+</body>
+</html>
