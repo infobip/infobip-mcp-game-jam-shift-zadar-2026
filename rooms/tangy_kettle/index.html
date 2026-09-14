@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Tap Rush!</title>
+    <title>Flower Rush!</title>
     <style>
         * {
             margin: 0;
@@ -59,12 +59,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
-            font-weight: bold;
-            color: white;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             transition: transform 0.1s;
+            background: rgba(255, 255, 255, 0.2);
         }
 
         .circle:active {
@@ -140,8 +137,8 @@
         </div>
 
         <div id="startScreen">
-            <h1>Tap Rush!</h1>
-            <p class="instructions">Tap the circles before they disappear! The faster you tap, the higher your score!</p>
+            <h1>Flower Rush!</h1>
+            <p class="instructions">Tap the flowers before they disappear! Rarer flowers with more petals are worth more points!</p>
             <button class="btn" id="startBtn">Start Game</button>
         </div>
 
@@ -169,10 +166,44 @@
         let timerInterval;
         let circles = [];
 
-        const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#ff9ff3', '#54a0ff', '#48dbfb', '#1dd1a1'];
+        function createFlowerSVG(petals, petalColor, centerColor, size) {
+            const center = size / 2;
+            const petalLength = size * 0.35;
+            const petalWidth = size * 0.15;
+            const centerRadius = size * 0.12;
 
-        function getRandomColor() {
-            return colors[Math.floor(Math.random() * colors.length)];
+            let petalsPaths = '';
+            for (let i = 0; i < petals; i++) {
+                const angle = (i * 360 / petals) * Math.PI / 180;
+                const x = center + Math.cos(angle) * (size * 0.25);
+                const y = center + Math.sin(angle) * (size * 0.25);
+
+                petalsPaths += `<ellipse cx="${x}" cy="${y}" rx="${petalWidth}" ry="${petalLength}"
+                    transform="rotate(${i * 360 / petals} ${x} ${y})"
+                    fill="${petalColor}" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>`;
+            }
+
+            const svg = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+                ${petalsPaths}
+                <circle cx="${center}" cy="${center}" r="${centerRadius}" fill="${centerColor}"
+                    stroke="rgba(0,0,0,0.2)" stroke-width="1"/>
+            </svg>`;
+
+            return 'data:image/svg+xml;base64,' + btoa(svg);
+        }
+
+        function getFlowerColors(points) {
+            if (points <= 6) {
+                return { petal: '#fff9c4', center: '#fdd835' };
+            } else if (points === 7) {
+                return { petal: '#ffe0b2', center: '#ff9800' };
+            } else if (points === 8) {
+                return { petal: '#f8bbd0', center: '#e91e63' };
+            } else if (points === 9) {
+                return { petal: '#ffccbc', center: '#ff5722' };
+            } else {
+                return { petal: '#ce93d8', center: '#9c27b0' };
+            }
         }
 
         function createCircle() {
@@ -181,10 +212,9 @@
             const circle = document.createElement('div');
             circle.className = 'circle';
 
-            const size = 60 + Math.random() * 40; // 60-100px
+            const size = 60 + Math.random() * 40;
             circle.style.width = size + 'px';
             circle.style.height = size + 'px';
-            circle.style.backgroundColor = getRandomColor();
 
             const maxX = window.innerWidth - size - 20;
             const maxY = window.innerHeight - size - 120;
@@ -194,12 +224,17 @@
             circle.style.top = (minY + Math.random() * (maxY - minY)) + 'px';
 
             const points = Math.floor(size / 10);
-            circle.textContent = points;
+            const colors = getFlowerColors(points);
+            const flowerSVG = createFlowerSVG(points, colors.petal, colors.center, size * 0.9);
+
+            circle.style.backgroundImage = `url("${flowerSVG}")`;
+            circle.style.backgroundSize = 'contain';
+            circle.style.backgroundPosition = 'center';
+            circle.style.backgroundRepeat = 'no-repeat';
 
             gameContainer.appendChild(circle);
             circles.push(circle);
 
-            // Animate circle appearing
             circle.style.opacity = '0';
             circle.style.transform = 'scale(0)';
             setTimeout(() => {
@@ -208,8 +243,7 @@
                 circle.style.transform = 'scale(1)';
             }, 10);
 
-            // Remove circle after delay
-            const lifetime = 1500 - Math.min(score * 5, 500); // Gets faster as score increases
+            const lifetime = 1500 - Math.min(score * 5, 500);
             setTimeout(() => {
                 if (circle.parentNode && gameActive) {
                     circle.style.transition = 'opacity 0.3s, transform 0.3s';
@@ -231,10 +265,9 @@
                 score += points;
                 scoreDisplay.textContent = score;
 
-                // Tap animation
                 circle.style.transition = 'opacity 0.2s, transform 0.2s';
                 circle.style.opacity = '0';
-                circle.style.transform = 'scale(1.5)';
+                circle.style.transform = 'scale(1.5) rotate(180deg)';
 
                 setTimeout(() => {
                     if (circle.parentNode) {
@@ -256,14 +289,11 @@
             startScreen.style.display = 'none';
             gameOverScreen.style.display = 'none';
 
-            // Clear any existing circles
             circles.forEach(circle => circle.remove());
             circles = [];
 
-            // Spawn circles
             spawnInterval = setInterval(createCircle, 800);
 
-            // Timer
             timerInterval = setInterval(() => {
                 timeLeft--;
                 timerDisplay.textContent = timeLeft;
@@ -279,7 +309,6 @@
             clearInterval(spawnInterval);
             clearInterval(timerInterval);
 
-            // Remove remaining circles
             circles.forEach(circle => {
                 if (circle.parentNode) {
                     circle.remove();
