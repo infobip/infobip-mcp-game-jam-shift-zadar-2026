@@ -209,6 +209,7 @@
         let frogInterval;
         let circles = [];
         let spawnRate = 800;
+        let flowersPerSpawn = 1;
 
         function createFlowerSVG(petals, petalColor, centerColor) {
             const center = 50;
@@ -484,10 +485,17 @@
             });
         }
 
+        function spawnFlowers() {
+            for (let i = 0; i < flowersPerSpawn; i++) {
+                setTimeout(() => createCircle(), i * 100);
+            }
+        }
+
         function startGame() {
             score = 0;
             lives = 5;
             spawnRate = 800;
+            flowersPerSpawn = 1;
             gameActive = true;
 
             scoreDisplay.textContent = score;
@@ -499,13 +507,17 @@
             circles.forEach(circle => circle.remove());
             circles = [];
 
-            spawnInterval = setInterval(createCircle, spawnRate);
+            spawnInterval = setInterval(spawnFlowers, spawnRate);
 
             difficultyInterval = setInterval(() => {
-                if (spawnRate > 300) {
+                if (spawnRate > 400) {
                     spawnRate -= 50;
                     clearInterval(spawnInterval);
-                    spawnInterval = setInterval(createCircle, spawnRate);
+                    spawnInterval = setInterval(spawnFlowers, spawnRate);
+                }
+
+                if (flowersPerSpawn < 5) {
+                    flowersPerSpawn++;
                 }
             }, 10000);
 
