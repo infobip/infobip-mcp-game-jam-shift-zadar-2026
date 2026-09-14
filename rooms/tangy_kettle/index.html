@@ -88,9 +88,21 @@
             animation: pulse 1s infinite;
         }
 
+        .fertilizer-wheel {
+            background: linear-gradient(135deg, #e67e22 0%, #d35400 100%) !important;
+            border: 3px solid #fff;
+            font-size: 40px;
+            animation: spin 2s linear infinite;
+        }
+
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.1); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .pest {
@@ -316,6 +328,7 @@
         let powerupInterval;
         let pestInterval;
         let fertilizerInterval;
+        let fertilizerWheelInterval;
         let circles = [];
         let spawnRate = 1000;
         let flowersPerSpawn = 1;
@@ -435,6 +448,76 @@
                 }
                 div.innerHTML = `<span>#${index + 1}</span><span>${entry.score} pts</span>`;
                 leaderboardEntries.appendChild(div);
+            });
+        }
+
+        function createFertilizerWheel() {
+            if (!gameActive) return;
+
+            const circle = document.createElement('div');
+            circle.className = 'circle fertilizer-wheel';
+            circle.dataset.type = 'fertilizer-wheel';
+
+            const size = 85;
+            circle.style.width = size + 'px';
+            circle.style.height = size + 'px';
+            circle.textContent = '⚙️';
+
+            const maxX = window.innerWidth - size - 20;
+            const maxY = window.innerHeight - size - 120;
+            const minY = 100;
+
+            circle.style.left = (20 + Math.random() * maxX) + 'px';
+            circle.style.top = (minY + Math.random() * (maxY - minY)) + 'px';
+
+            gameContainer.appendChild(circle);
+            circles.push(circle);
+
+            circle.style.opacity = '0';
+            circle.style.transform = 'scale(0)';
+            setTimeout(() => {
+                circle.style.transition = 'opacity 0.3s, transform 0.3s';
+                circle.style.opacity = '1';
+                circle.style.transform = 'scale(1)';
+            }, 10);
+
+            const timeoutId = setTimeout(() => {
+                if (circle.parentNode && gameActive) {
+                    circle.style.transition = 'opacity 0.3s, transform 0.3s';
+                    circle.style.opacity = '0';
+                    circle.style.transform = 'scale(0)';
+                    setTimeout(() => {
+                        if (circle.parentNode) {
+                            circle.remove();
+                        }
+                        circles = circles.filter(c => c !== circle);
+                    }, 300);
+                }
+            }, 4000);
+
+            circle.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                if (!gameActive) return;
+
+                clearTimeout(timeoutId);
+
+                fertilizerMultiplier *= 3;
+                updateMultiplierDisplay();
+
+                score += 15;
+                scoreDisplay.textContent = score;
+                checkLevelUp();
+
+                circle.style.transition = 'opacity 0.2s, transform 0.2s';
+                circle.style.opacity = '0';
+                circle.style.transform = 'scale(2) rotate(720deg)';
+
+                setTimeout(() => {
+                    if (circle.parentNode) {
+                        circle.remove();
+                    }
+                    circles = circles.filter(c => c !== circle);
+                }, 200);
             });
         }
 
@@ -814,6 +897,12 @@
                     createFertilizer();
                 }
             }, 25000);
+
+            fertilizerWheelInterval = setInterval(() => {
+                if (gameActive) {
+                    createFertilizerWheel();
+                }
+            }, 35000);
         }
 
         function endGame() {
@@ -823,6 +912,7 @@
             clearInterval(powerupInterval);
             clearInterval(pestInterval);
             clearInterval(fertilizerInterval);
+            clearInterval(fertilizerWheelInterval);
 
             circles.forEach(circle => {
                 if (circle.parentNode) {
