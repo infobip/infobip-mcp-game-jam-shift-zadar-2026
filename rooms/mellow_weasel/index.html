@@ -134,6 +134,44 @@
             text-align: center;
             margin: 20px;
         }
+
+        #colorSelector {
+            display: flex;
+            gap: 15px;
+            margin: 25px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .colorOption {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 4px solid rgba(255,255,255,0.5);
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: transform 0.2s, border-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
+
+        .colorOption:active {
+            transform: scale(0.9);
+        }
+
+        .colorOption.selected {
+            border-color: white;
+            border-width: 5px;
+            box-shadow: 0 0 20px rgba(255,255,255,0.8);
+        }
+
+        .colorLabel {
+            color: white;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -145,6 +183,15 @@
         <div class="instructions">
             Tap to fly!<br>
             Dodge the towers!
+        </div>
+        <div class="colorLabel">Choose Your Plane:</div>
+        <div id="colorSelector">
+            <div class="colorOption selected" data-color="classic" style="background: linear-gradient(135deg, #E8E8E8, #C0C0C0);">✈️</div>
+            <div class="colorOption" data-color="blue" style="background: linear-gradient(135deg, #4A90E2, #2E5C8A);">✈️</div>
+            <div class="colorOption" data-color="red" style="background: linear-gradient(135deg, #E74C3C, #C0392B);">✈️</div>
+            <div class="colorOption" data-color="green" style="background: linear-gradient(135deg, #27AE60, #1E8449);">✈️</div>
+            <div class="colorOption" data-color="gold" style="background: linear-gradient(135deg, #F39C12, #D68910);">✈️</div>
+            <div class="colorOption" data-color="purple" style="background: linear-gradient(135deg, #9B59B6, #7D3C98);">✈️</div>
         </div>
         <button id="startBtn">START</button>
     </div>
@@ -164,6 +211,7 @@
         const restartBtn = document.getElementById('restartBtn');
         const scoreEl = document.getElementById('score');
         const finalScoreEl = document.getElementById('finalScore');
+        const colorOptions = document.querySelectorAll('.colorOption');
 
         let width, height;
         let gameRunning = false;
@@ -174,6 +222,25 @@
         let jump = -12;
         let towerSpeed = 3;
         let frameCount = 0;
+        let selectedColor = 'classic';
+
+        const colorSchemes = {
+            classic: { body: '#E8E8E8', dark: '#D0D0D0', stripe1: '#4A90E2', stripe2: '#E85555' },
+            blue: { body: '#4A90E2', dark: '#2E5C8A', stripe1: '#FFFFFF', stripe2: '#FFD700' },
+            red: { body: '#E74C3C', dark: '#C0392B', stripe1: '#FFFFFF', stripe2: '#2C3E50' },
+            green: { body: '#27AE60', dark: '#1E8449', stripe1: '#FFFFFF', stripe2: '#F39C12' },
+            gold: { body: '#F39C12', dark: '#D68910', stripe1: '#2C3E50', stripe2: '#E74C3C' },
+            purple: { body: '#9B59B6', dark: '#7D3C98', stripe1: '#FFFFFF', stripe2: '#F1C40F' }
+        };
+
+        colorOptions.forEach(option => {
+            option.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                colorOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                selectedColor = option.dataset.color;
+            });
+        });
 
         function resizeCanvas() {
             width = window.innerWidth;
@@ -208,25 +275,26 @@
 
             const w = plane.width;
             const h = plane.height;
+            const colors = colorSchemes[selectedColor];
 
-            ctx.fillStyle = '#E8E8E8';
+            ctx.fillStyle = colors.body;
             ctx.fillRect(-w/2, -h/2 + 8, w * 0.85, h - 16);
 
-            ctx.fillStyle = '#F5F5F5';
+            ctx.fillStyle = colors.body;
             ctx.beginPath();
             ctx.ellipse(-w/2 + 12, 0, 12, h/2 - 4, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            ctx.fillStyle = '#D0D0D0';
+            ctx.fillStyle = colors.dark;
             ctx.fillRect(-w/2 + 5, -h/2 + 4, 25, h/2 - 2);
 
-            ctx.fillStyle = '#4A90E2';
+            ctx.fillStyle = colors.stripe1;
             ctx.fillRect(-w/2 + 8, h/4 - 2, w * 0.6, 3);
 
-            ctx.fillStyle = '#E85555';
+            ctx.fillStyle = colors.stripe2;
             ctx.fillRect(-w/2 + 8, h/4 + 3, w * 0.6, 2);
 
-            ctx.fillStyle = '#D5D5D5';
+            ctx.fillStyle = colors.dark;
             ctx.fillRect(w/2 - 8, -h/2 + 8, 8, h - 16);
 
             for (let i = 0; i < 8; i++) {
