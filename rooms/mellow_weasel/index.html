@@ -28,6 +28,7 @@
             padding: 20px;
             text-align: center;
             background: rgba(0,0,0,0.2);
+            position: relative;
         }
 
         h1 {
@@ -40,6 +41,28 @@
             justify-content: space-around;
             margin-top: 10px;
             font-size: 18px;
+        }
+
+        #trophyBtn {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            color: white;
+            font-size: 24px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            touch-action: manipulation;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #trophyBtn:active {
+            transform: scale(0.9);
         }
 
         #target {
@@ -115,7 +138,7 @@
             margin: 20px 0;
         }
 
-        #restartBtn {
+        #restartBtn, #collectionBtn {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             border: 3px solid white;
@@ -129,7 +152,7 @@
             margin: 10px;
         }
 
-        #restartBtn:active {
+        #restartBtn:active, #collectionBtn:active {
             transform: scale(0.95);
         }
 
@@ -168,10 +191,97 @@
             0% { opacity: 1; transform: translate(0, 0) scale(1); }
             100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0); }
         }
+
+        #rewardScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            z-index: 1001;
+            overflow-y: auto;
+        }
+
+        #rewardScreen.show {
+            display: flex;
+        }
+
+        #closeRewardBtn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            color: white;
+            font-size: 24px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        #closeRewardBtn:active {
+            transform: scale(0.9);
+        }
+
+        .tshirt {
+            width: 140px;
+            height: 140px;
+            margin: 15px;
+            display: inline-block;
+            position: relative;
+        }
+
+        .tshirt-body {
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            border: 3px solid white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .tshirt.locked .tshirt-body {
+            background: rgba(100,100,100,0.3);
+            border-color: rgba(255,255,255,0.3);
+            filter: grayscale(1);
+        }
+
+        .tshirt-label {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        .new-unlock {
+            animation: unlockPulse 1s ease-in-out;
+        }
+
+        @keyframes unlockPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); box-shadow: 0 0 30px rgba(255,255,255,0.8); }
+        }
+
+        #rewardGrid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 60px;
+        }
     </style>
 </head>
 <body>
     <div id="header">
+        <button id="trophyBtn">👕</button>
         <h1>🎯 Color Rush</h1>
         <div id="stats">
             <div>Score: <span id="score">0</span></div>
@@ -195,7 +305,16 @@
     <div id="gameOver">
         <h2>Game Over!</h2>
         <div id="finalScore"></div>
+        <div id="newUnlockMsg"></div>
         <button id="restartBtn">Play Again</button>
+        <button id="collectionBtn">View Collection</button>
+    </div>
+
+    <div id="rewardScreen">
+        <button id="closeRewardBtn">✕</button>
+        <h2 style="margin-top: 20px;">👕 T-Shirt Collection</h2>
+        <p style="margin-top: 10px; opacity: 0.8;">Unlock shirts by reaching score milestones!</p>
+        <div id="rewardGrid"></div>
     </div>
 
     <script>
@@ -205,7 +324,19 @@
             '#FF85A2', '#7FE5D8', '#FFD93D', '#6BCF7F'
         ];
 
+        const tshirts = [
+            { emoji: '👕', name: 'Starter Tee', score: 0, color: '#ffffff' },
+            { emoji: '👔', name: 'Pro Shirt', score: 50, color: '#4ECDC4' },
+            { emoji: '🎽', name: 'Champion Tank', score: 150, color: '#FF6B6B' },
+            { emoji: '🥼', name: 'Lab Coat', score: 300, color: '#F7DC6F' },
+            { emoji: '🦺', name: 'Safety Vest', score: 500, color: '#FFA07A' },
+            { emoji: '🎓', name: 'Graduate Cap', score: 750, color: '#BB8FCE' },
+            { emoji: '👑', name: 'Royal Crown', score: 1000, color: '#FFD93D' },
+            { emoji: '🏆', name: 'Legend Trophy', score: 1500, color: '#85C1E2' }
+        ];
+
         let score = 0;
+        let highScore = parseInt(localStorage.getItem('highScore') || '0');
         let level = 1;
         let combo = 0;
         let targetColor = '';
@@ -213,6 +344,8 @@
         let gameInterval;
         let spawnInterval;
         let circles = [];
+        let unlockedShirts = new Set(JSON.parse(localStorage.getItem('unlockedShirts') || '["👕"]'));
+        let newlyUnlocked = [];
 
         const gameArea = document.getElementById('gameArea');
         const scoreEl = document.getElementById('score');
@@ -223,7 +356,12 @@
         const gameOverEl = document.getElementById('gameOver');
         const finalScoreEl = document.getElementById('finalScore');
         const restartBtn = document.getElementById('restartBtn');
+        const collectionBtn = document.getElementById('collectionBtn');
         const comboDisplay = document.getElementById('comboDisplay');
+        const trophyBtn = document.getElementById('trophyBtn');
+        const rewardScreen = document.getElementById('rewardScreen');
+        const closeRewardBtn = document.getElementById('closeRewardBtn');
+        const newUnlockMsg = document.getElementById('newUnlockMsg');
 
         function startGame() {
             score = 0;
@@ -231,6 +369,7 @@
             combo = 0;
             timeLeft = 100;
             circles = [];
+            newlyUnlocked = [];
             gameArea.innerHTML = '<div id="comboDisplay"></div>';
             gameOverEl.classList.remove('show');
             updateUI();
@@ -325,6 +464,16 @@
             }, 600);
         }
 
+        function checkUnlocks() {
+            tshirts.forEach(shirt => {
+                if (score >= shirt.score && !unlockedShirts.has(shirt.emoji)) {
+                    unlockedShirts.add(shirt.emoji);
+                    newlyUnlocked.push(shirt);
+                }
+            });
+            localStorage.setItem('unlockedShirts', JSON.stringify([...unlockedShirts]));
+        }
+
         function handleCircleClick(circle, isTarget, x, y) {
             if (isTarget) {
                 combo++;
@@ -340,6 +489,8 @@
                 if (combo >= 3) {
                     showComboText(combo);
                 }
+
+                checkUnlocks();
 
                 if (score > 0 && score % 100 === 0) {
                     level++;
@@ -368,16 +519,75 @@
             comboEl.textContent = combo;
         }
 
+        function renderCollection() {
+            const grid = document.getElementById('rewardGrid');
+            grid.innerHTML = '';
+
+            tshirts.forEach(shirt => {
+                const div = document.createElement('div');
+                div.className = 'tshirt';
+                if (!unlockedShirts.has(shirt.emoji)) {
+                    div.classList.add('locked');
+                }
+
+                const body = document.createElement('div');
+                body.className = 'tshirt-body';
+                body.style.backgroundColor = shirt.color;
+                body.textContent = unlockedShirts.has(shirt.emoji) ? shirt.emoji : '🔒';
+
+                const label = document.createElement('div');
+                label.className = 'tshirt-label';
+                label.textContent = unlockedShirts.has(shirt.emoji) ? shirt.name : `Score ${shirt.score}`;
+
+                div.appendChild(body);
+                div.appendChild(label);
+                grid.appendChild(div);
+            });
+        }
+
         function endGame() {
             clearInterval(gameInterval);
             clearInterval(spawnInterval);
+
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('highScore', highScore);
+            }
+
             finalScoreEl.textContent = score + ' points!';
+
+            if (newlyUnlocked.length > 0) {
+                newUnlockMsg.textContent = '🎉 New unlock: ' + newlyUnlocked[0].name + '!';
+                newUnlockMsg.style.fontSize = '20px';
+                newUnlockMsg.style.marginTop = '15px';
+            } else {
+                newUnlockMsg.textContent = '';
+            }
+
             gameOverEl.classList.add('show');
         }
 
         restartBtn.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             startGame();
+        });
+
+        collectionBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            renderCollection();
+            rewardScreen.classList.add('show');
+            gameOverEl.classList.remove('show');
+        });
+
+        trophyBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            renderCollection();
+            rewardScreen.classList.add('show');
+        });
+
+        closeRewardBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            rewardScreen.classList.remove('show');
         });
 
         startGame();
