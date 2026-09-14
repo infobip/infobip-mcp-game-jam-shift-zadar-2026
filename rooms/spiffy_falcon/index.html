@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Zadar Tank Battle</title>
+    <title>Metro Rush</title>
     <style>
         * {
             margin: 0;
@@ -13,7 +13,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(180deg, #1e3a8a 0%, #0c4a6e 100%);
+            background: #1a1a2e;
             overflow: hidden;
             touch-action: none;
             height: 100dvh;
@@ -22,55 +22,37 @@
         }
 
         #game-header {
-            padding: 10px;
+            padding: 15px;
             color: white;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.7);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            z-index: 10;
         }
 
-        .player-info {
+        .stat {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
         }
 
-        .player-name {
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        .health-bar {
-            width: 100px;
-            height: 20px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            overflow: hidden;
-            border: 2px solid rgba(255, 255, 255, 0.4);
-        }
-
-        .health-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #ef4444, #dc2626);
-            transition: width 0.3s;
-        }
-
-        .wind-info {
-            text-align: center;
-            font-size: 16px;
-        }
-
-        .wind-label {
+        .stat-label {
             font-size: 11px;
             opacity: 0.8;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
         }
 
         #game-container {
             flex: 1;
             position: relative;
             overflow: hidden;
+            background: #2d2d44;
         }
 
         #canvas {
@@ -82,133 +64,13 @@
             touch-action: none;
         }
 
-        #controls {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.85);
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .control-row {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .control-label {
-            color: white;
-            font-size: 14px;
-            min-width: 60px;
-        }
-
-        .slider-container {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        input[type="range"] {
-            flex: 1;
-            -webkit-appearance: none;
-            appearance: none;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 5px;
-            outline: none;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 24px;
-            height: 24px;
-            background: #3b82f6;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-
-        input[type="range"]::-moz-range-thumb {
-            width: 24px;
-            height: 24px;
-            background: #3b82f6;
-            border-radius: 50%;
-            cursor: pointer;
-            border: none;
-        }
-
-        .value-display {
-            color: white;
-            font-size: 14px;
-            min-width: 40px;
-            text-align: right;
-        }
-
-        .weapon-buttons {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-        }
-
-        .weapon-btn {
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            color: white;
-            border: 2px solid #2563eb;
-            border-radius: 8px;
-            padding: 8px 12px;
-            min-width: 70px;
-            min-height: 48px;
-            font-size: 14px;
-            touch-action: manipulation;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-
-        .weapon-btn.selected {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            border-color: #d97706;
-        }
-
-        .weapon-btn:active {
-            transform: scale(0.95);
-        }
-
-        #fire-btn {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            color: white;
-            border: none;
-            padding: 14px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 12px;
-            cursor: pointer;
-            touch-action: manipulation;
-            min-height: 52px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        #fire-btn:active {
-            transform: scale(0.95);
-        }
-
-        #fire-btn:disabled {
-            background: #6b7280;
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-
         #game-over {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             background: white;
-            padding: 30px;
+            padding: 35px;
             border-radius: 20px;
             text-align: center;
             display: none;
@@ -218,28 +80,35 @@
         }
 
         #game-over h2 {
-            font-size: 28px;
+            color: #ef4444;
+            font-size: 32px;
             margin-bottom: 15px;
         }
 
-        #winner-name {
-            font-size: 36px;
-            margin: 15px 0;
+        #final-score {
+            font-size: 48px;
+            color: #3b82f6;
+            margin: 20px 0;
             font-weight: bold;
+        }
+
+        #high-score-display {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 20px;
         }
 
         #restart-btn {
             background: linear-gradient(135deg, #3b82f6, #2563eb);
             color: white;
             border: none;
-            padding: 14px 35px;
-            font-size: 18px;
+            padding: 16px 40px;
+            font-size: 20px;
             border-radius: 50px;
             cursor: pointer;
             touch-action: manipulation;
-            min-width: 180px;
-            min-height: 52px;
-            margin-top: 15px;
+            min-width: 200px;
+            min-height: 56px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
@@ -247,487 +116,476 @@
             transform: scale(0.95);
         }
 
-        .turn-indicator {
+        .swipe-hint {
             position: absolute;
-            top: 20px;
+            bottom: 30%;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
             color: white;
-            padding: 10px 20px;
-            border-radius: 20px;
             font-size: 18px;
-            font-weight: bold;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px 25px;
+            border-radius: 15px;
             pointer-events: none;
-            z-index: 10;
+            opacity: 0;
+            animation: fadeInOut 3s ease-in-out;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; }
+            20%, 80% { opacity: 1; }
         }
     </style>
 </head>
 <body>
     <div id="game-header">
-        <div class="player-info">
-            <div class="player-name">⛵ Player 1</div>
-            <div class="health-bar">
-                <div class="health-fill" id="health1" style="width: 100%"></div>
-            </div>
+        <div class="stat">
+            <div class="stat-label">Score</div>
+            <div class="stat-value" id="score-value">0</div>
         </div>
-        <div class="wind-info">
-            <div class="wind-label">WIND</div>
-            <div id="wind-value">0 m/s</div>
+        <div class="stat">
+            <div class="stat-label">Coins</div>
+            <div class="stat-value" id="coins-value">0</div>
         </div>
-        <div class="player-info">
-            <div class="player-name">Player 2 🏰</div>
-            <div class="health-bar">
-                <div class="health-fill" id="health2" style="width: 100%"></div>
-            </div>
+        <div class="stat">
+            <div class="stat-label">Speed</div>
+            <div class="stat-value" id="speed-value">1.0x</div>
         </div>
     </div>
 
     <div id="game-container">
         <canvas id="canvas"></canvas>
-        <div class="turn-indicator" id="turn-indicator">Player 1's Turn</div>
-
-        <div id="controls">
-            <div class="control-row">
-                <div class="control-label">Angle:</div>
-                <div class="slider-container">
-                    <input type="range" id="angle-slider" min="0" max="180" value="45">
-                    <div class="value-display" id="angle-value">45°</div>
-                </div>
-            </div>
-            <div class="control-row">
-                <div class="control-label">Power:</div>
-                <div class="slider-container">
-                    <input type="range" id="power-slider" min="10" max="100" value="50">
-                    <div class="value-display" id="power-value">50%</div>
-                </div>
-            </div>
-            <div class="control-row">
-                <div class="weapon-buttons">
-                    <button class="weapon-btn selected" data-weapon="shell">Shell</button>
-                    <button class="weapon-btn" data-weapon="cluster">Cluster</button>
-                    <button class="weapon-btn" data-weapon="missile">Missile</button>
-                    <button class="weapon-btn" data-weapon="nuke">Mini Nuke</button>
-                </div>
-            </div>
-            <button id="fire-btn">🔥 FIRE!</button>
+        <div class="swipe-hint" id="swipe-hint">
+            Swipe ↑ Jump  ↓ Slide  ← → Switch Lanes
         </div>
     </div>
 
     <div id="game-over">
-        <h2>Victory!</h2>
-        <div id="winner-name">Player 1</div>
-        <p style="font-size: 16px; color: #666; margin-bottom: 10px;">Wins the Battle!</p>
-        <button id="restart-btn">New Battle</button>
+        <h2>Game Over!</h2>
+        <div id="final-score">0</div>
+        <div id="high-score-display">Best: 0</div>
+        <button id="restart-btn">Play Again</button>
     </div>
 
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        const health1Fill = document.getElementById('health1');
-        const health2Fill = document.getElementById('health2');
-        const windValue = document.getElementById('wind-value');
-        const angleSlider = document.getElementById('angle-slider');
-        const powerSlider = document.getElementById('power-slider');
-        const angleDisplay = document.getElementById('angle-value');
-        const powerDisplay = document.getElementById('power-value');
-        const fireBtn = document.getElementById('fire-btn');
-        const weaponButtons = document.querySelectorAll('.weapon-btn');
-        const turnIndicator = document.getElementById('turn-indicator');
+        const scoreValue = document.getElementById('score-value');
+        const coinsValue = document.getElementById('coins-value');
+        const speedValue = document.getElementById('speed-value');
         const gameOverScreen = document.getElementById('game-over');
-        const winnerNameDisplay = document.getElementById('winner-name');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const highScoreDisplay = document.getElementById('high-score-display');
         const restartBtn = document.getElementById('restart-btn');
+        const swipeHint = document.getElementById('swipe-hint');
 
         let canvasWidth, canvasHeight;
-        let terrain = [];
-        let tanks = [];
-        let projectiles = [];
-        let explosions = [];
-        let currentPlayer = 0;
-        let selectedWeapon = 'shell';
-        let wind = 0;
         let gameActive = false;
-        let shooting = false;
+        let score = 0;
+        let coins = 0;
+        let speed = 8;
+        let baseSpeed = 8;
+        let highScore = 0;
 
-        const weapons = {
-            shell: { damage: 25, blast: 30, color: '#fbbf24' },
-            cluster: { damage: 15, blast: 20, clusters: 5, color: '#f97316' },
-            missile: { damage: 35, blast: 40, guided: true, color: '#ef4444' },
-            nuke: { damage: 50, blast: 80, color: '#a855f7' }
+        let player = {
+            lane: 1,
+            y: 0,
+            targetY: 0,
+            jumping: false,
+            sliding: false,
+            velocityY: 0,
+            size: 30
         };
+
+        let obstacles = [];
+        let coinItems = [];
+        let trackOffset = 0;
+        let nextObstacle = 0;
+        let nextCoin = 0;
+
+        const LANE_WIDTH = 100;
+        const GROUND_Y = 0.75;
+        const JUMP_POWER = -18;
+        const GRAVITY = 0.8;
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchStartTime = 0;
 
         function resizeCanvas() {
             canvasWidth = canvas.offsetWidth;
             canvasHeight = canvas.offsetHeight;
             canvas.width = canvasWidth;
             canvas.height = canvasHeight;
+
+            player.y = canvasHeight * GROUND_Y;
+            player.targetY = player.y;
         }
 
-        function generateTerrain() {
-            terrain = [];
-            const points = 40;
-            const baseHeight = canvasHeight * 0.6;
-
-            for (let i = 0; i <= points; i++) {
-                const x = (canvasWidth / points) * i;
-                const variation = Math.sin(i * 0.5) * 40 + Math.cos(i * 0.3) * 30;
-                const y = baseHeight + variation + (Math.random() - 0.5) * 20;
-                terrain.push({ x, y });
-            }
-
-            terrain[0].y = canvasHeight * 0.7;
-            terrain[terrain.length - 1].y = canvasHeight * 0.7;
-        }
-
-        function getTerrainY(x) {
-            for (let i = 0; i < terrain.length - 1; i++) {
-                if (x >= terrain[i].x && x <= terrain[i + 1].x) {
-                    const t = (x - terrain[i].x) / (terrain[i + 1].x - terrain[i].x);
-                    return terrain[i].y + (terrain[i + 1].y - terrain[i].y) * t;
-                }
-            }
-            return canvasHeight;
-        }
-
-        function placeTanks() {
-            const tank1X = canvasWidth * 0.15;
-            const tank2X = canvasWidth * 0.85;
-
-            tanks = [
-                {
-                    x: tank1X,
-                    y: getTerrainY(tank1X) - 10,
-                    health: 100,
-                    maxHealth: 100,
-                    color: '#3b82f6',
-                    facingRight: true
-                },
-                {
-                    x: tank2X,
-                    y: getTerrainY(tank2X) - 10,
-                    health: 100,
-                    maxHealth: 100,
-                    color: '#ef4444',
-                    facingRight: false
-                }
-            ];
-        }
-
-        function drawSky() {
+        function drawBackground() {
             const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
-            gradient.addColorStop(0, '#87ceeb');
-            gradient.addColorStop(0.5, '#e0f2fe');
-            gradient.addColorStop(1, '#fef3c7');
+            gradient.addColorStop(0, '#1a1a2e');
+            gradient.addColorStop(1, '#16213e');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-            ctx.fillStyle = '#fbbf24';
-            ctx.beginPath();
-            ctx.arc(canvasWidth * 0.85, canvasHeight * 0.15, 30, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+            for (let i = 0; i < 50; i++) {
+                const x = (Math.sin(i * 123.456) * 10000) % canvasWidth;
+                const y = (Math.cos(i * 789.123) * 10000) % canvasHeight;
+                ctx.fillRect(x, y, 2, 2);
+            }
+        }
 
-            for (let i = 0; i < 3; i++) {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        function drawTracks() {
+            const centerX = canvasWidth / 2;
+            const groundY = canvasHeight * GROUND_Y;
+
+            ctx.fillStyle = '#374151';
+            ctx.fillRect(centerX - LANE_WIDTH * 1.8, groundY, LANE_WIDTH * 3.6, canvasHeight - groundY);
+
+            for (let lane = 0; lane < 3; lane++) {
+                const x = centerX + (lane - 1) * LANE_WIDTH;
+
+                ctx.strokeStyle = '#4b5563';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([]);
                 ctx.beginPath();
-                ctx.ellipse(100 + i * 150, 80 + i * 20, 40 + i * 10, 25, 0, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.moveTo(x - LANE_WIDTH / 2, groundY);
+                ctx.lineTo(x - LANE_WIDTH / 2, canvasHeight);
+                ctx.stroke();
+            }
+
+            const dashOffset = (trackOffset * 2) % 40;
+            for (let lane = 0; lane < 3; lane++) {
+                const x = centerX + (lane - 1) * LANE_WIDTH;
+
+                ctx.strokeStyle = '#fbbf24';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([20, 20]);
+                ctx.lineDashOffset = -dashOffset;
+                ctx.beginPath();
+                ctx.moveTo(x, groundY);
+                ctx.lineTo(x, canvasHeight);
+                ctx.stroke();
+            }
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = '#1f2937';
+            ctx.fillRect(0, canvasHeight * GROUND_Y, canvasWidth, 4);
+        }
+
+        function drawPlayer() {
+            const centerX = canvasWidth / 2;
+            const x = centerX + (player.lane - 1) * LANE_WIDTH;
+            const size = player.sliding ? player.size * 0.6 : player.size;
+
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillRect(x - size / 2, player.y - size, size, size);
+
+            ctx.fillStyle = '#60a5fa';
+            ctx.fillRect(x - size / 3, player.y - size + 5, size * 0.66, size * 0.4);
+
+            ctx.fillStyle = '#1e40af';
+            ctx.fillRect(x - size / 2, player.y - size / 3, size, size / 3);
+        }
+
+        function updatePlayer() {
+            if (player.jumping) {
+                player.velocityY += GRAVITY;
+                player.y += player.velocityY;
+
+                if (player.y >= player.targetY) {
+                    player.y = player.targetY;
+                    player.jumping = false;
+                    player.velocityY = 0;
+                    player.sliding = false;
+                }
             }
         }
 
-        function drawTerrain() {
-            ctx.fillStyle = '#84cc16';
-            ctx.strokeStyle = '#65a30d';
-            ctx.lineWidth = 3;
-
-            ctx.beginPath();
-            ctx.moveTo(0, canvasHeight);
-            ctx.lineTo(terrain[0].x, terrain[0].y);
-
-            for (let i = 1; i < terrain.length; i++) {
-                ctx.lineTo(terrain[i].x, terrain[i].y);
+        function jump() {
+            if (!player.jumping) {
+                player.jumping = true;
+                player.velocityY = JUMP_POWER;
             }
-
-            ctx.lineTo(canvasWidth, canvasHeight);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
-
-            ctx.fillStyle = '#713f12';
-            ctx.fillRect(0, canvasHeight - 5, canvasWidth, 5);
         }
 
-        function drawTank(tank) {
-            const size = 12;
-
-            ctx.fillStyle = tank.color;
-            ctx.fillRect(tank.x - size, tank.y - size/2, size * 2, size);
-
-            ctx.fillStyle = tank.color;
-            ctx.beginPath();
-            ctx.arc(tank.x, tank.y - size/2, size * 0.8, 0, Math.PI * 2);
-            ctx.fill();
-
-            const barrelLength = 18;
-            const angle = (currentPlayer === tanks.indexOf(tank)) ?
-                (tank.facingRight ? -angleSlider.value : -(180 - angleSlider.value)) * Math.PI / 180 : 0;
-
-            ctx.strokeStyle = tank.color;
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(tank.x, tank.y - size/2);
-            ctx.lineTo(
-                tank.x + Math.cos(angle) * barrelLength,
-                tank.y - size/2 + Math.sin(angle) * barrelLength
-            );
-            ctx.stroke();
+        function slide() {
+            if (!player.jumping) {
+                player.sliding = true;
+                setTimeout(() => {
+                    player.sliding = false;
+                }, 500);
+            }
         }
 
-        function fire() {
-            if (shooting || !gameActive) return;
+        function changeLane(direction) {
+            player.lane = Math.max(0, Math.min(2, player.lane + direction));
+        }
 
-            shooting = true;
-            fireBtn.disabled = true;
+        function spawnObstacle() {
+            const lane = Math.floor(Math.random() * 3);
+            const type = Math.random() > 0.5 ? 'barrier' : 'low';
 
-            const tank = tanks[currentPlayer];
-            const angle = tank.facingRight ?
-                -angleSlider.value * Math.PI / 180 :
-                -(180 - angleSlider.value) * Math.PI / 180;
-            const power = powerSlider.value / 100;
-
-            const velocity = {
-                x: Math.cos(angle) * power * 15,
-                y: Math.sin(angle) * power * 15
-            };
-
-            projectiles.push({
-                x: tank.x,
-                y: tank.y - 6,
-                vx: velocity.x,
-                vy: velocity.y,
-                weapon: selectedWeapon,
-                player: currentPlayer,
-                trail: []
+            obstacles.push({
+                lane,
+                y: -100,
+                type,
+                width: 40,
+                height: type === 'barrier' ? 60 : 30,
+                passed: false
             });
+
+            nextObstacle = Math.random() * 100 + 100;
         }
 
-        function updateProjectiles() {
-            for (let i = projectiles.length - 1; i >= 0; i--) {
-                const proj = projectiles[i];
+        function spawnCoin() {
+            const lane = Math.floor(Math.random() * 3);
+            const pattern = Math.random();
 
-                proj.trail.push({ x: proj.x, y: proj.y });
-                if (proj.trail.length > 15) proj.trail.shift();
+            if (pattern < 0.3) {
+                for (let i = 0; i < 3; i++) {
+                    coinItems.push({
+                        lane: i,
+                        y: -100 - i * 50,
+                        collected: false
+                    });
+                }
+            } else {
+                for (let i = 0; i < 5; i++) {
+                    coinItems.push({
+                        lane,
+                        y: -100 - i * 40,
+                        collected: false
+                    });
+                }
+            }
 
-                proj.vx += wind * 0.02;
-                proj.vy += 0.4;
+            nextCoin = Math.random() * 150 + 200;
+        }
 
-                proj.x += proj.vx;
-                proj.y += proj.vy;
+        function updateObstacles() {
+            const centerX = canvasWidth / 2;
 
-                const terrainY = getTerrainY(proj.x);
-                const weapon = weapons[proj.weapon];
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obs = obstacles[i];
+                obs.y += speed;
 
-                if (proj.y >= terrainY || proj.x < 0 || proj.x > canvasWidth || proj.y > canvasHeight) {
-                    createExplosion(proj.x, Math.min(proj.y, terrainY), weapon.blast, weapon.damage);
+                const obsX = centerX + (obs.lane - 1) * LANE_WIDTH;
+                const playerX = centerX + (player.lane - 1) * LANE_WIDTH;
 
-                    if (proj.weapon === 'cluster') {
-                        for (let j = 0; j < weapon.clusters; j++) {
-                            const angle = (Math.PI * 2 / weapon.clusters) * j;
-                            setTimeout(() => {
-                                createExplosion(
-                                    proj.x + Math.cos(angle) * 30,
-                                    proj.y + Math.sin(angle) * 30,
-                                    weapon.blast * 0.7,
-                                    weapon.damage * 0.7
-                                );
-                            }, j * 100);
+                if (!obs.passed && obs.y > canvasHeight * GROUND_Y) {
+                    if (player.lane === obs.lane) {
+                        const playerBottom = player.y;
+                        const playerTop = player.y - (player.sliding ? player.size * 0.6 : player.size);
+                        const obsBottom = obs.y;
+                        const obsTop = obs.y - obs.height;
+
+                        if (playerBottom > obsTop && playerTop < obsBottom) {
+                            if (obs.type === 'barrier' && !player.jumping) {
+                                endGame();
+                            } else if (obs.type === 'low' && !player.sliding && !player.jumping) {
+                                endGame();
+                            }
                         }
                     }
-
-                    projectiles.splice(i, 1);
-
-                    setTimeout(() => {
-                        shooting = false;
-                        fireBtn.disabled = false;
-                        nextTurn();
-                    }, proj.weapon === 'cluster' ? 800 : 200);
+                    obs.passed = true;
                 }
-            }
-        }
 
-        function createExplosion(x, y, radius, damage) {
-            explosions.push({
-                x, y, radius, currentRadius: 0, maxRadius: radius, growing: true
-            });
-
-            for (let i = 0; i < terrain.length; i++) {
-                const dx = terrain[i].x - x;
-                const dy = terrain[i].y - y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < radius) {
-                    terrain[i].y += radius - dist;
+                if (obs.y > canvasHeight + 100) {
+                    obstacles.splice(i, 1);
                 }
             }
 
-            tanks.forEach((tank, idx) => {
-                const dx = tank.x - x;
-                const dy = tank.y - y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < radius) {
-                    const dmg = damage * (1 - dist / radius);
-                    tank.health = Math.max(0, tank.health - dmg);
-                    updateHealthBars();
-
-                    if (tank.health <= 0) {
-                        endGame(1 - idx);
-                    }
-                }
-            });
+            nextObstacle--;
+            if (nextObstacle <= 0) {
+                spawnObstacle();
+            }
         }
 
-        function updateExplosions() {
-            for (let i = explosions.length - 1; i >= 0; i--) {
-                const exp = explosions[i];
+        function updateCoins() {
+            const centerX = canvasWidth / 2;
 
-                if (exp.growing) {
-                    exp.currentRadius += exp.maxRadius / 10;
-                    if (exp.currentRadius >= exp.maxRadius) {
-                        exp.growing = false;
+            for (let i = coinItems.length - 1; i >= 0; i--) {
+                const coin = coinItems[i];
+                coin.y += speed;
+
+                if (!coin.collected && coin.y > player.y - player.size && coin.y < player.y) {
+                    if (player.lane === coin.lane) {
+                        coin.collected = true;
+                        coins++;
+                        coinsValue.textContent = coins;
                     }
+                }
+
+                if (coin.y > canvasHeight + 100) {
+                    coinItems.splice(i, 1);
+                }
+            }
+
+            nextCoin--;
+            if (nextCoin <= 0) {
+                spawnCoin();
+            }
+        }
+
+        function drawObstacles() {
+            const centerX = canvasWidth / 2;
+
+            obstacles.forEach(obs => {
+                const x = centerX + (obs.lane - 1) * LANE_WIDTH;
+
+                if (obs.type === 'barrier') {
+                    ctx.fillStyle = '#ef4444';
+                    ctx.fillRect(x - obs.width / 2, obs.y - obs.height, obs.width, obs.height);
+
+                    ctx.fillStyle = '#fca5a5';
+                    ctx.fillRect(x - obs.width / 2 + 5, obs.y - obs.height + 5, obs.width - 10, 8);
+                    ctx.fillRect(x - obs.width / 2 + 5, obs.y - obs.height + 20, obs.width - 10, 8);
                 } else {
-                    exp.currentRadius -= exp.maxRadius / 15;
-                    if (exp.currentRadius <= 0) {
-                        explosions.splice(i, 1);
-                    }
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.fillRect(x - obs.width / 2, obs.y - obs.height, obs.width, obs.height);
+
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.fillRect(x - obs.width / 2 + 3, obs.y - obs.height + 3, obs.width - 6, obs.height - 6);
                 }
-            }
-        }
-
-        function drawExplosions() {
-            explosions.forEach(exp => {
-                const gradient = ctx.createRadialGradient(exp.x, exp.y, 0, exp.x, exp.y, exp.currentRadius);
-                gradient.addColorStop(0, 'rgba(255, 255, 100, 0.9)');
-                gradient.addColorStop(0.4, 'rgba(255, 150, 50, 0.7)');
-                gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
-
-                ctx.fillStyle = gradient;
-                ctx.beginPath();
-                ctx.arc(exp.x, exp.y, exp.currentRadius, 0, Math.PI * 2);
-                ctx.fill();
             });
         }
 
-        function drawProjectiles() {
-            projectiles.forEach(proj => {
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-                ctx.lineWidth = 2;
+        function drawCoins() {
+            const centerX = canvasWidth / 2;
+
+            coinItems.forEach(coin => {
+                if (coin.collected) return;
+
+                const x = centerX + (coin.lane - 1) * LANE_WIDTH;
+
+                ctx.fillStyle = '#fbbf24';
                 ctx.beginPath();
-                for (let i = 0; i < proj.trail.length; i++) {
-                    const point = proj.trail[i];
-                    if (i === 0) ctx.moveTo(point.x, point.y);
-                    else ctx.lineTo(point.x, point.y);
-                }
+                ctx.arc(x, coin.y, 12, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(x, coin.y, 12, 0, Math.PI * 2);
                 ctx.stroke();
 
-                const weapon = weapons[proj.weapon];
-                ctx.fillStyle = weapon.color;
-                ctx.beginPath();
-                ctx.arc(proj.x, proj.y, 4, 0, Math.PI * 2);
-                ctx.fill();
-            });
-        }
-
-        function updateHealthBars() {
-            health1Fill.style.width = (tanks[0].health / tanks[0].maxHealth * 100) + '%';
-            health2Fill.style.width = (tanks[1].health / tanks[1].maxHealth * 100) + '%';
-        }
-
-        function nextTurn() {
-            currentPlayer = 1 - currentPlayer;
-            const tank = tanks[currentPlayer];
-
-            turnIndicator.textContent = `Player ${currentPlayer + 1}'s Turn`;
-
-            angleSlider.value = 45;
-            powerSlider.value = 50;
-            angleDisplay.textContent = '45°';
-            powerDisplay.textContent = '50%';
-
-            tanks.forEach((t, idx) => {
-                t.y = getTerrainY(t.x) - 10;
+                ctx.fillStyle = '#fef3c7';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('$', x, coin.y);
             });
         }
 
         function gameLoop() {
-            if (!gameActive && projectiles.length === 0 && explosions.length === 0) return;
+            if (!gameActive) return;
+
+            trackOffset += speed;
+            score += 1;
+            scoreValue.textContent = Math.floor(score / 10);
+
+            speed = baseSpeed + Math.floor(score / 1000) * 0.5;
+            speedValue.textContent = (speed / baseSpeed).toFixed(1) + 'x';
 
             ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-            drawSky();
-            drawTerrain();
+            drawBackground();
+            drawTracks();
+            drawObstacles();
+            drawCoins();
+            drawPlayer();
 
-            tanks.forEach(tank => drawTank(tank));
-
-            drawProjectiles();
-            drawExplosions();
-
-            updateProjectiles();
-            updateExplosions();
+            updatePlayer();
+            updateObstacles();
+            updateCoins();
 
             requestAnimationFrame(gameLoop);
         }
 
         function startGame() {
             gameActive = true;
-            currentPlayer = 0;
-            shooting = false;
-            projectiles = [];
-            explosions = [];
+            score = 0;
+            coins = 0;
+            speed = baseSpeed;
+            obstacles = [];
+            coinItems = [];
+            trackOffset = 0;
+            nextObstacle = 100;
+            nextCoin = 150;
+
+            player.lane = 1;
+            player.y = canvasHeight * GROUND_Y;
+            player.targetY = player.y;
+            player.jumping = false;
+            player.sliding = false;
+            player.velocityY = 0;
+
+            scoreValue.textContent = '0';
+            coinsValue.textContent = '0';
+            speedValue.textContent = '1.0x';
+            gameOverScreen.style.display = 'none';
+
+            setTimeout(() => {
+                swipeHint.style.animation = 'fadeInOut 3s ease-in-out';
+            }, 500);
 
             resizeCanvas();
-            generateTerrain();
-            placeTanks();
-
-            wind = (Math.random() - 0.5) * 10;
-            windValue.textContent = wind.toFixed(1) + ' m/s ' + (wind > 0 ? '→' : '←');
-
-            updateHealthBars();
-            turnIndicator.textContent = "Player 1's Turn";
-            gameOverScreen.style.display = 'none';
-            fireBtn.disabled = false;
-
             gameLoop();
         }
 
-        function endGame(winner) {
+        function endGame() {
             gameActive = false;
-            winnerNameDisplay.textContent = `Player ${winner + 1}`;
-            winnerNameDisplay.style.color = tanks[winner].color;
 
-            setTimeout(() => {
-                gameOverScreen.style.display = 'block';
-            }, 1000);
+            const finalScore = Math.floor(score / 10);
+            finalScoreDisplay.textContent = finalScore;
+
+            if (finalScore > highScore) {
+                highScore = finalScore;
+            }
+
+            highScoreDisplay.textContent = `Best: ${highScore}`;
+            gameOverScreen.style.display = 'block';
         }
 
-        angleSlider.addEventListener('input', (e) => {
-            angleDisplay.textContent = e.target.value + '°';
-        });
-
-        powerSlider.addEventListener('input', (e) => {
-            powerDisplay.textContent = e.target.value + '%';
-        });
-
-        weaponButtons.forEach(btn => {
-            btn.addEventListener('pointerdown', (e) => {
-                e.preventDefault();
-                weaponButtons.forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                selectedWeapon = btn.dataset.weapon;
-            });
-        });
-
-        fireBtn.addEventListener('pointerdown', (e) => {
+        canvas.addEventListener('pointerdown', (e) => {
             e.preventDefault();
-            fire();
+            touchStartX = e.clientX;
+            touchStartY = e.clientY;
+            touchStartTime = Date.now();
+        });
+
+        canvas.addEventListener('pointerup', (e) => {
+            e.preventDefault();
+            if (!gameActive) return;
+
+            const touchEndX = e.clientX;
+            const touchEndY = e.clientY;
+            const touchDuration = Date.now() - touchStartTime;
+
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+
+            const isSwipe = touchDuration < 300 && (Math.abs(deltaX) > 50 || Math.abs(deltaY) > 50);
+
+            if (isSwipe) {
+                if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                    if (deltaX > 0) {
+                        changeLane(1);
+                    } else {
+                        changeLane(-1);
+                    }
+                } else {
+                    if (deltaY < 0) {
+                        jump();
+                    } else {
+                        slide();
+                    }
+                }
+            }
         });
 
         restartBtn.addEventListener('pointerdown', (e) => {
