@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Bubble Pop!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100%;
+            height: 100svh;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        #game-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #score-board {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: inset -5px -5px 20px rgba(0, 0, 0, 0.1),
+                        inset 5px 5px 20px rgba(255, 255, 255, 0.3),
+                        0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.1s;
+            touch-action: none;
+        }
+
+        .bubble:active {
+            transform: scale(0.9);
+        }
+
+        .pop-effect {
+            position: absolute;
+            pointer-events: none;
+            font-size: 28px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            animation: pop-float 0.8s ease-out forwards;
+            z-index: 50;
+        }
+
+        @keyframes pop-float {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px) scale(1.5);
+            }
+        }
+
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 200;
+        }
+
+        #start-screen h1 {
+            font-size: 48px;
+            color: white;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        #start-screen p {
+            font-size: 20px;
+            color: white;
+            margin-bottom: 40px;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        #start-btn {
+            padding: 16px 48px;
+            font-size: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            touch-action: manipulation;
+            min-width: 200px;
+            min-height: 60px;
+        }
+
+        #start-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="score-board">Score: <span id="score">0</span></div>
+
+        <div id="start-screen">
+            <h1>🫧 Bubble Pop! 🫧</h1>
+            <p>Tap the bubbles before they float away!</p>
+            <button id="start-btn">Start Game</button>
+        </div>
+    </div>
+
+    <script>
+        const gameContainer = document.getElementById('game-container');
+        const scoreDisplay = document.getElementById('score');
+        const startScreen = document.getElementById('start-screen');
+        const startBtn = document.getElementById('start-btn');
+
+        let score = 0;
+        let gameActive = false;
+        let bubbleInterval;
+
+        const colors = [
+            '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A',
+            '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2'
+        ];
+
+        function createBubble() {
+            if (!gameActive) return;
+
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+
+            const size = Math.random() * 40 + 50; // 50-90px
+            bubble.style.width = size + 'px';
+            bubble.style.height = size + 'px';
+            bubble.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+
+            const maxX = window.innerWidth - size;
+            const startX = Math.random() * maxX;
+            bubble.style.left = startX + 'px';
+            bubble.style.bottom = '-100px';
+
+            const duration = Math.random() * 3000 + 3000; // 3-6 seconds
+            const floatHeight = window.innerHeight + 100;
+
+            gameContainer.appendChild(bubble);
+
+            let startTime = Date.now();
+            let animationFrame;
+
+            function animate() {
+                if (!gameActive) {
+                    bubble.remove();
+                    return;
+                }
+
+                const elapsed = Date.now() - startTime;
+                const progress = elapsed / duration;
+
+                if (progress >= 1) {
+                    bubble.remove();
+                    return;
+                }
+
+                const currentY = -100 + (floatHeight * progress);
+                bubble.style.bottom = currentY + 'px';
+
+                const wobble = Math.sin(elapsed / 200) * 15;
+                bubble.style.left = (startX + wobble) + 'px';
+
+                animationFrame = requestAnimationFrame(animate);
+            }
+
+            animationFrame = requestAnimationFrame(animate);
+
+            bubble.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                if (!gameActive) return;
+
+                cancelAnimationFrame(animationFrame);
+
+                score += 10;
+                scoreDisplay.textContent = score;
+
+                const popEffect = document.createElement('div');
+                popEffect.className = 'pop-effect';
+                popEffect.textContent = '+10';
+                popEffect.style.left = bubble.style.left;
+                popEffect.style.bottom = bubble.style.bottom;
+                gameContainer.appendChild(popEffect);
+
+                setTimeout(() => popEffect.remove(), 800);
+
+                bubble.style.transition = 'opacity 0.2s, transform 0.2s';
+                bubble.style.opacity = '0';
+                bubble.style.transform = 'scale(1.5)';
+
+                setTimeout(() => bubble.remove(), 200);
+            });
+        }
+
+        function startGame() {
+            gameActive = true;
+            score = 0;
+            scoreDisplay.textContent = score;
+            startScreen.style.display = 'none';
+
+            // Remove any existing bubbles
+            document.querySelectorAll('.bubble').forEach(b => b.remove());
+
+            // Create bubbles at random intervals
+            bubbleInterval = setInterval(() => {
+                createBubble();
+            }, 800);
+        }
+
+        startBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            startGame();
+        });
+    </script>
+</body>
+</html>
