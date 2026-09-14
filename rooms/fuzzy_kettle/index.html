@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Catch the Stars</title>
+    <title>Space Invaders</title>
     <style>
         * {
             margin: 0;
@@ -19,6 +19,7 @@
             background: linear-gradient(to bottom, #0a0e27 0%, #1a1e3e 100%);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
             touch-action: none;
+            overflow-x: hidden;
         }
 
         #game-container {
@@ -30,33 +31,97 @@
 
         #score-display {
             position: absolute;
-            top: 20px;
+            top: 10px;
             left: 50%;
             transform: translateX(-50%);
-            color: #fff;
-            font-size: 28px;
+            color: #0f0;
+            font-size: 24px;
             font-weight: bold;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
             z-index: 100;
         }
 
-        #basket {
+        #player {
             position: absolute;
-            width: 80px;
-            height: 60px;
-            bottom: 20px;
+            width: 40px;
+            height: 40px;
+            font-size: 36px;
+            bottom: 80px;
             left: 50%;
             transform: translateX(-50%);
             touch-action: none;
-            cursor: pointer;
         }
 
-        .star {
+        .invader {
             position: absolute;
-            width: 30px;
-            height: 30px;
-            font-size: 30px;
+            width: 32px;
+            height: 32px;
+            font-size: 28px;
             pointer-events: none;
+        }
+
+        .bullet {
+            position: absolute;
+            width: 4px;
+            height: 16px;
+            background: #0f0;
+            box-shadow: 0 0 8px rgba(0, 255, 0, 0.8);
+            pointer-events: none;
+        }
+
+        .enemy-bullet {
+            position: absolute;
+            width: 4px;
+            height: 16px;
+            background: #f00;
+            box-shadow: 0 0 8px rgba(255, 0, 0, 0.8);
+            pointer-events: none;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+            z-index: 100;
+        }
+
+        .control-btn {
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #0f0;
+            border-radius: 8px;
+            color: #0f0;
+            font-size: 28px;
+            font-weight: bold;
+            min-width: 60px;
+            min-height: 60px;
+            touch-action: manipulation;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        .control-btn:active {
+            background: rgba(0, 255, 0, 0.4);
+            transform: scale(0.95);
+        }
+
+        #shoot-btn {
+            background: rgba(255, 0, 0, 0.2);
+            border-color: #f00;
+            color: #f00;
+            min-width: 80px;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+        }
+
+        #shoot-btn:active {
+            background: rgba(255, 0, 0, 0.4);
         }
 
         #start-screen, #game-over-screen {
@@ -79,10 +144,11 @@
         }
 
         h1 {
-            color: #ffd700;
-            font-size: 48px;
+            color: #0f0;
+            font-size: 42px;
             margin-bottom: 20px;
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            text-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+            text-align: center;
         }
 
         .instruction {
@@ -94,7 +160,7 @@
         }
 
         .button {
-            background: linear-gradient(to bottom, #ffd700, #ffaa00);
+            background: linear-gradient(to bottom, #0f0, #0a0);
             color: #0a0e27;
             font-size: 24px;
             font-weight: bold;
@@ -105,7 +171,7 @@
             touch-action: manipulation;
             min-width: 200px;
             min-height: 60px;
-            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+            box-shadow: 0 4px 12px rgba(0, 255, 0, 0.4);
         }
 
         .button:active {
@@ -113,9 +179,21 @@
         }
 
         #final-score {
-            color: #ffd700;
+            color: #0f0;
             font-size: 36px;
             margin-bottom: 20px;
+        }
+
+        .explosion {
+            position: absolute;
+            font-size: 40px;
+            pointer-events: none;
+            animation: explode 0.5s forwards;
+        }
+
+        @keyframes explode {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(2); }
         }
     </style>
 </head>
@@ -123,11 +201,17 @@
     <div id="game-container">
         <div id="score-display">Score: 0</div>
 
-        <div id="basket">🧺</div>
+        <div id="player">🚀</div>
+
+        <div id="controls">
+            <button class="control-btn" id="left-btn">◀</button>
+            <button class="control-btn" id="shoot-btn">🔥</button>
+            <button class="control-btn" id="right-btn">▶</button>
+        </div>
 
         <div id="start-screen">
-            <h1>⭐ Catch the Stars ⭐</h1>
-            <p class="instruction">Tap and drag the basket to catch falling stars!<br>The game gets faster as you score more.</p>
+            <h1>👾 SPACE INVADERS 👾</h1>
+            <p class="instruction">Use ◀ ▶ to move<br>Tap 🔥 to shoot<br>Destroy all invaders!</p>
             <button class="button" id="start-button">Start Game</button>
         </div>
 
@@ -140,133 +224,288 @@
 
     <script>
         const gameContainer = document.getElementById('game-container');
-        const basket = document.getElementById('basket');
+        const player = document.getElementById('player');
         const scoreDisplay = document.getElementById('score-display');
         const startScreen = document.getElementById('start-screen');
         const gameOverScreen = document.getElementById('game-over-screen');
         const startButton = document.getElementById('start-button');
         const restartButton = document.getElementById('restart-button');
         const finalScoreDisplay = document.getElementById('final-score');
+        const leftBtn = document.getElementById('left-btn');
+        const rightBtn = document.getElementById('right-btn');
+        const shootBtn = document.getElementById('shoot-btn');
 
         let score = 0;
         let gameActive = false;
-        let stars = [];
-        let missedStars = 0;
-        let basketX = window.innerWidth / 2;
+        let invaders = [];
+        let bullets = [];
+        let enemyBullets = [];
+        let playerX = window.innerWidth / 2;
         let animationId;
+        let invaderDirection = 1;
+        let invaderSpeed = 1;
+        let lastShootTime = 0;
+        let moveLeftPressed = false;
+        let moveRightPressed = false;
 
-        const basketWidth = 80;
-        const basketHeight = 60;
-        const starSize = 30;
+        const playerWidth = 40;
+        const playerHeight = 40;
+        const invaderSize = 32;
+        const bulletSpeed = 8;
+        const enemyBulletSpeed = 4;
+        const shootCooldown = 300;
 
-        function updateBasketPosition(x) {
-            basketX = Math.max(basketWidth / 2, Math.min(window.innerWidth - basketWidth / 2, x));
-            basket.style.left = basketX + 'px';
-            basket.style.transform = 'translateX(-50%)';
+        function updatePlayerPosition() {
+            playerX = Math.max(playerWidth / 2, Math.min(window.innerWidth - playerWidth / 2, playerX));
+            player.style.left = playerX + 'px';
         }
 
-        basket.addEventListener('pointerdown', (e) => {
+        leftBtn.addEventListener('pointerdown', (e) => {
             e.preventDefault();
+            moveLeftPressed = true;
+        });
 
-            function onPointerMove(e) {
-                if (gameActive) {
-                    updateBasketPosition(e.clientX);
+        leftBtn.addEventListener('pointerup', (e) => {
+            e.preventDefault();
+            moveLeftPressed = false;
+        });
+
+        leftBtn.addEventListener('pointerleave', (e) => {
+            moveLeftPressed = false;
+        });
+
+        rightBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            moveRightPressed = true;
+        });
+
+        rightBtn.addEventListener('pointerup', (e) => {
+            e.preventDefault();
+            moveRightPressed = false;
+        });
+
+        rightBtn.addEventListener('pointerleave', (e) => {
+            moveRightPressed = false;
+        });
+
+        shootBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            shoot();
+        });
+
+        function shoot() {
+            if (!gameActive) return;
+
+            const now = Date.now();
+            if (now - lastShootTime < shootCooldown) return;
+
+            lastShootTime = now;
+
+            const bullet = document.createElement('div');
+            bullet.className = 'bullet';
+            bullet.style.left = (playerX - 2) + 'px';
+            bullet.style.bottom = '120px';
+
+            gameContainer.appendChild(bullet);
+            bullets.push({
+                element: bullet,
+                x: playerX,
+                y: window.innerHeight - 120
+            });
+        }
+
+        function createInvaders() {
+            const rows = 4;
+            const cols = Math.min(6, Math.floor(window.innerWidth / 50));
+            const startX = (window.innerWidth - (cols * 50)) / 2;
+            const startY = 60;
+
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const invader = document.createElement('div');
+                    invader.className = 'invader';
+                    invader.textContent = '👾';
+
+                    const x = startX + col * 50;
+                    const y = startY + row * 45;
+
+                    invader.style.left = x + 'px';
+                    invader.style.top = y + 'px';
+
+                    gameContainer.appendChild(invader);
+                    invaders.push({
+                        element: invader,
+                        x: x,
+                        y: y
+                    });
+                }
+            }
+        }
+
+        function updateInvaders() {
+            let hitEdge = false;
+
+            for (let invader of invaders) {
+                invader.x += invaderDirection * invaderSpeed;
+
+                if (invader.x <= 0 || invader.x >= window.innerWidth - invaderSize) {
+                    hitEdge = true;
                 }
             }
 
-            function onPointerUp() {
-                document.removeEventListener('pointermove', onPointerMove);
-                document.removeEventListener('pointerup', onPointerUp);
+            if (hitEdge) {
+                invaderDirection *= -1;
+                for (let invader of invaders) {
+                    invader.y += 20;
+                }
             }
 
-            document.addEventListener('pointermove', onPointerMove);
-            document.addEventListener('pointerup', onPointerUp);
-        });
+            for (let invader of invaders) {
+                invader.element.style.left = invader.x + 'px';
+                invader.element.style.top = invader.y + 'px';
 
-        gameContainer.addEventListener('pointermove', (e) => {
-            if (gameActive && e.target !== basket) {
-                updateBasketPosition(e.clientX);
+                if (invader.y > window.innerHeight - 150) {
+                    endGame();
+                    return;
+                }
             }
-        });
-
-        function createStar() {
-            const star = document.createElement('div');
-            star.className = 'star';
-            star.textContent = '⭐';
-            star.style.left = Math.random() * (window.innerWidth - starSize) + 'px';
-            star.style.top = '-30px';
-
-            const starData = {
-                element: star,
-                x: parseFloat(star.style.left),
-                y: -30,
-                speed: 2 + Math.min(score * 0.1, 5)
-            };
-
-            gameContainer.appendChild(star);
-            stars.push(starData);
         }
 
-        function checkCollision(star) {
-            const basketLeft = basketX - basketWidth / 2;
-            const basketRight = basketX + basketWidth / 2;
-            const basketTop = window.innerHeight - 20 - basketHeight;
+        function updateBullets() {
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const bullet = bullets[i];
+                bullet.y -= bulletSpeed;
+                bullet.element.style.bottom = (window.innerHeight - bullet.y) + 'px';
 
-            const starLeft = star.x;
-            const starRight = star.x + starSize;
-            const starBottom = star.y + starSize;
+                if (bullet.y < 0) {
+                    bullet.element.remove();
+                    bullets.splice(i, 1);
+                    continue;
+                }
 
-            return starBottom >= basketTop &&
-                   starBottom <= window.innerHeight - 20 &&
-                   starRight >= basketLeft &&
-                   starLeft <= basketRight;
+                for (let j = invaders.length - 1; j >= 0; j--) {
+                    const invader = invaders[j];
+                    if (bullet.x >= invader.x && bullet.x <= invader.x + invaderSize &&
+                        bullet.y >= invader.y && bullet.y <= invader.y + invaderSize) {
+
+                        createExplosion(invader.x + invaderSize / 2, invader.y + invaderSize / 2);
+
+                        invader.element.remove();
+                        invaders.splice(j, 1);
+
+                        bullet.element.remove();
+                        bullets.splice(i, 1);
+
+                        score += 10;
+                        scoreDisplay.textContent = 'Score: ' + score;
+
+                        if (invaders.length === 0) {
+                            setTimeout(() => {
+                                if (gameActive) {
+                                    createInvaders();
+                                    invaderSpeed += 0.5;
+                                }
+                            }, 1000);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        function enemyShoot() {
+            if (invaders.length === 0 || Math.random() > 0.02) return;
+
+            const randomInvader = invaders[Math.floor(Math.random() * invaders.length)];
+
+            const bullet = document.createElement('div');
+            bullet.className = 'enemy-bullet';
+            bullet.style.left = (randomInvader.x + invaderSize / 2) + 'px';
+            bullet.style.top = (randomInvader.y + invaderSize) + 'px';
+
+            gameContainer.appendChild(bullet);
+            enemyBullets.push({
+                element: bullet,
+                x: randomInvader.x + invaderSize / 2,
+                y: randomInvader.y + invaderSize
+            });
+        }
+
+        function updateEnemyBullets() {
+            for (let i = enemyBullets.length - 1; i >= 0; i--) {
+                const bullet = enemyBullets[i];
+                bullet.y += enemyBulletSpeed;
+                bullet.element.style.top = bullet.y + 'px';
+
+                if (bullet.y > window.innerHeight) {
+                    bullet.element.remove();
+                    enemyBullets.splice(i, 1);
+                    continue;
+                }
+
+                const playerBottom = window.innerHeight - 80;
+                const playerTop = playerBottom - playerHeight;
+
+                if (bullet.y >= playerTop && bullet.y <= playerBottom &&
+                    bullet.x >= playerX - playerWidth / 2 && bullet.x <= playerX + playerWidth / 2) {
+                    endGame();
+                    return;
+                }
+            }
+        }
+
+        function createExplosion(x, y) {
+            const explosion = document.createElement('div');
+            explosion.className = 'explosion';
+            explosion.textContent = '💥';
+            explosion.style.left = (x - 20) + 'px';
+            explosion.style.top = (y - 20) + 'px';
+            gameContainer.appendChild(explosion);
+
+            setTimeout(() => explosion.remove(), 500);
         }
 
         function updateGame() {
             if (!gameActive) return;
 
-            for (let i = stars.length - 1; i >= 0; i--) {
-                const star = stars[i];
-                star.y += star.speed;
-                star.element.style.top = star.y + 'px';
-
-                if (checkCollision(star)) {
-                    score++;
-                    scoreDisplay.textContent = 'Score: ' + score;
-                    star.element.remove();
-                    stars.splice(i, 1);
-                } else if (star.y > window.innerHeight) {
-                    star.element.remove();
-                    stars.splice(i, 1);
-                    missedStars++;
-
-                    if (missedStars >= 10) {
-                        endGame();
-                        return;
-                    }
-                }
+            if (moveLeftPressed) {
+                playerX -= 5;
+                updatePlayerPosition();
+            }
+            if (moveRightPressed) {
+                playerX += 5;
+                updatePlayerPosition();
             }
 
-            if (Math.random() < 0.02 + score * 0.001) {
-                createStar();
-            }
+            updateInvaders();
+            updateBullets();
+            updateEnemyBullets();
+            enemyShoot();
 
             animationId = requestAnimationFrame(updateGame);
         }
 
         function startGame() {
             score = 0;
-            missedStars = 0;
-            stars = [];
+            invaders = [];
+            bullets = [];
+            enemyBullets = [];
             gameActive = true;
+            invaderDirection = 1;
+            invaderSpeed = 1;
+            moveLeftPressed = false;
+            moveRightPressed = false;
 
             scoreDisplay.textContent = 'Score: 0';
             startScreen.style.display = 'none';
             gameOverScreen.style.display = 'none';
 
-            document.querySelectorAll('.star').forEach(star => star.remove());
+            document.querySelectorAll('.invader, .bullet, .enemy-bullet, .explosion').forEach(el => el.remove());
 
-            updateBasketPosition(window.innerWidth / 2);
+            playerX = window.innerWidth / 2;
+            updatePlayerPosition();
+
+            createInvaders();
 
             animationId = requestAnimationFrame(updateGame);
         }
@@ -274,6 +513,8 @@
         function endGame() {
             gameActive = false;
             cancelAnimationFrame(animationId);
+            moveLeftPressed = false;
+            moveRightPressed = false;
 
             finalScoreDisplay.textContent = 'Score: ' + score;
             gameOverScreen.style.display = 'flex';
@@ -282,7 +523,7 @@
         startButton.addEventListener('click', startGame);
         restartButton.addEventListener('click', startGame);
 
-        updateBasketPosition(window.innerWidth / 2);
+        updatePlayerPosition();
     </script>
 </body>
 </html>
