@@ -36,16 +36,12 @@
             padding: 5px;
         }
 
-        #score-panel {
+        #title {
             text-align: center;
-            font-size: 12px;
-            text-shadow: 0 0 10px #00ff00;
-        }
-
-        #score-panel h1 {
             font-size: 18px;
-            margin-bottom: 5px;
             letter-spacing: 3px;
+            text-shadow: 0 0 10px #00ff00;
+            margin-bottom: 5px;
         }
 
         #play-area {
@@ -92,6 +88,20 @@
             margin: 0 auto;
             image-rendering: pixelated;
             image-rendering: crisp-edges;
+        }
+
+        #score-panel {
+            border: 3px solid #00ff00;
+            box-shadow: 0 0 15px #00ff00;
+            background: #000;
+            padding: 10px;
+            text-align: center;
+            font-size: 12px;
+            text-shadow: 0 0 8px #00ff00;
+        }
+
+        #score-panel div {
+            margin: 5px 0;
         }
 
         #sound-toggle {
@@ -203,12 +213,7 @@
 </head>
 <body>
     <div id="game-container">
-        <div id="score-panel">
-            <h1>8-BIT TETRIS</h1>
-            <div>SCORE: <span id="score">0</span></div>
-            <div>LINES: <span id="lines">0</span></div>
-            <div>LEVEL: <span id="level">1</span></div>
-        </div>
+        <h1 id="title">8-BIT TETRIS</h1>
 
         <div id="play-area">
             <canvas id="canvas" width="240" height="504"></canvas>
@@ -217,6 +222,11 @@
                     <h3>NEXT</h3>
                     <canvas id="next-canvas" width="96" height="96"></canvas>
                 </div>
+                <div id="score-panel">
+                    <div>SCORE: <span id="score">0</span></div>
+                    <div>LINES: <span id="lines">0</span></div>
+                    <div>LEVEL: <span id="level">1</span></div>
+                </div>
                 <button id="sound-toggle">♪ SOUND</button>
             </div>
         </div>
@@ -224,7 +234,7 @@
         <div id="controls">
             <button class="btn" id="rotate">ROTATE</button>
             <button class="btn" id="left">LEFT</button>
-            <button class="btn" id="down">DOWN</button>
+            <button class="btn" id="down">DROP</button>
             <button class="btn" id="right">RIGHT</button>
         </div>
     </div>
@@ -370,407 +380,4 @@
             // Epic heroic melody - Star Wars inspired
             const melody = [
                 [392.00, 0.15], // G4
-                [392.00, 0.15], // G4
-                [392.00, 0.15], // G4
-                [523.25, 0.6],  // C5 - heroic
-                [783.99, 0.6],  // G5
-                [698.46, 0.15], // F5
-                [659.25, 0.15], // E5
-                [587.33, 0.15], // D5
-                [1046.50, 0.6], // C6 - high
-                [783.99, 0.4],  // G5
-                [698.46, 0.15], // F5
-                [659.25, 0.15], // E5
-                [587.33, 0.15], // D5
-                [1046.50, 0.6], // C6
-                [783.99, 0.4],  // G5
-                [698.46, 0.15], // F5
-                [659.25, 0.15], // E5
-                [698.46, 0.15], // F5
-                [587.33, 0.8],  // D5
-            ];
-
-            // Powerful bass line
-            const bassLine = [
-                [130.81, 0.4], // C3
-                [0, 0.1],
-                [130.81, 0.4], // C3
-                [0, 0.1],
-                [130.81, 0.4], // C3
-                [196.00, 0.8], // G3
-                [130.81, 0.8], // C3
-                [146.83, 0.4], // D3
-                [0, 0.1],
-                [146.83, 0.4], // D3
-                [196.00, 0.8], // G3
-                [130.81, 0.8], // C3
-                [146.83, 0.4], // D3
-                [0, 0.1],
-                [146.83, 0.4], // D3
-                [110.00, 0.8], // A2
-                [146.83, 0.8], // D3
-            ];
-
-            // Chord progression for epic feel
-            const chords = [
-                [[261.63, 329.63, 392.00], 1.2], // C major
-                [[293.66, 369.99, 440.00], 1.2], // D minor
-                [[196.00, 246.94, 293.66], 1.2], // G major
-                [[261.63, 329.63, 392.00], 1.2], // C major
-                [[220.00, 277.18, 329.63], 1.2], // A minor
-                [[246.94, 311.13, 369.99], 1.2], // B dim
-                [[261.63, 329.63, 392.00], 1.6], // C major
-            ];
-
-            function scheduleLoop() {
-                const now = audioContext.currentTime;
-                let time = now;
-
-                // Schedule epic melody
-                melody.forEach(([freq, duration]) => {
-                    if (freq > 0) {
-                        playNote(freq, time, duration, 'square', 0.12);
-                        playNote(freq * 2, time, duration, 'sine', 0.04); // Harmonic
-                    }
-                    time += duration;
-                });
-
-                // Schedule bass
-                let bassTime = now;
-                bassLine.forEach(([freq, duration]) => {
-                    if (freq > 0) {
-                        playBassNote(freq, bassTime, duration);
-                    }
-                    bassTime += duration;
-                });
-
-                // Schedule chords
-                let chordTime = now;
-                chords.forEach(([freqs, duration]) => {
-                    playChord(freqs, chordTime, duration);
-                    chordTime += duration;
-                });
-
-                const loopDuration = melody.reduce((sum, [_, dur]) => sum + dur, 0);
-                setTimeout(scheduleLoop, loopDuration * 1000 - 100);
-            }
-
-            scheduleLoop();
-        }
-
-        function initBoard() {
-            board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
-        }
-
-        function drawBlock(x, y, colorIndex, context = ctx, blockSize = BLOCK_SIZE) {
-            context.fillStyle = COLORS[colorIndex];
-            context.fillRect(x * blockSize, y * blockSize, blockSize, blockSize);
-            context.strokeStyle = '#003300';
-            context.lineWidth = 2;
-            context.strokeRect(x * blockSize, y * blockSize, blockSize, blockSize);
-        }
-
-        function drawBoard() {
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            for (let y = 0; y < ROWS; y++) {
-                for (let x = 0; x < COLS; x++) {
-                    if (board[y][x]) {
-                        drawBlock(x, y, board[y][x]);
-                    }
-                }
-            }
-
-            if (currentPiece) {
-                for (let y = 0; y < currentPiece.shape.length; y++) {
-                    for (let x = 0; x < currentPiece.shape[y].length; x++) {
-                        if (currentPiece.shape[y][x]) {
-                            drawBlock(currentX + x, currentY + y, currentPiece.color);
-                        }
-                    }
-                }
-            }
-        }
-
-        function drawNextPiece() {
-            nextCtx.fillStyle = '#000';
-            nextCtx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
-
-            if (nextPiece) {
-                const blockSize = 20;
-                const offsetX = (nextCanvas.width - nextPiece.shape[0].length * blockSize) / 2 / blockSize;
-                const offsetY = (nextCanvas.height - nextPiece.shape.length * blockSize) / 2 / blockSize;
-
-                for (let y = 0; y < nextPiece.shape.length; y++) {
-                    for (let x = 0; x < nextPiece.shape[y].length; x++) {
-                        if (nextPiece.shape[y][x]) {
-                            drawBlock(offsetX + x, offsetY + y, nextPiece.color, nextCtx, blockSize);
-                        }
-                    }
-                }
-            }
-        }
-
-        function generatePiece() {
-            const shapeIndex = Math.floor(Math.random() * SHAPES.length);
-            return {
-                shape: SHAPES[shapeIndex],
-                color: shapeIndex + 1
-            };
-        }
-
-        function newPiece() {
-            if (!nextPiece) {
-                nextPiece = generatePiece();
-            }
-
-            currentPiece = nextPiece;
-            nextPiece = generatePiece();
-
-            currentX = Math.floor(COLS / 2) - Math.floor(currentPiece.shape[0].length / 2);
-            currentY = 0;
-
-            drawNextPiece();
-
-            if (collision()) {
-                gameOver();
-            }
-        }
-
-        function collision() {
-            for (let y = 0; y < currentPiece.shape.length; y++) {
-                for (let x = 0; x < currentPiece.shape[y].length; x++) {
-                    if (currentPiece.shape[y][x]) {
-                        const newX = currentX + x;
-                        const newY = currentY + y;
-
-                        if (newX < 0 || newX >= COLS || newY >= ROWS) {
-                            return true;
-                        }
-
-                        if (newY >= 0 && board[newY][newX]) {
-                            return true;
-                        }
-                    }
-                }
-            }
-            return false;
-        }
-
-        function merge() {
-            for (let y = 0; y < currentPiece.shape.length; y++) {
-                for (let x = 0; x < currentPiece.shape[y].length; x++) {
-                    if (currentPiece.shape[y][x]) {
-                        const boardY = currentY + y;
-                        const boardX = currentX + x;
-                        if (boardY >= 0) {
-                            board[boardY][boardX] = currentPiece.color;
-                        }
-                    }
-                }
-            }
-        }
-
-        function rotate() {
-            const rotated = currentPiece.shape[0].map((_, i) =>
-                currentPiece.shape.map(row => row[i]).reverse()
-            );
-            const previousShape = currentPiece.shape;
-            currentPiece.shape = rotated;
-
-            if (collision()) {
-                currentPiece.shape = previousShape;
-            }
-        }
-
-        function moveLeft() {
-            currentX--;
-            if (collision()) {
-                currentX++;
-            }
-        }
-
-        function moveRight() {
-            currentX++;
-            if (collision()) {
-                currentX--;
-            }
-        }
-
-        function moveDown() {
-            currentY++;
-            if (collision()) {
-                currentY--;
-                merge();
-                clearLines();
-                newPiece();
-            } else {
-                dropCounter = 0;
-            }
-        }
-
-        function hardDrop() {
-            while (!collision()) {
-                currentY++;
-            }
-            currentY--;
-            merge();
-            clearLines();
-            newPiece();
-            dropCounter = 0;
-        }
-
-        function clearLines() {
-            let linesCleared = 0;
-
-            for (let y = ROWS - 1; y >= 0; y--) {
-                if (board[y].every(cell => cell !== 0)) {
-                    board.splice(y, 1);
-                    board.unshift(Array(COLS).fill(0));
-                    linesCleared++;
-                    y++;
-                }
-            }
-
-            if (linesCleared > 0) {
-                lines += linesCleared;
-                score += [40, 100, 300, 1200][linesCleared - 1] * level;
-                level = Math.floor(lines / 10) + 1;
-                dropInterval = Math.max(100, 1000 - (level - 1) * 100);
-
-                document.getElementById('score').textContent = score;
-                document.getElementById('lines').textContent = lines;
-                document.getElementById('level').textContent = level;
-            }
-        }
-
-        function gameOver() {
-            gameRunning = false;
-            document.getElementById('final-score').textContent = score;
-            document.getElementById('game-over').style.display = 'block';
-        }
-
-        function restartGame() {
-            initBoard();
-            score = 0;
-            lines = 0;
-            level = 1;
-            dropInterval = 1000;
-            gameRunning = true;
-            nextPiece = null;
-
-            document.getElementById('score').textContent = score;
-            document.getElementById('lines').textContent = lines;
-            document.getElementById('level').textContent = level;
-            document.getElementById('game-over').style.display = 'none';
-
-            newPiece();
-        }
-
-        function update(time = 0) {
-            if (gameRunning) {
-                const deltaTime = time - lastTime;
-                lastTime = time;
-                dropCounter += deltaTime;
-
-                if (dropCounter > dropInterval) {
-                    moveDown();
-                }
-
-                drawBoard();
-            }
-
-            requestAnimationFrame(update);
-        }
-
-        function startGameWithMusic() {
-            initAudio();
-            startMusic();
-        }
-
-        // Sound toggle
-        document.getElementById('sound-toggle').addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleSound();
-        });
-
-        // Touch controls with preventDefault to ensure DOWN works
-        document.getElementById('rotate').addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            startGameWithMusic();
-            if (gameRunning) rotate();
-        });
-
-        document.getElementById('left').addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            startGameWithMusic();
-            if (gameRunning) moveLeft();
-        });
-
-        document.getElementById('right').addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            startGameWithMusic();
-            if (gameRunning) moveRight();
-        });
-
-        document.getElementById('down').addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            startGameWithMusic();
-            if (gameRunning) {
-                moveDown();
-            }
-        });
-
-        document.getElementById('restart').addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            restartGame();
-        });
-
-        // Keyboard controls
-        document.addEventListener('keydown', (e) => {
-            startGameWithMusic();
-            if (!gameRunning) return;
-
-            switch(e.key) {
-                case 'ArrowLeft':
-                    e.preventDefault();
-                    moveLeft();
-                    break;
-                case 'ArrowRight':
-                    e.preventDefault();
-                    moveRight();
-                    break;
-                case 'ArrowDown':
-                    e.preventDefault();
-                    moveDown();
-                    break;
-                case 'ArrowUp':
-                case ' ':
-                    e.preventDefault();
-                    rotate();
-                    break;
-                case 'm':
-                case 'M':
-                    e.preventDefault();
-                    toggleSound();
-                    break;
-            }
-        });
-
-        // Start music on first interaction (not on DOWN button to avoid conflict)
-        canvas.addEventListener('pointerdown', startGameWithMusic, { once: true });
-
-        // Initialize game
-        initBoard();
-        newPiece();
-        update();
-    </script>
-</body>
-</html>
+                [392
