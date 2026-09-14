@@ -194,7 +194,7 @@
                 this.element.className = 'bubble';
                 this.size = 50 + Math.random() * 40;
                 this.x = Math.random() * (window.innerWidth - this.size);
-                this.y = window.innerHeight;
+                this.y = -this.size;
                 this.rotation = Math.random() * 360;
 
                 const speedMultiplier = 1 + (difficultyLevel - 1) * 0.3;
@@ -230,12 +230,12 @@
             }
 
             update() {
-                this.y -= this.speed;
+                this.y += this.speed;
                 this.rotation += this.rotationSpeed;
                 this.element.style.top = this.y + 'px';
                 this.element.style.transform = `rotate(${this.rotation}deg)`;
 
-                if (this.y + this.size < 0) {
+                if (this.y > window.innerHeight) {
                     return false;
                 }
                 return true;
