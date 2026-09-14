@@ -40,43 +40,12 @@
             text-align: center;
             font-size: 12px;
             text-shadow: 0 0 10px #00ff00;
-            position: relative;
         }
 
         #score-panel h1 {
             font-size: 18px;
             margin-bottom: 5px;
             letter-spacing: 3px;
-        }
-
-        #sound-toggle {
-            position: absolute;
-            top: 0;
-            right: 0;
-            background: #003300;
-            border: 2px solid #00ff00;
-            color: #00ff00;
-            font-family: 'Courier New', monospace;
-            font-size: 16px;
-            width: 44px;
-            height: 44px;
-            cursor: pointer;
-            touch-action: none;
-            user-select: none;
-            text-shadow: 0 0 5px #00ff00;
-            box-shadow: 0 0 10px #00ff00;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #sound-toggle:active {
-            background: #00ff00;
-            color: #000;
-        }
-
-        #sound-toggle.muted {
-            opacity: 0.5;
         }
 
         #play-area {
@@ -123,6 +92,33 @@
             margin: 0 auto;
             image-rendering: pixelated;
             image-rendering: crisp-edges;
+        }
+
+        #sound-toggle {
+            background: #003300;
+            border: 3px solid #00ff00;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            width: 100%;
+            height: 50px;
+            cursor: pointer;
+            touch-action: none;
+            user-select: none;
+            text-shadow: 0 0 5px #00ff00;
+            box-shadow: 0 0 10px #00ff00;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #sound-toggle:active {
+            background: #00ff00;
+            color: #000;
+        }
+
+        #sound-toggle.muted {
+            opacity: 0.5;
         }
 
         #controls {
@@ -208,7 +204,6 @@
 <body>
     <div id="game-container">
         <div id="score-panel">
-            <button id="sound-toggle">♪</button>
             <h1>8-BIT TETRIS</h1>
             <div>SCORE: <span id="score">0</span></div>
             <div>LINES: <span id="lines">0</span></div>
@@ -222,6 +217,7 @@
                     <h3>NEXT</h3>
                     <canvas id="next-canvas" width="96" height="96"></canvas>
                 </div>
+                <button id="sound-toggle">♪ SOUND</button>
             </div>
         </div>
 
@@ -305,13 +301,13 @@
 
             if (soundEnabled) {
                 btn.classList.remove('muted');
-                btn.textContent = '♪';
+                btn.textContent = '♪ SOUND';
                 if (masterGain) {
                     masterGain.gain.setValueAtTime(1, audioContext.currentTime);
                 }
             } else {
                 btn.classList.add('muted');
-                btn.textContent = '♪';
+                btn.textContent = '♪ MUTED';
                 if (masterGain) {
                     masterGain.gain.setValueAtTime(0, audioContext.currentTime);
                 }
