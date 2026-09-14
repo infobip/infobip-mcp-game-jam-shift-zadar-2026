@@ -61,7 +61,13 @@
             justify-content: center;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             transition: transform 0.1s;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .circle svg {
+            width: 85%;
+            height: 85%;
+            pointer-events: none;
         }
 
         .circle:active {
@@ -192,7 +198,7 @@
         let spawnRate = 800;
         let flowersCollected = 0;
 
-        function createFlowerSVG(petals, petalColor, centerColor, size) {
+        function createFlowerSVG(petals, petalColor, centerColor) {
             const center = 50;
             const petalLength = 35;
             const petalWidth = 15;
@@ -208,9 +214,10 @@
                 petalsPaths += `<ellipse cx="${x}" cy="${y}" rx="${petalWidth}" ry="${petalLength}" transform="rotate(${rotation} ${x} ${y})" fill="${petalColor}" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>`;
             }
 
-            const svgString = `<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">${petalsPaths}<circle cx="${center}" cy="${center}" r="${centerRadius}" fill="${centerColor}" stroke="rgba(0,0,0,0.2)" stroke-width="1"/></svg>`;
-
-            return 'data:image/svg+xml,' + encodeURIComponent(svgString);
+            return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                ${petalsPaths}
+                <circle cx="${center}" cy="${center}" r="${centerRadius}" fill="${centerColor}" stroke="rgba(0,0,0,0.2)" stroke-width="1"/>
+            </svg>`;
         }
 
         function getFlowerColors(points) {
@@ -341,12 +348,9 @@
 
             const points = Math.floor(size / 10);
             const colors = getFlowerColors(points);
-            const flowerSVG = createFlowerSVG(points, colors.petal, colors.center, size * 0.9);
+            const flowerSVG = createFlowerSVG(points, colors.petal, colors.center);
 
-            circle.style.backgroundImage = `url("${flowerSVG}")`;
-            circle.style.backgroundSize = '90%';
-            circle.style.backgroundPosition = 'center';
-            circle.style.backgroundRepeat = 'no-repeat';
+            circle.innerHTML = flowerSVG;
 
             gameContainer.appendChild(circle);
             circles.push(circle);
