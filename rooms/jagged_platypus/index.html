@@ -258,11 +258,51 @@
         let comboMultiplier = 1;
         let comboTimeout = null;
         let comboDisplay = null;
+        let audioContext = null;
 
         const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#f0932b', '#eb4d4b', '#6c5ce7', '#a29bfe'];
 
         function getRandomColor() {
             return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playMeow() {
+            if (!audioContext) return;
+
+            const now = audioContext.currentTime;
+            const duration = 0.25;
+
+            // Create oscillator for the meow sound
+            const osc = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            // Connect nodes
+            osc.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            // Set oscillator type
+            osc.type = 'sine';
+
+            // Create meow-like frequency envelope (pitch goes up then down)
+            osc.frequency.setValueAtTime(400, now);
+            osc.frequency.linearRampToValueAtTime(800, now + 0.08);
+            osc.frequency.linearRampToValueAtTime(600, now + 0.15);
+            osc.frequency.linearRampToValueAtTime(300, now + duration);
+
+            // Volume envelope (quick attack, gradual decay)
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.3, now + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+            // Play the sound
+            osc.start(now);
+            osc.stop(now + duration);
         }
 
         function updateComboDisplay() {
@@ -303,6 +343,9 @@
             if (!gameActive || bubble.classList.contains('popping')) return;
 
             bubble.classList.add('popping');
+
+            // Play meow sound
+            playMeow();
 
             // Update combo
             combo++;
@@ -400,6 +443,9 @@
         }
 
         function startGame() {
+            // Initialize audio on first user interaction
+            initAudio();
+
             // Clean up any existing game state
             cleanupGame();
 
