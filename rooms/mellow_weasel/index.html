@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Dice Roller</title>
+    <title>Logarithmic Number Visualizer</title>
     <style>
         * {
             margin: 0;
@@ -14,304 +14,250 @@
 
         body {
             font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             width: 100vw;
             height: 100svh;
-            overflow-x: hidden;
-            overflow-y: auto;
-            touch-action: pan-y;
+            overflow: hidden;
+            touch-action: none;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
+            justify-content: center;
             color: white;
+            padding: 20px;
         }
 
         h1 {
-            font-size: 48px;
-            margin: 20px 0;
-            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            font-size: 32px;
+            margin-bottom: 30px;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
-        .controls {
-            background: rgba(255,255,255,0.15);
-            border-radius: 20px;
-            padding: 25px;
-            margin: 20px 0;
+        .container {
+            display: flex;
+            gap: 40px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
             width: 100%;
-            max-width: 500px;
-            backdrop-filter: blur(10px);
+            max-width: 800px;
         }
 
-        .control-group {
-            margin: 20px 0;
+        .input-section {
+            flex: 1;
+            min-width: 280px;
+            max-width: 350px;
         }
 
         label {
             display: block;
-            font-size: 20px;
+            font-size: 18px;
             margin-bottom: 10px;
             font-weight: bold;
         }
 
-        .button-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .option-btn {
-            flex: 1;
-            min-width: 70px;
-            padding: 15px;
-            font-size: 18px;
-            border: 3px solid rgba(255,255,255,0.5);
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border-radius: 12px;
-            cursor: pointer;
-            touch-action: manipulation;
-            transition: all 0.2s;
-            font-weight: bold;
-        }
-
-        .option-btn:active {
-            transform: scale(0.95);
-        }
-
-        .option-btn.selected {
-            background: rgba(255,255,255,0.9);
-            color: #667eea;
-            border-color: white;
-            box-shadow: 0 4px 15px rgba(255,255,255,0.3);
-        }
-
-        #rollBtn {
+        #numberInput {
             width: 100%;
             padding: 20px;
             font-size: 28px;
-            background: linear-gradient(135deg, #FFD700, #FFA500);
-            color: #333;
+            border: 4px solid white;
+            border-radius: 15px;
+            background: rgba(255,255,255,0.95);
+            color: #1e3c72;
+            font-weight: bold;
+            text-align: center;
+            touch-action: manipulation;
+        }
+
+        #numberInput:focus {
+            outline: none;
+            box-shadow: 0 0 20px rgba(255,255,255,0.5);
+        }
+
+        .info {
+            margin-top: 15px;
+            font-size: 14px;
+            opacity: 0.9;
+            text-align: center;
+        }
+
+        #display {
+            background: rgba(0,0,0,0.7);
             border: 4px solid white;
             border-radius: 20px;
-            cursor: pointer;
-            touch-action: manipulation;
+            padding: 25px;
+            min-width: 200px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+        }
+
+        #digitDisplay {
+            font-family: 'Courier New', monospace;
+            font-size: 72px;
             font-weight: bold;
-            margin-top: 20px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-            min-height: 70px;
-        }
-
-        #rollBtn:active {
-            transform: scale(0.98);
-        }
-
-        #results {
-            width: 100%;
-            max-width: 600px;
-            margin: 30px 0;
-        }
-
-        #diceContainer {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-
-        .die {
-            width: 80px;
-            height: 80px;
-            background: white;
-            color: #333;
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            font-weight: bold;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            border: 3px solid #667eea;
-        }
-
-        .die.rolling {
-            animation: roll 0.5s ease-in-out;
-        }
-
-        @keyframes roll {
-            0%, 100% { transform: rotate(0deg) scale(1); }
-            25% { transform: rotate(90deg) scale(1.1); }
-            50% { transform: rotate(180deg) scale(1); }
-            75% { transform: rotate(270deg) scale(1.1); }
-        }
-
-        #totalDisplay {
-            background: rgba(255,255,255,0.2);
-            border-radius: 20px;
+            color: #00ff00;
+            text-shadow: 0 0 20px #00ff00;
+            letter-spacing: 8px;
+            margin-bottom: 15px;
+            background: #000;
             padding: 20px;
-            text-align: center;
-            backdrop-filter: blur(10px);
+            border-radius: 10px;
         }
 
-        #totalDisplay h2 {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-
-        #totalValue {
-            font-size: 64px;
-            font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .stats {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 15px;
+        #scientificNotation {
             font-size: 18px;
+            color: #90EE90;
+            margin-top: 10px;
         }
 
-        .stat-item {
-            text-align: center;
+        .thermometer-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        .stat-label {
-            opacity: 0.8;
-            font-size: 14px;
-        }
-
-        .stat-value {
-            font-size: 24px;
+        .scale-labels {
+            position: absolute;
+            left: -80px;
+            top: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 16px;
             font-weight: bold;
+        }
+
+        .scale-label {
+            text-align: right;
+            width: 70px;
+        }
+
+        #thermometer {
+            width: 60px;
+            height: 450px;
+            background: rgba(255,255,255,0.2);
+            border: 4px solid white;
+            border-radius: 30px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
+        }
+
+        #mercury {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, #ff0000, #ff6600, #ffaa00);
+            transition: height 0.5s ease-out;
+            border-radius: 0 0 26px 26px;
+            box-shadow: 0 0 20px rgba(255,100,0,0.6);
+        }
+
+        #currentMarker {
+            position: absolute;
+            left: -10px;
+            right: -10px;
+            height: 4px;
+            background: white;
+            box-shadow: 0 0 10px white;
+            transition: bottom 0.5s ease-out;
+        }
+
+        .tick {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: rgba(255,255,255,0.3);
         }
     </style>
 </head>
 <body>
-    <h1>🎲 Dice Roller</h1>
+    <h1>📊 Logarithmic Number Visualizer</h1>
 
-    <div class="controls">
-        <div class="control-group">
-            <label>Number of Dice</label>
-            <div class="button-group" id="numDiceButtons">
-                <button class="option-btn selected" data-value="1">1</button>
-                <button class="option-btn" data-value="2">2</button>
-                <button class="option-btn" data-value="3">3</button>
-                <button class="option-btn" data-value="4">4</button>
-                <button class="option-btn" data-value="5">5</button>
-                <button class="option-btn" data-value="6">6</button>
+    <div class="container">
+        <div class="input-section">
+            <label for="numberInput">Enter Number (1 - 5,000,000)</label>
+            <input type="number" id="numberInput" min="1" max="5000000" value="1" placeholder="Enter number">
+            <div class="info">Logarithmic scale visualization</div>
+        </div>
+
+        <div class="thermometer-container">
+            <div class="scale-labels">
+                <div class="scale-label">5M</div>
+                <div class="scale-label">1M</div>
+                <div class="scale-label">100K</div>
+                <div class="scale-label">10K</div>
+                <div class="scale-label">1K</div>
+                <div class="scale-label">100</div>
+                <div class="scale-label">10</div>
+                <div class="scale-label">1</div>
+            </div>
+            <div id="thermometer">
+                <div id="mercury"></div>
+                <div id="currentMarker"></div>
             </div>
         </div>
 
-        <div class="control-group">
-            <label>Dice Type (Faces)</label>
-            <div class="button-group" id="facesButtons">
-                <button class="option-btn" data-value="4">D4</button>
-                <button class="option-btn selected" data-value="6">D6</button>
-                <button class="option-btn" data-value="8">D8</button>
-                <button class="option-btn" data-value="10">D10</button>
-                <button class="option-btn" data-value="12">D12</button>
-                <button class="option-btn" data-value="20">D20</button>
-            </div>
-        </div>
-
-        <button id="rollBtn">🎲 ROLL DICE</button>
-    </div>
-
-    <div id="results">
-        <div id="diceContainer"></div>
-        <div id="totalDisplay" style="display: none;">
-            <h2>Total</h2>
-            <div id="totalValue">0</div>
-            <div class="stats">
-                <div class="stat-item">
-                    <div class="stat-label">Min</div>
-                    <div class="stat-value" id="minValue">-</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">Max</div>
-                    <div class="stat-value" id="maxValue">-</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">Avg</div>
-                    <div class="stat-value" id="avgValue">-</div>
-                </div>
-            </div>
+        <div id="display">
+            <div id="digitDisplay">000</div>
+            <div id="scientificNotation">0.00e+0</div>
         </div>
     </div>
 
     <script>
-        let numDice = 1;
-        let numFaces = 6;
+        const numberInput = document.getElementById('numberInput');
+        const mercury = document.getElementById('mercury');
+        const currentMarker = document.getElementById('currentMarker');
+        const digitDisplay = document.getElementById('digitDisplay');
+        const scientificNotation = document.getElementById('scientificNotation');
 
-        const numDiceButtons = document.querySelectorAll('#numDiceButtons .option-btn');
-        const facesButtons = document.querySelectorAll('#facesButtons .option-btn');
-        const rollBtn = document.getElementById('rollBtn');
-        const diceContainer = document.getElementById('diceContainer');
-        const totalDisplay = document.getElementById('totalDisplay');
-        const totalValue = document.getElementById('totalValue');
-        const minValue = document.getElementById('minValue');
-        const maxValue = document.getElementById('maxValue');
-        const avgValue = document.getElementById('avgValue');
+        const MIN_VALUE = 1;
+        const MAX_VALUE = 5000000;
 
-        numDiceButtons.forEach(btn => {
-            btn.addEventListener('pointerdown', (e) => {
-                e.preventDefault();
-                numDiceButtons.forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                numDice = parseInt(btn.dataset.value);
-            });
-        });
+        function updateVisualization() {
+            let value = parseInt(numberInput.value) || 1;
 
-        facesButtons.forEach(btn => {
-            btn.addEventListener('pointerdown', (e) => {
-                e.preventDefault();
-                facesButtons.forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                numFaces = parseInt(btn.dataset.value);
-            });
-        });
+            if (value < MIN_VALUE) value = MIN_VALUE;
+            if (value > MAX_VALUE) value = MAX_VALUE;
 
-        function rollDice() {
-            diceContainer.innerHTML = '';
-            const results = [];
+            numberInput.value = value;
 
-            for (let i = 0; i < numDice; i++) {
-                const die = document.createElement('div');
-                die.className = 'die rolling';
-                die.textContent = '?';
-                diceContainer.appendChild(die);
+            const minLog = Math.log10(MIN_VALUE);
+            const maxLog = Math.log10(MAX_VALUE);
+            const valueLog = Math.log10(value);
 
-                setTimeout(() => {
-                    const value = Math.floor(Math.random() * numFaces) + 1;
-                    results.push(value);
-                    die.textContent = value;
-                    die.classList.remove('rolling');
+            const percentage = ((valueLog - minLog) / (maxLog - minLog)) * 100;
 
-                    if (results.length === numDice) {
-                        displayResults(results);
-                    }
-                }, 500);
+            mercury.style.height = percentage + '%';
+            currentMarker.style.bottom = percentage + '%';
+
+            if (value >= 1000) {
+                const shortened = (value / 1000).toFixed(0);
+                digitDisplay.textContent = shortened.padStart(3, '0');
+            } else {
+                digitDisplay.textContent = value.toString().padStart(3, '0');
             }
+
+            const exponent = Math.floor(Math.log10(value));
+            const mantissa = value / Math.pow(10, exponent);
+            scientificNotation.textContent = `${mantissa.toFixed(2)}e+${exponent}`;
+
+            const formattedNumber = value.toLocaleString();
+            document.title = `${formattedNumber} - Log Visualizer`;
         }
 
-        function displayResults(results) {
-            const total = results.reduce((sum, val) => sum + val, 0);
-            const min = Math.min(...results);
-            const max = Math.max(...results);
-            const avg = (total / results.length).toFixed(1);
+        numberInput.addEventListener('input', updateVisualization);
 
-            totalValue.textContent = total;
-            minValue.textContent = min;
-            maxValue.textContent = max;
-            avgValue.textContent = avg;
-            totalDisplay.style.display = 'block';
-        }
-
-        rollBtn.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            rollDice();
+        numberInput.addEventListener('focus', function() {
+            this.select();
         });
+
+        updateVisualization();
     </script>
 </body>
 </html>
