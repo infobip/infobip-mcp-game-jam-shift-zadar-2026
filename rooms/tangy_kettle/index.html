@@ -335,6 +335,7 @@
         let pestsPerSpawn = 1;
         let fertilizerMultiplier = 1;
         let isFruitLevel = false;
+        const maxItemsOnScreen = 15;
 
         const flowerPests = [
             { emoji: '🐸', class: 'frog' },
@@ -349,6 +350,10 @@
         ];
 
         const fruits = ['🍎', '🍌', '🍑', '🍒', '🍐', '🍊', '🍓', '🍇'];
+
+        function getItemCount() {
+            return circles.filter(c => !c.dataset.type).length;
+        }
 
         function createFlowerSVG(petals, petalColor, centerColor) {
             const center = 50;
@@ -752,6 +757,10 @@
         function createCircle() {
             if (!gameActive) return;
 
+            if (getItemCount() >= maxItemsOnScreen) {
+                return;
+            }
+
             const circle = document.createElement('div');
             circle.className = 'circle';
 
@@ -817,7 +826,9 @@
 
                 if (fertilizerMultiplier > 1) {
                     for (let i = 0; i < fertilizerMultiplier - 1; i++) {
-                        setTimeout(() => createCircle(), i * 100);
+                        if (getItemCount() < maxItemsOnScreen) {
+                            setTimeout(() => createCircle(), i * 100);
+                        }
                     }
                 }
 
@@ -836,7 +847,9 @@
 
         function spawnItems() {
             for (let i = 0; i < flowersPerSpawn; i++) {
-                setTimeout(() => createCircle(), i * 100);
+                if (getItemCount() < maxItemsOnScreen) {
+                    setTimeout(() => createCircle(), i * 100);
+                }
             }
         }
 
