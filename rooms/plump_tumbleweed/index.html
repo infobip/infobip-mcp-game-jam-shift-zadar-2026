@@ -15,11 +15,12 @@
             width: 100%;
             height: 100svh;
             overflow: hidden;
-            background: #1a1a2e;
+            background: #000;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
             touch-action: none;
             -webkit-user-select: none;
             user-select: none;
+            cursor: none;
         }
 
         #game-container {
@@ -27,30 +28,51 @@
             height: 100%;
             position: relative;
             overflow: hidden;
-            background: linear-gradient(180deg, #0f3460 0%, #16213e 100%);
+            background: linear-gradient(180deg, #2a1a3e 0%, #0d1117 50%, #1a0f1e 100%);
         }
 
         #hud {
             position: absolute;
-            top: 10px;
-            left: 0;
-            right: 0;
+            top: 20px;
+            left: 20px;
+            right: 20px;
             display: flex;
-            justify-content: space-around;
-            padding: 0 20px;
+            justify-content: space-between;
             z-index: 100;
             pointer-events: none;
         }
 
         .hud-item {
-            background: rgba(0, 0, 0, 0.7);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 18px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 20px;
             font-weight: bold;
-            color: #00ff88;
-            text-shadow: 0 0 10px #00ff88;
-            border: 2px solid #00ff88;
+            color: #ff3333;
+            text-shadow: 0 0 10px #ff3333;
+            border: 2px solid #ff3333;
+        }
+
+        #health-bar {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 3px solid #ff3333;
+            border-radius: 5px;
+            overflow: hidden;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        #health-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff3333 0%, #ff6666 100%);
+            transition: width 0.3s;
         }
 
         #game-area {
@@ -59,53 +81,94 @@
             left: 0;
             right: 0;
             bottom: 0;
-            perspective: 1000px;
             touch-action: none;
+            cursor: none;
         }
 
-        #hero {
+        #crosshair {
             position: absolute;
             width: 50px;
             height: 50px;
-            font-size: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
             pointer-events: none;
-            z-index: 70;
-            filter: drop-shadow(0 0 10px #00ff88);
-            transition: transform 0.1s;
+            z-index: 90;
+            transform: translate(-50%, -50%);
+        }
+
+        #crosshair::before,
+        #crosshair::after {
+            content: '';
+            position: absolute;
+            background: #ff3333;
+            box-shadow: 0 0 10px #ff3333;
+        }
+
+        #crosshair::before {
+            width: 30px;
+            height: 3px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #crosshair::after {
+            width: 3px;
+            height: 30px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .crosshair-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 3px solid #ff3333;
+            border-radius: 50%;
+            box-shadow: 0 0 15px #ff3333;
+            opacity: 0.8;
         }
 
         .enemy {
             position: absolute;
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #ff0844 0%, #ff6b6b 100%);
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #8b0000 0%, #ff0000 100%);
             border-radius: 10px;
-            cursor: pointer;
+            cursor: crosshair;
             touch-action: none;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 32px;
-            box-shadow: 0 0 20px rgba(255, 8, 68, 0.6),
-                        inset 0 0 10px rgba(255, 255, 255, 0.3);
-            transition: transform 0.1s;
+            font-size: 48px;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.8),
+                        inset 0 0 20px rgba(255, 255, 255, 0.2);
+            transform: scale(0);
+            animation: enemy-appear 0.3s ease-out forwards;
         }
 
-        .enemy:active {
-            transform: scale(0.9);
+        @keyframes enemy-appear {
+            0% {
+                transform: scale(0);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .enemy.attacking {
+            animation: enemy-attack 0.5s ease-in-out infinite;
+        }
+
+        @keyframes enemy-attack {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
 
         .explosion {
             position: absolute;
             pointer-events: none;
-            font-size: 48px;
-            animation: explode 0.5s ease-out forwards;
+            font-size: 60px;
+            animation: explode 0.6s ease-out forwards;
             z-index: 50;
         }
 
@@ -116,18 +179,18 @@
             }
             100% {
                 opacity: 0;
-                transform: scale(3) rotate(180deg);
+                transform: scale(3) rotate(360deg);
             }
         }
 
         .hit-effect {
             position: absolute;
             pointer-events: none;
-            font-size: 24px;
+            font-size: 28px;
             font-weight: bold;
-            color: #00ff88;
-            text-shadow: 0 0 10px #00ff88;
-            animation: score-pop 0.6s ease-out forwards;
+            color: #ff3333;
+            text-shadow: 0 0 10px #ff3333;
+            animation: score-pop 0.8s ease-out forwards;
             z-index: 60;
         }
 
@@ -138,60 +201,22 @@
             }
             100% {
                 opacity: 0;
-                transform: translateY(-40px) scale(1.3);
+                transform: translateY(-60px) scale(1.5);
             }
         }
 
-        .bullet {
+        .bullet-hole {
             position: absolute;
-            width: 8px;
-            height: 8px;
-            background: radial-gradient(circle, #00ff88 0%, #00d9ff 100%);
+            width: 15px;
+            height: 15px;
+            background: radial-gradient(circle, #000 30%, transparent 70%);
             border-radius: 50%;
             pointer-events: none;
-            box-shadow: 0 0 15px #00ff88;
-            z-index: 60;
-        }
-
-        .aim-line {
-            position: absolute;
-            pointer-events: none;
-            height: 2px;
-            background: linear-gradient(90deg, rgba(0, 255, 136, 0.5), transparent);
-            transform-origin: left center;
-            z-index: 65;
             opacity: 0.6;
+            z-index: 5;
         }
 
-        #game-over-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 200;
-        }
-
-        #game-over-screen h1 {
-            font-size: 48px;
-            color: #ff0844;
-            margin-bottom: 20px;
-            text-shadow: 0 0 20px #ff0844;
-        }
-
-        #game-over-screen .stats {
-            font-size: 24px;
-            color: #00ff88;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        #start-screen {
+        #start-screen, #game-over-screen {
             position: absolute;
             top: 0;
             left: 0;
@@ -201,15 +226,20 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.95);
             z-index: 200;
         }
 
-        #start-screen h1 {
-            font-size: 42px;
-            color: #00ff88;
+        #game-over-screen {
+            display: none;
+        }
+
+        #start-screen h1, #game-over-screen h1 {
+            font-size: 48px;
+            color: #ff3333;
             margin-bottom: 20px;
-            text-shadow: 0 0 20px #00ff88;
+            text-shadow: 0 0 30px #ff3333;
+            text-align: center;
         }
 
         #start-screen p {
@@ -218,22 +248,31 @@
             margin-bottom: 30px;
             text-align: center;
             padding: 0 20px;
-            line-height: 1.6;
+            line-height: 1.8;
+        }
+
+        .stats {
+            font-size: 24px;
+            color: #ff3333;
+            margin-bottom: 30px;
+            text-align: center;
+            line-height: 1.8;
         }
 
         .game-btn {
-            padding: 16px 48px;
-            font-size: 24px;
-            background: linear-gradient(135deg, #00ff88 0%, #00d9ff 100%);
-            color: #1a1a2e;
+            padding: 18px 50px;
+            font-size: 26px;
+            background: linear-gradient(135deg, #ff3333 0%, #cc0000 100%);
+            color: white;
             border: none;
-            border-radius: 50px;
+            border-radius: 10px;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+            box-shadow: 0 0 30px rgba(255, 51, 51, 0.8);
             touch-action: manipulation;
-            min-width: 200px;
-            min-height: 60px;
+            min-width: 220px;
+            min-height: 70px;
+            text-transform: uppercase;
         }
 
         .game-btn:active {
@@ -243,20 +282,38 @@
         .muzzle-flash {
             position: absolute;
             pointer-events: none;
-            font-size: 30px;
-            animation: flash 0.15s ease-out forwards;
-            z-index: 80;
+            font-size: 40px;
+            animation: flash 0.1s ease-out forwards;
+            z-index: 85;
         }
 
         @keyframes flash {
             0% {
                 opacity: 1;
-                transform: scale(0.5);
+                transform: scale(0.3);
             }
             100% {
                 opacity: 0;
-                transform: scale(1.5);
+                transform: scale(2);
             }
+        }
+
+        .damage-vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, transparent 30%, rgba(255, 0, 0, 0.5) 100%);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 95;
+            animation: damage-flash 0.3s ease-out;
+        }
+
+        @keyframes damage-flash {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
         }
     </style>
 </head>
@@ -265,37 +322,42 @@
         <div id="hud">
             <div class="hud-item">SCORE: <span id="score">0</span></div>
             <div class="hud-item">WAVE: <span id="wave">1</span></div>
-            <div class="hud-item">KILLS: <span id="kills">0</span></div>
+        </div>
+
+        <div id="health-bar">
+            <div id="health-fill"></div>
         </div>
 
         <div id="game-area">
-            <div id="hero">🚀</div>
+            <div id="crosshair">
+                <div class="crosshair-ring"></div>
+            </div>
         </div>
 
         <div id="start-screen">
-            <h1>⚡ 360° SHOOTER ⚡</h1>
-            <p>Drag to move your ship<br>Tap anywhere to shoot in that direction!<br>Don't let enemies touch you!</p>
-            <button class="game-btn" id="start-btn">START MISSION</button>
+            <h1>🎯 CRISIS ZONE 🎯</h1>
+            <p>Classic arcade rail shooter action!<br><br>Tap to aim and shoot enemies<br>Don't let them attack you!<br>Survive as long as you can!</p>
+            <button class="game-btn" id="start-btn">Start Game</button>
         </div>
 
         <div id="game-over-screen">
-            <h1>💀 GAME OVER 💀</h1>
+            <h1>💀 MISSION FAILED 💀</h1>
             <div class="stats">
                 <div>Final Score: <span id="final-score">0</span></div>
                 <div>Wave Reached: <span id="final-wave">1</span></div>
-                <div>Total Kills: <span id="final-kills">0</span></div>
+                <div>Enemies Eliminated: <span id="final-kills">0</span></div>
             </div>
-            <button class="game-btn" id="retry-btn">TRY AGAIN</button>
+            <button class="game-btn" id="retry-btn">Retry Mission</button>
         </div>
     </div>
 
     <script>
         const gameContainer = document.getElementById('game-container');
         const gameArea = document.getElementById('game-area');
-        const hero = document.getElementById('hero');
+        const crosshair = document.getElementById('crosshair');
         const scoreDisplay = document.getElementById('score');
         const waveDisplay = document.getElementById('wave');
-        const killsDisplay = document.getElementById('kills');
+        const healthFill = document.getElementById('health-fill');
         const startScreen = document.getElementById('start-screen');
         const gameOverScreen = document.getElementById('game-over-screen');
         const startBtn = document.getElementById('start-btn');
@@ -304,114 +366,19 @@
         let score = 0;
         let wave = 1;
         let kills = 0;
+        let health = 100;
         let gameActive = false;
         let enemySpawnInterval;
-        let waveEnemiesSpawned = 0;
-        let maxEnemiesPerWave = 10;
+        let currentMouseX = window.innerWidth / 2;
+        let currentMouseY = window.innerHeight / 2;
 
-        // Hero movement
-        let heroX = window.innerWidth / 2;
-        let heroY = window.innerHeight - 80;
-        let heroVelX = 0;
-        let heroVelY = 0;
-        let targetX = heroX;
-        let targetY = heroY;
-        let isDragging = false;
-
-        const ACCELERATION = 0.8;
-        const FRICTION = 0.85;
-        const MAX_SPEED = 15;
-        const COLLISION_DISTANCE = 55; // Distance for enemy collision
-
-        function updateHeroPosition() {
-            if (!gameActive) return;
-
-            // Calculate distance to target
-            const dx = targetX - heroX;
-            const dy = targetY - heroY;
-
-            // Apply acceleration towards target
-            heroVelX += dx * ACCELERATION * 0.01;
-            heroVelY += dy * ACCELERATION * 0.01;
-
-            // Apply friction
-            heroVelX *= FRICTION;
-            heroVelY *= FRICTION;
-
-            // Limit speed
-            const speed = Math.sqrt(heroVelX * heroVelX + heroVelY * heroVelY);
-            if (speed > MAX_SPEED) {
-                heroVelX = (heroVelX / speed) * MAX_SPEED;
-                heroVelY = (heroVelY / speed) * MAX_SPEED;
-            }
-
-            // Update position
-            heroX += heroVelX;
-            heroY += heroVelY;
-
-            // Keep hero in bounds
-            const margin = 25;
-            heroX = Math.max(margin, Math.min(window.innerWidth - margin, heroX));
-            heroY = Math.max(80, Math.min(window.innerHeight - margin, heroY));
-
-            // Update DOM
-            hero.style.left = heroX + 'px';
-            hero.style.bottom = (window.innerHeight - heroY) + 'px';
-            hero.style.transform = 'translateX(-50%)';
-
-            // Check collision with enemies
-            checkEnemyCollision();
-
-            requestAnimationFrame(updateHeroPosition);
-        }
-
-        function checkEnemyCollision() {
-            const enemies = document.querySelectorAll('.enemy');
-            enemies.forEach(enemy => {
-                if (enemy.dataset.destroyed) return;
-
-                const rect = enemy.getBoundingClientRect();
-                const enemyX = rect.left + rect.width / 2;
-                const enemyY = rect.top + rect.height / 2;
-
-                const dx = heroX - enemyX;
-                const dy = heroY - enemyY;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-
-                if (distance < COLLISION_DISTANCE) {
-                    gameOver();
-                }
-            });
-        }
-
-        function gameOver() {
-            gameActive = false;
-            clearInterval(enemySpawnInterval);
-
-            // Show game over screen
-            document.getElementById('final-score').textContent = score;
-            document.getElementById('final-wave').textContent = wave;
-            document.getElementById('final-kills').textContent = kills;
-            gameOverScreen.style.display = 'flex';
-
-            // Big explosion at hero
-            const explosion = document.createElement('div');
-            explosion.className = 'explosion';
-            explosion.textContent = '💥';
-            explosion.style.left = heroX + 'px';
-            explosion.style.top = heroY + 'px';
-            explosion.style.fontSize = '80px';
-            gameArea.appendChild(explosion);
-            setTimeout(() => explosion.remove(), 500);
-        }
-
-        // Touch/pointer handling
+        // Update crosshair position
         gameArea.addEventListener('pointermove', (e) => {
-            if (!gameActive) return;
             e.preventDefault();
-            targetX = e.clientX;
-            targetY = e.clientY;
-            isDragging = true;
+            currentMouseX = e.clientX;
+            currentMouseY = e.clientY;
+            crosshair.style.left = currentMouseX + 'px';
+            crosshair.style.top = currentMouseY + 'px';
         });
 
         gameArea.addEventListener('pointerdown', (e) => {
@@ -421,132 +388,45 @@
             const tapX = e.clientX;
             const tapY = e.clientY;
 
-            targetX = tapX;
-            targetY = tapY;
-            isDragging = true;
-
-            // Check if tapped on enemy
+            // Check if hit enemy
             const target = e.target;
             if (target.classList.contains('enemy')) {
-                return; // Enemy click handler will handle this
+                shootEnemy(target, tapX, tapY);
+            } else {
+                // Missed shot - show bullet hole
+                createBulletHole(tapX, tapY);
             }
 
-            // Shoot toward tap position
-            shootBullet(tapX, tapY);
+            // Muzzle flash at crosshair
+            createMuzzleFlash(tapX, tapY);
         });
 
-        gameArea.addEventListener('pointerup', (e) => {
-            isDragging = false;
-        });
-
-        function shootBullet(targetTapX, targetTapY) {
-            // Calculate direction from hero to tap position
-            const dx = targetTapX - heroX;
-            const dy = targetTapY - heroY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < 10) return; // Too close, don't shoot
-
-            // Normalize direction
-            const dirX = dx / distance;
-            const dirY = dy / distance;
-
-            // Calculate angle for rotation
-            const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-
-            // Show aim line briefly
-            const aimLine = document.createElement('div');
-            aimLine.className = 'aim-line';
-            aimLine.style.left = heroX + 'px';
-            aimLine.style.top = heroY + 'px';
-            aimLine.style.width = Math.min(distance, 200) + 'px';
-            aimLine.style.transform = `rotate(${angle}deg)`;
-            gameArea.appendChild(aimLine);
-            setTimeout(() => aimLine.remove(), 100);
-
-            const bullet = document.createElement('div');
-            bullet.className = 'bullet';
-            bullet.style.left = heroX + 'px';
-            bullet.style.top = heroY + 'px';
-            gameArea.appendChild(bullet);
-
-            // Muzzle flash at hero position, rotated toward target
+        function createMuzzleFlash(x, y) {
             const flash = document.createElement('div');
             flash.className = 'muzzle-flash';
             flash.textContent = '💥';
-            flash.style.left = heroX + 'px';
-            flash.style.top = heroY + 'px';
-            flash.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+            flash.style.left = x + 'px';
+            flash.style.top = y + 'px';
             gameArea.appendChild(flash);
-            setTimeout(() => flash.remove(), 150);
-
-            // Rotate hero briefly toward shot direction
-            hero.style.transform = `translateX(-50%) rotate(${angle}deg)`;
-            setTimeout(() => {
-                hero.style.transform = 'translateX(-50%)';
-            }, 200);
-
-            let bulletX = heroX;
-            let bulletY = heroY;
-            const bulletSpeed = 18;
-            let animFrame;
-
-            function moveBullet() {
-                if (!gameActive) {
-                    bullet.remove();
-                    return;
-                }
-
-                bulletX += dirX * bulletSpeed;
-                bulletY += dirY * bulletSpeed;
-
-                bullet.style.left = bulletX + 'px';
-                bullet.style.top = bulletY + 'px';
-
-                // Check collision with enemies
-                const enemies = document.querySelectorAll('.enemy');
-                const bulletRect = bullet.getBoundingClientRect();
-
-                enemies.forEach(enemy => {
-                    if (enemy.dataset.destroyed) return;
-
-                    const enemyRect = enemy.getBoundingClientRect();
-                    if (rectsIntersect(bulletRect, enemyRect)) {
-                        destroyEnemy(enemy);
-                        bullet.remove();
-                        cancelAnimationFrame(animFrame);
-                    }
-                });
-
-                // Check if bullet is out of bounds
-                if (bulletX < -50 || bulletX > window.innerWidth + 50 ||
-                    bulletY < -50 || bulletY > window.innerHeight + 50) {
-                    bullet.remove();
-                    cancelAnimationFrame(animFrame);
-                    return;
-                }
-
-                animFrame = requestAnimationFrame(moveBullet);
-            }
-
-            animFrame = requestAnimationFrame(moveBullet);
+            setTimeout(() => flash.remove(), 100);
         }
 
-        function rectsIntersect(r1, r2) {
-            return !(r2.left > r1.right ||
-                     r2.right < r1.left ||
-                     r2.top > r1.bottom ||
-                     r2.bottom < r1.top);
+        function createBulletHole(x, y) {
+            const hole = document.createElement('div');
+            hole.className = 'bullet-hole';
+            hole.style.left = x + 'px';
+            hole.style.top = y + 'px';
+            gameArea.appendChild(hole);
+            setTimeout(() => hole.remove(), 3000);
         }
 
-        function destroyEnemy(enemy) {
+        function shootEnemy(enemy, x, y) {
             if (enemy.dataset.destroyed) return;
             enemy.dataset.destroyed = 'true';
 
-            score += 50;
+            score += 100;
             kills++;
             scoreDisplay.textContent = score;
-            killsDisplay.textContent = kills;
 
             // Explosion
             const rect = enemy.getBoundingClientRect();
@@ -554,20 +434,20 @@
             explosion.className = 'explosion';
             explosion.textContent = '💥';
             explosion.style.left = rect.left + rect.width / 2 + 'px';
-            explosion.style.top = rect.top + 'px';
-            explosion.style.transform = 'translateX(-50%)';
+            explosion.style.top = rect.top + rect.height / 2 + 'px';
+            explosion.style.transform = 'translate(-50%, -50%)';
             gameArea.appendChild(explosion);
-            setTimeout(() => explosion.remove(), 500);
+            setTimeout(() => explosion.remove(), 600);
 
             // Score popup
             const hitEffect = document.createElement('div');
             hitEffect.className = 'hit-effect';
-            hitEffect.textContent = '+50';
+            hitEffect.textContent = '+100';
             hitEffect.style.left = rect.left + rect.width / 2 + 'px';
             hitEffect.style.top = rect.top + 'px';
             hitEffect.style.transform = 'translateX(-50%)';
             gameArea.appendChild(hitEffect);
-            setTimeout(() => hitEffect.remove(), 600);
+            setTimeout(() => hitEffect.remove(), 800);
 
             enemy.remove();
         }
@@ -577,83 +457,85 @@
 
             const enemy = document.createElement('div');
             enemy.className = 'enemy';
-            enemy.textContent = '👾';
 
-            // Spawn from random edges of screen
-            const edge = Math.floor(Math.random() * 4);
-            let startX, startY;
+            // Random enemy types
+            const types = ['👹', '👺', '🤖', '👻', '💀', '🧟'];
+            enemy.textContent = types[Math.floor(Math.random() * types.length)];
 
-            switch(edge) {
-                case 0: // Top
-                    startX = Math.random() * window.innerWidth;
-                    startY = -80;
-                    break;
-                case 1: // Right
-                    startX = window.innerWidth + 80;
-                    startY = Math.random() * window.innerHeight;
-                    break;
-                case 2: // Bottom
-                    startX = Math.random() * window.innerWidth;
-                    startY = window.innerHeight + 80;
-                    break;
-                case 3: // Left
-                    startX = -80;
-                    startY = Math.random() * window.innerHeight;
-                    break;
-            }
+            // Spawn at random positions on screen
+            const positions = [
+                { x: Math.random() * (window.innerWidth - 100) + 50, y: 100 + Math.random() * 150 }, // Top
+                { x: 100 + Math.random() * 150, y: window.innerHeight / 2 + (Math.random() - 0.5) * 200 }, // Left
+                { x: window.innerWidth - 250 + Math.random() * 150, y: window.innerHeight / 2 + (Math.random() - 0.5) * 200 }, // Right
+                { x: window.innerWidth / 2 + (Math.random() - 0.5) * 300, y: window.innerHeight / 2 + (Math.random() - 0.5) * 200 } // Center
+            ];
 
-            enemy.style.left = startX + 'px';
-            enemy.style.top = startY + 'px';
+            const pos = positions[Math.floor(Math.random() * positions.length)];
+            enemy.style.left = pos.x + 'px';
+            enemy.style.top = pos.y + 'px';
 
             gameArea.appendChild(enemy);
 
-            const duration = Math.max(3500 - (wave * 100), 2000);
+            // Enemy lifetime - starts attacking after a delay
+            const attackDelay = Math.max(2500 - (wave * 100), 1000);
 
-            let startTime = Date.now();
-            let animationFrame;
+            setTimeout(() => {
+                if (!enemy.dataset.destroyed && gameActive) {
+                    enemy.classList.add('attacking');
 
-            // Move toward hero's current position
-            function animate() {
-                if (!gameActive || enemy.dataset.destroyed) {
-                    if (!enemy.dataset.destroyed) enemy.remove();
-                    return;
+                    // Attack after animation
+                    setTimeout(() => {
+                        if (!enemy.dataset.destroyed && gameActive) {
+                            enemyAttack(enemy);
+                        }
+                    }, 1500);
                 }
+            }, attackDelay);
 
-                const elapsed = Date.now() - startTime;
-                const progress = elapsed / duration;
-
-                if (progress >= 1) {
+            // Auto-remove if not killed
+            setTimeout(() => {
+                if (!enemy.dataset.destroyed) {
                     enemy.remove();
-                    return;
                 }
+            }, attackDelay + 2000);
+        }
 
-                // Track hero position
-                const currentX = startX + (heroX - startX) * progress;
-                const currentY = startY + (heroY - startY) * progress;
+        function enemyAttack(enemy) {
+            if (!gameActive) return;
 
-                enemy.style.left = currentX + 'px';
-                enemy.style.top = currentY + 'px';
+            health -= 20;
+            healthFill.style.width = health + '%';
 
-                animationFrame = requestAnimationFrame(animate);
+            // Damage vignette effect
+            const vignette = document.createElement('div');
+            vignette.className = 'damage-vignette';
+            gameContainer.appendChild(vignette);
+            setTimeout(() => vignette.remove(), 300);
+
+            // Remove enemy after attack
+            enemy.remove();
+
+            if (health <= 0) {
+                gameOver();
             }
+        }
 
-            animationFrame = requestAnimationFrame(animate);
+        function gameOver() {
+            gameActive = false;
+            clearInterval(enemySpawnInterval);
 
-            // Allow tapping enemies directly too
-            enemy.addEventListener('pointerdown', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (!gameActive || enemy.dataset.destroyed) return;
-                destroyEnemy(enemy);
-                cancelAnimationFrame(animationFrame);
-            });
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('final-wave').textContent = wave;
+            document.getElementById('final-kills').textContent = kills;
+            gameOverScreen.style.display = 'flex';
+
+            // Clear all enemies
+            document.querySelectorAll('.enemy').forEach(e => e.remove());
         }
 
         function nextWave() {
             wave++;
             waveDisplay.textContent = wave;
-            waveEnemiesSpawned = 0;
-            maxEnemiesPerWave = 10 + (wave * 3);
         }
 
         function startGame() {
@@ -661,37 +543,35 @@
             score = 0;
             wave = 1;
             kills = 0;
-            waveEnemiesSpawned = 0;
-            maxEnemiesPerWave = 10;
+            health = 100;
 
             scoreDisplay.textContent = score;
             waveDisplay.textContent = wave;
-            killsDisplay.textContent = kills;
+            healthFill.style.width = '100%';
             startScreen.style.display = 'none';
             gameOverScreen.style.display = 'none';
 
-            // Reset hero position
-            heroX = window.innerWidth / 2;
-            heroY = window.innerHeight / 2;
-            targetX = heroX;
-            targetY = heroY;
-            heroVelX = 0;
-            heroVelY = 0;
+            // Position crosshair
+            crosshair.style.left = window.innerWidth / 2 + 'px';
+            crosshair.style.top = window.innerHeight / 2 + 'px';
 
-            document.querySelectorAll('.enemy, .bullet').forEach(e => e.remove());
+            document.querySelectorAll('.enemy, .bullet-hole').forEach(e => e.remove());
 
-            updateHeroPosition();
+            // Spawn enemies in waves
+            let enemiesThisWave = 0;
+            const enemiesPerWave = 5 + wave;
 
-            // Spawn enemies more frequently and continuously
-            const baseSpawnRate = 600;
             enemySpawnInterval = setInterval(() => {
-                createEnemy();
-                waveEnemiesSpawned++;
+                if (!gameActive) return;
 
-                if (waveEnemiesSpawned >= maxEnemiesPerWave) {
+                createEnemy();
+                enemiesThisWave++;
+
+                if (enemiesThisWave >= enemiesPerWave) {
+                    enemiesThisWave = 0;
                     nextWave();
                 }
-            }, Math.max(baseSpawnRate - (wave * 30), 250));
+            }, Math.max(1500 - (wave * 50), 600));
         }
 
         startBtn.addEventListener('pointerdown', (e) => {
@@ -703,6 +583,10 @@
             e.preventDefault();
             startGame();
         });
+
+        // Initialize crosshair
+        crosshair.style.left = window.innerWidth / 2 + 'px';
+        crosshair.style.top = window.innerHeight / 2 + 'px';
     </script>
 </body>
 </html>
