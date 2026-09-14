@@ -105,59 +105,6 @@
         .bubble.popping {
             animation: pop 0.3s ease-out forwards;
         }
-
-        #start-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100dvh;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 200;
-            padding: 20px;
-        }
-
-        #start-screen h1 {
-            font-size: 48px;
-            color: white;
-            margin-bottom: 20px;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
-
-        #start-screen p {
-            font-size: 20px;
-            color: rgba(255, 255, 255, 0.9);
-            margin-bottom: 40px;
-            text-align: center;
-            max-width: 300px;
-        }
-
-        #start-button {
-            padding: 20px 50px;
-            font-size: 24px;
-            font-weight: bold;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-            cursor: pointer;
-            touch-action: manipulation;
-            min-width: 200px;
-            min-height: 60px;
-        }
-
-        #start-button:active {
-            transform: scale(0.95);
-        }
-
-        .hidden {
-            display: none !important;
-        }
     </style>
 </head>
 <body>
@@ -168,20 +115,12 @@
         </div>
     </div>
 
-    <div id="start-screen">
-        <h1>🫧 Bubble Pop</h1>
-        <p>Tap the bubbles before they float away!</p>
-        <button id="start-button">Start Game</button>
-    </div>
-
     <script>
         const gameContainer = document.getElementById('game-container');
         const scoreElement = document.getElementById('score');
-        const startScreen = document.getElementById('start-screen');
-        const startButton = document.getElementById('start-button');
 
         let score = 0;
-        let gameActive = false;
+        let gameActive = true;
         let bubbleInterval = null;
 
         const colors = [
@@ -200,12 +139,12 @@
             const bubble = document.createElement('div');
             bubble.className = 'bubble';
 
-            const size = Math.random() * 40 + 50; // 50-90px
+            const size = Math.random() * 40 + 50;
             bubble.style.width = size + 'px';
             bubble.style.height = size + 'px';
 
             const maxX = window.innerWidth - size;
-            const maxY = window.innerHeight - 200; // Leave room at top and bottom
+            const maxY = window.innerHeight - 200;
 
             bubble.style.left = Math.random() * maxX + 'px';
             bubble.style.top = Math.random() * maxY + 100 + 'px';
@@ -238,29 +177,11 @@
             }, 300);
         }
 
-        function startGame() {
-            startScreen.classList.add('hidden');
-            score = 0;
-            scoreElement.textContent = score;
-            gameActive = true;
-
-            // Clear existing bubbles
-            const existingBubbles = document.querySelectorAll('.bubble');
-            existingBubbles.forEach(b => b.remove());
-
-            // Create bubbles at intervals
-            bubbleInterval = setInterval(() => {
-                createBubble();
-            }, 800);
-
-            // Create initial bubble immediately
+        bubbleInterval = setInterval(() => {
             createBubble();
-        }
+        }, 800);
 
-        startButton.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            startGame();
-        });
+        createBubble();
     </script>
 </body>
 </html>
