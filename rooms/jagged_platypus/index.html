@@ -213,7 +213,7 @@
         }
 
         .hidden {
-            display: none;
+            display: none !important;
         }
     </style>
 </head>
@@ -252,8 +252,8 @@
         let score = 0;
         let timeLeft = 30;
         let gameActive = false;
-        let gameInterval;
-        let bubbleInterval;
+        let gameInterval = null;
+        let bubbleInterval = null;
         let combo = 0;
         let comboMultiplier = 1;
         let comboTimeout = null;
@@ -268,6 +268,7 @@
         function updateComboDisplay() {
             if (comboDisplay) {
                 comboDisplay.remove();
+                comboDisplay = null;
             }
 
             if (combo >= 2) {
@@ -363,6 +364,7 @@
             // Use touchstart for better mobile support
             bubble.addEventListener('touchstart', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 clearTimeout(removeTimer);
                 handleBubblePop(bubble, basePoints, size);
             }, { passive: false });
@@ -370,29 +372,52 @@
             // Also support mouse clicks for desktop
             bubble.addEventListener('click', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 clearTimeout(removeTimer);
                 handleBubblePop(bubble, basePoints, size);
             });
         }
 
+        function cleanupGame() {
+            // Clear all intervals and timeouts
+            if (gameInterval) {
+                clearInterval(gameInterval);
+                gameInterval = null;
+            }
+            if (bubbleInterval) {
+                clearInterval(bubbleInterval);
+                bubbleInterval = null;
+            }
+            if (comboTimeout) {
+                clearTimeout(comboTimeout);
+                comboTimeout = null;
+            }
+
+            // Remove all game elements
+            document.querySelectorAll('.bubble').forEach(b => b.remove());
+            document.querySelectorAll('.score-popup').forEach(p => p.remove());
+            resetCombo();
+        }
+
         function startGame() {
+            // Clean up any existing game state
+            cleanupGame();
+
+            // Reset game variables
             score = 0;
             timeLeft = 30;
             gameActive = true;
             combo = 0;
             comboMultiplier = 1;
 
+            // Update UI
             scoreEl.textContent = 'Score: 0';
             timerEl.textContent = 'Time: 30';
 
+            // Show/hide screens
             startScreen.classList.add('hidden');
             endScreen.classList.add('hidden');
             header.classList.remove('hidden');
-
-            // Clear any existing bubbles and displays
-            document.querySelectorAll('.bubble').forEach(b => b.remove());
-            document.querySelectorAll('.score-popup').forEach(p => p.remove());
-            resetCombo();
 
             // Create bubbles at intervals
             bubbleInterval = setInterval(createBubble, 800);
@@ -410,31 +435,37 @@
 
         function endGame() {
             gameActive = false;
-            clearInterval(gameInterval);
-            clearInterval(bubbleInterval);
-            clearTimeout(comboTimeout);
-
-            // Remove all bubbles and displays
-            document.querySelectorAll('.bubble').forEach(b => b.remove());
-            document.querySelectorAll('.score-popup').forEach(p => p.remove());
-            resetCombo();
+            cleanupGame();
 
             finalScoreEl.textContent = score;
             header.classList.add('hidden');
             endScreen.classList.remove('hidden');
         }
 
-        // Button event handlers with multiple event types for compatibility
-        function handleStartGame(e) {
+        // Button event handlers
+        startBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             startGame();
-        }
+        }, { passive: false });
 
-        startBtn.addEventListener('touchstart', handleStartGame, { passive: false });
-        startBtn.addEventListener('click', handleStartGame);
+        startBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            startGame();
+        });
 
-        restartBtn.addEventListener('touchstart', handleStartGame, { passive: false });
-        restartBtn.addEventListener('click', handleStartGame);
+        restartBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            startGame();
+        }, { passive: false });
+
+        restartBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            startGame();
+        });
 
         // Prevent page scrolling and zooming
         document.addEventListener('touchmove', (e) => {
