@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Logo Guesser</title>
+    <title>Coin Tapper</title>
     <style>
         * {
             margin: 0;
@@ -18,7 +18,7 @@
             height: 100dvh;
             overflow: hidden;
             overflow-x: hidden;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
             touch-action: manipulation;
         }
@@ -30,93 +30,95 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
-        #header {
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.2);
-            color: white;
+        #stats {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            z-index: 10;
         }
 
         #score {
-            font-size: 20px;
+            font-size: 36px;
             font-weight: bold;
+            color: #fff;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
 
-        #progress {
-            font-size: 18px;
+        #timer {
+            font-size: 36px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
 
-        #logo-container {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+        #coin-container {
             position: relative;
-        }
-
-        #logo-display {
-            width: 100%;
-            max-width: 300px;
+            width: 250px;
             height: 250px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            position: relative;
-            overflow: hidden;
         }
 
-        .logo {
-            width: 100%;
-            height: 100%;
+        #coin {
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #f9d423 0%, #ff4e50 100%);
+            border: 8px solid #fff;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), inset 0 -5px 20px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            touch-action: manipulation;
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
-        }
-
-        #choices-container {
-            padding: 20px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            background: rgba(0, 0, 0, 0.1);
-        }
-
-        .choice-btn {
-            background: white;
-            border: none;
-            border-radius: 15px;
-            padding: 20px;
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-            cursor: pointer;
-            touch-action: manipulation;
-            min-height: 70px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            font-size: 80px;
             transition: transform 0.1s;
+            user-select: none;
         }
 
-        .choice-btn:active {
-            transform: scale(0.95);
+        #coin:active {
+            transform: scale(0.9);
         }
 
-        .choice-btn.correct {
-            background: #4caf50;
-            color: white;
+        #coin.tap-effect {
+            animation: tap-pulse 0.3s ease-out;
         }
 
-        .choice-btn.wrong {
-            background: #f44336;
-            color: white;
+        @keyframes tap-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .tap-particle {
+            position: absolute;
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            pointer-events: none;
+            animation: float-up 1s ease-out forwards;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes float-up {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) scale(1.5);
+            }
         }
 
         #start-screen, #end-screen {
@@ -125,7 +127,7 @@
             left: 0;
             width: 100%;
             height: 100dvh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -140,33 +142,35 @@
 
         h1 {
             color: white;
-            font-size: 40px;
+            font-size: 48px;
             margin-bottom: 20px;
             text-align: center;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 3px 15px rgba(0, 0, 0, 0.3);
         }
 
         .instruction {
             color: white;
-            font-size: 18px;
+            font-size: 20px;
             text-align: center;
-            margin-bottom: 30px;
-            line-height: 1.6;
+            margin-bottom: 40px;
+            line-height: 1.8;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
         .start-btn {
-            background: white;
-            color: #667eea;
-            font-size: 24px;
+            background: linear-gradient(145deg, #f9d423 0%, #ff4e50 100%);
+            color: white;
+            font-size: 28px;
             font-weight: bold;
-            padding: 18px 50px;
+            padding: 20px 60px;
             border: none;
             border-radius: 50px;
             cursor: pointer;
             touch-action: manipulation;
-            min-width: 220px;
-            min-height: 65px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            min-width: 240px;
+            min-height: 70px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
         .start-btn:active {
@@ -175,351 +179,146 @@
 
         #final-score {
             color: white;
-            font-size: 32px;
-            margin-bottom: 30px;
+            font-size: 42px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
+            text-shadow: 0 3px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        #taps-per-second {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 24px;
+            margin-bottom: 40px;
             text-align: center;
         }
 
-        .mcdonalds { background: #fff; }
-        .mcdonalds::before,
-        .mcdonalds::after {
-            content: '';
-            position: absolute;
-            width: 80px;
-            height: 140px;
-            background: #FFC72C;
-            border-radius: 80px 80px 0 0;
-            filter: blur(3px);
-        }
-        .mcdonalds::before { transform: translateX(-25px); }
-        .mcdonalds::after { transform: translateX(25px); }
-
-        .apple {
-            background: #fff;
-            position: relative;
-        }
-        .apple::before {
-            content: '';
-            position: absolute;
-            width: 120px;
-            height: 140px;
-            background: #555;
-            border-radius: 50% 50% 50% 50%;
-            filter: blur(2px);
-        }
-        .apple::after {
-            content: '';
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            background: #fff;
-            border-radius: 50%;
-            top: 50%;
-            right: 30%;
-            filter: blur(2px);
+        .timer-warning {
+            animation: pulse-red 0.5s ease-in-out infinite;
         }
 
-        .nike {
-            background: #fff;
-        }
-        .nike::before {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 0;
-            border-left: 150px solid transparent;
-            border-bottom: 80px solid #000;
-            transform: skewX(-20deg);
-            filter: blur(2px);
-        }
-
-        .adidas {
-            background: #fff;
-            gap: 15px;
-        }
-        .adidas::before,
-        .adidas::after {
-            content: '';
-            position: absolute;
-            width: 100px;
-            height: 15px;
-            background: #000;
-            filter: blur(2px);
-        }
-        .adidas::before { transform: translateY(-25px) rotate(15deg); }
-        .adidas::after { transform: translateY(25px) rotate(15deg); }
-
-        .target {
-            background: #fff;
-        }
-        .target::before {
-            content: '';
-            position: absolute;
-            width: 140px;
-            height: 140px;
-            background:
-                radial-gradient(circle, transparent 20%, #CC0000 20%, #CC0000 35%, #fff 35%, #fff 50%, #CC0000 50%, #CC0000 65%, #fff 65%);
-            border-radius: 50%;
-            filter: blur(3px);
-        }
-
-        .starbucks {
-            background: #00704A;
-        }
-        .starbucks::before {
-            content: '';
-            position: absolute;
-            width: 120px;
-            height: 120px;
-            background: #fff;
-            border-radius: 50%;
-            filter: blur(4px);
-        }
-
-        .amazon {
-            background: #fff;
-        }
-        .amazon::before {
-            content: '';
-            position: absolute;
-            width: 120px;
-            height: 80px;
-            background: #000;
-            border-radius: 10px;
-            filter: blur(2px);
-        }
-        .amazon::after {
-            content: '';
-            position: absolute;
-            width: 100px;
-            height: 8px;
-            background: #FF9900;
-            bottom: 40px;
-            border-radius: 4px 4px 8px 8px;
-            filter: blur(1px);
-        }
-
-        .google {
-            background: #fff;
-        }
-        .google::before {
-            content: 'G';
-            font-size: 120px;
-            font-weight: bold;
-            background: linear-gradient(to right, #4285F4 0%, #EA4335 25%, #FBBC05 50%, #34A853 75%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            filter: blur(3px);
-        }
-
-        .twitter {
-            background: #fff;
-        }
-        .twitter::before {
-            content: '';
-            position: absolute;
-            width: 100px;
-            height: 80px;
-            background: #1DA1F2;
-            border-radius: 50% 50% 0 50%;
-            transform: rotate(-30deg);
-            filter: blur(3px);
-        }
-
-        .pepsi {
-            background: #fff;
-        }
-        .pepsi::before {
-            content: '';
-            position: absolute;
-            width: 130px;
-            height: 130px;
-            background: radial-gradient(circle at center, #fff 0%, #fff 35%, #E32934 35%, #E32934 50%, #004B93 50%);
-            border-radius: 50%;
-            filter: blur(3px);
+        @keyframes pulse-red {
+            0%, 100% { color: #fff; }
+            50% { color: #ff4e50; }
         }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <div id="header">
-            <div id="score">Score: 0</div>
-            <div id="progress">1/10</div>
+        <div id="stats">
+            <div id="score">0</div>
+            <div id="timer">25s</div>
         </div>
 
-        <div id="logo-container">
-            <div id="logo-display">
-                <div class="logo mcdonalds"></div>
-            </div>
-        </div>
-
-        <div id="choices-container">
-            <button class="choice-btn">McDonald's</button>
-            <button class="choice-btn">Burger King</button>
-            <button class="choice-btn">Wendy's</button>
-            <button class="choice-btn">KFC</button>
+        <div id="coin-container">
+            <div id="coin">🪙</div>
         </div>
 
         <div id="start-screen">
-            <h1>🎨 Logo Guesser 🎨</h1>
-            <p class="instruction">Can you identify famous brand logos<br>from their altered versions?<br><br>Tap the correct answer!</p>
-            <button class="start-btn" id="start-button">Start Game</button>
+            <h1>🪙 Coin Tapper 🪙</h1>
+            <p class="instruction">Tap the coin as fast as you can!<br><br>Each tap = 1 point<br>You have 25 seconds<br><br>How fast can you tap?</p>
+            <button class="start-btn" id="start-button">Start Tapping!</button>
         </div>
 
         <div id="end-screen">
-            <h1>Game Complete!</h1>
-            <div id="final-score">Score: 0/10</div>
-            <button class="start-btn" id="restart-button">Play Again</button>
+            <h1>Time's Up!</h1>
+            <div id="final-score">0 Taps</div>
+            <div id="taps-per-second">0 taps/second</div>
+            <button class="start-btn" id="restart-button">Tap Again!</button>
         </div>
     </div>
 
     <script>
-        const logos = [
-            {
-                class: 'mcdonalds',
-                correct: "McDonald's",
-                choices: ["McDonald's", "Burger King", "Wendy's", "KFC"]
-            },
-            {
-                class: 'apple',
-                correct: 'Apple',
-                choices: ['Apple', 'Microsoft', 'Samsung', 'Google']
-            },
-            {
-                class: 'nike',
-                correct: 'Nike',
-                choices: ['Nike', 'Adidas', 'Puma', 'Reebok']
-            },
-            {
-                class: 'adidas',
-                correct: 'Adidas',
-                choices: ['Adidas', 'Nike', 'Under Armour', 'Puma']
-            },
-            {
-                class: 'target',
-                correct: 'Target',
-                choices: ['Target', 'Walmart', 'Costco', 'Kmart']
-            },
-            {
-                class: 'starbucks',
-                correct: 'Starbucks',
-                choices: ['Starbucks', 'Dunkin', 'Costa Coffee', 'Tim Hortons']
-            },
-            {
-                class: 'amazon',
-                correct: 'Amazon',
-                choices: ['Amazon', 'eBay', 'Alibaba', 'Walmart']
-            },
-            {
-                class: 'google',
-                correct: 'Google',
-                choices: ['Google', 'Yahoo', 'Bing', 'Firefox']
-            },
-            {
-                class: 'twitter',
-                correct: 'Twitter',
-                choices: ['Twitter', 'Facebook', 'Instagram', 'LinkedIn']
-            },
-            {
-                class: 'pepsi',
-                correct: 'Pepsi',
-                choices: ['Pepsi', 'Coca-Cola', '7UP', 'Sprite']
-            }
-        ];
-
+        const coin = document.getElementById('coin');
         const scoreDisplay = document.getElementById('score');
-        const progressDisplay = document.getElementById('progress');
-        const logoDisplay = document.getElementById('logo-display');
-        const choicesContainer = document.getElementById('choices-container');
+        const timerDisplay = document.getElementById('timer');
         const startScreen = document.getElementById('start-screen');
         const endScreen = document.getElementById('end-screen');
         const startButton = document.getElementById('start-button');
         const restartButton = document.getElementById('restart-button');
         const finalScoreDisplay = document.getElementById('final-score');
+        const tapsPerSecondDisplay = document.getElementById('taps-per-second');
+        const coinContainer = document.getElementById('coin-container');
 
         let score = 0;
-        let currentQuestion = 0;
         let gameActive = false;
-        let shuffledLogos = [];
+        let timeLeft = 25;
+        let timerInterval;
 
-        function shuffle(array) {
-            const newArray = [...array];
-            for (let i = newArray.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-            }
-            return newArray;
+        function createParticle(x, y) {
+            const particle = document.createElement('div');
+            particle.className = 'tap-particle';
+            particle.textContent = '+1';
+            particle.style.left = x + 'px';
+            particle.style.top = y + 'px';
+            coinContainer.appendChild(particle);
+
+            setTimeout(() => particle.remove(), 1000);
         }
 
-        function displayQuestion() {
-            if (currentQuestion >= shuffledLogos.length) {
-                endGame();
-                return;
-            }
-
-            const question = shuffledLogos[currentQuestion];
-
-            logoDisplay.innerHTML = `<div class="logo ${question.class}"></div>`;
-
-            const shuffledChoices = shuffle(question.choices);
-            choicesContainer.innerHTML = '';
-
-            shuffledChoices.forEach(choice => {
-                const btn = document.createElement('button');
-                btn.className = 'choice-btn';
-                btn.textContent = choice;
-                btn.addEventListener('click', () => handleAnswer(choice, btn));
-                choicesContainer.appendChild(btn);
-            });
-
-            progressDisplay.textContent = `${currentQuestion + 1}/${shuffledLogos.length}`;
-        }
-
-        function handleAnswer(selected, btn) {
+        function handleTap(e) {
             if (!gameActive) return;
 
-            gameActive = false;
+            e.preventDefault();
 
-            const question = shuffledLogos[currentQuestion];
-            const allButtons = choicesContainer.querySelectorAll('.choice-btn');
+            score++;
+            scoreDisplay.textContent = score;
 
-            if (selected === question.correct) {
-                score++;
-                btn.classList.add('correct');
-                scoreDisplay.textContent = `Score: ${score}`;
-            } else {
-                btn.classList.add('wrong');
-                allButtons.forEach(button => {
-                    if (button.textContent === question.correct) {
-                        button.classList.add('correct');
-                    }
-                });
+            coin.classList.remove('tap-effect');
+            void coin.offsetWidth;
+            coin.classList.add('tap-effect');
+
+            const rect = coinContainer.getBoundingClientRect();
+            const x = (e.clientX || e.touches?.[0]?.clientX || rect.left + rect.width / 2) - rect.left;
+            const y = (e.clientY || e.touches?.[0]?.clientY || rect.top + rect.height / 2) - rect.top;
+            createParticle(x, y);
+        }
+
+        coin.addEventListener('pointerdown', handleTap);
+        coin.addEventListener('touchstart', handleTap);
+
+        function updateTimer() {
+            timeLeft--;
+            timerDisplay.textContent = timeLeft + 's';
+
+            if (timeLeft <= 5) {
+                timerDisplay.classList.add('timer-warning');
             }
 
-            setTimeout(() => {
-                currentQuestion++;
-                gameActive = true;
-                displayQuestion();
-            }, 1500);
+            if (timeLeft <= 0) {
+                endGame();
+            }
         }
 
         function startGame() {
             score = 0;
-            currentQuestion = 0;
+            timeLeft = 25;
             gameActive = true;
-            shuffledLogos = shuffle(logos);
 
-            scoreDisplay.textContent = 'Score: 0';
+            scoreDisplay.textContent = '0';
+            timerDisplay.textContent = '25s';
+            timerDisplay.classList.remove('timer-warning');
+
             startScreen.style.display = 'none';
             endScreen.style.display = 'none';
 
-            displayQuestion();
+            coin.classList.remove('tap-effect');
+
+            document.querySelectorAll('.tap-particle').forEach(p => p.remove());
+
+            clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimer, 1000);
         }
 
         function endGame() {
             gameActive = false;
-            finalScoreDisplay.textContent = `Score: ${score}/${shuffledLogos.length}`;
+            clearInterval(timerInterval);
+
+            const tapsPerSecond = (score / 25).toFixed(2);
+
+            finalScoreDisplay.textContent = score + ' Taps';
+            tapsPerSecondDisplay.textContent = tapsPerSecond + ' taps/second';
+
             endScreen.style.display = 'flex';
         }
 
