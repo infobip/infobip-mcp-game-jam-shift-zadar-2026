@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Minesweeper</title>
+    <title>Retro Tetris</title>
     <style>
         * {
             margin: 0;
@@ -12,7 +12,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            font-family: 'Courier New', monospace;
             background: linear-gradient(135deg, #ff6ec7 0%, #ff9a9e 100%);
             height: 100dvh;
             display: flex;
@@ -24,28 +24,30 @@
         .header {
             background: rgba(255, 192, 203, 0.95);
             padding: 12px;
-            box-shadow: 0 2px 8px rgba(255, 105, 180, 0.3);
+            box-shadow: 0 4px 0 #ff1493;
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 10px;
         }
 
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #c71585;
+            text-shadow: 2px 2px 0 #ff69b4;
+        }
+
         .stats {
             display: flex;
-            gap: 15px;
+            flex-direction: column;
+            gap: 5px;
             font-size: 16px;
-            font-weight: 600;
+            font-weight: bold;
             color: #8b0052;
         }
 
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .controls {
+        .controls-header {
             display: flex;
             gap: 8px;
         }
@@ -53,34 +55,25 @@
         button {
             padding: 10px 16px;
             font-size: 16px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
+            border: 3px solid #8b0052;
+            border-radius: 0;
+            font-weight: bold;
             cursor: pointer;
             touch-action: manipulation;
             min-width: 44px;
             min-height: 44px;
-            transition: transform 0.1s;
+            font-family: 'Courier New', monospace;
+            box-shadow: 4px 4px 0 rgba(0,0,0,0.2);
         }
 
         button:active {
-            transform: scale(0.95);
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+            transform: translate(2px, 2px);
         }
 
         .new-game {
             background: #ff69b4;
             color: white;
-        }
-
-        .flag-toggle {
-            background: #ff1493;
-            color: white;
-            position: relative;
-        }
-
-        .flag-toggle.active {
-            background: #c71585;
-            box-shadow: 0 0 0 3px rgba(199, 21, 133, 0.3);
         }
 
         .code-toggle {
@@ -91,80 +84,49 @@
         .game-container {
             flex: 1;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             padding: 15px;
-            overflow: auto;
+            overflow: hidden;
+            gap: 15px;
         }
 
-        .grid {
+        .canvas-container {
+            background: #2d1a2e;
+            padding: 8px;
+            border: 4px solid #ff69b4;
+            box-shadow: 8px 8px 0 rgba(0,0,0,0.3);
+        }
+
+        #tetris {
+            display: block;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        .controls {
             display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            gap: 2px;
-            background: rgba(255, 105, 180, 0.3);
-            padding: 2px;
-            border-radius: 8px;
-            max-width: 100%;
-            touch-action: none;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 300px;
+            width: 100%;
         }
 
-        .cell {
-            aspect-ratio: 1;
-            background: #ffb6d9;
-            border: none;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            touch-action: manipulation;
-            min-width: 40px;
-            min-height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            user-select: none;
-            -webkit-user-select: none;
-            position: relative;
-        }
-
-        .cell:active {
-            background: #ff99cc;
-        }
-
-        .cell.revealed {
-            background: #ffe6f0;
-            cursor: default;
-        }
-
-        .cell.revealed:active {
-            background: #ffe6f0;
-        }
-
-        .cell.mine {
-            background: #ff1493;
-        }
-
-        .cell.flagged {
+        .control-btn {
             background: #ff69b4;
-        }
-
-        .cell.flagged::before {
-            content: '🚩';
+            color: white;
+            min-height: 60px;
             font-size: 20px;
         }
 
-        .cell.mine::before {
-            content: '💣';
-            font-size: 20px;
+        .rotate-btn {
+            grid-column: 2;
         }
 
-        .cell.number-1 { color: #c71585; }
-        .cell.number-2 { color: #ff1493; }
-        .cell.number-3 { color: #ff69b4; }
-        .cell.number-4 { color: #8b0052; }
-        .cell.number-5 { color: #db7093; }
-        .cell.number-6 { color: #c71585; }
-        .cell.number-7 { color: #8b0052; }
-        .cell.number-8 { color: #ff1493; }
+        .down-btn {
+            grid-column: 2;
+        }
 
         .modal {
             position: fixed;
@@ -186,16 +148,17 @@
         .modal-content {
             background: #ffe6f0;
             padding: 30px;
-            border-radius: 16px;
+            border: 4px solid #ff69b4;
+            box-shadow: 8px 8px 0 rgba(0,0,0,0.3);
             text-align: center;
             max-width: 90%;
-            border: 3px solid #ff69b4;
         }
 
         .modal-content h2 {
             font-size: 32px;
             margin-bottom: 15px;
             color: #c71585;
+            text-shadow: 2px 2px 0 #ff69b4;
         }
 
         .modal-content p {
@@ -284,32 +247,34 @@
 </head>
 <body>
     <div class="header">
+        <div class="title">TETRIS</div>
         <div class="stats">
-            <div class="stat-item">
-                <span>💣</span>
-                <span id="mines-left">10</span>
-            </div>
-            <div class="stat-item">
-                <span>⏱️</span>
-                <span id="timer">0</span>
-            </div>
+            <div>SCORE: <span id="score">0</span></div>
+            <div>LINES: <span id="lines">0</span></div>
         </div>
-        <div class="controls">
+        <div class="controls-header">
             <button class="code-toggle" id="code-toggle">{ }</button>
-            <button class="flag-toggle" id="flag-toggle">🚩</button>
-            <button class="new-game" id="new-game">New</button>
+            <button class="new-game" id="new-game">NEW</button>
         </div>
     </div>
 
     <div class="game-container">
-        <div class="grid" id="grid"></div>
+        <div class="canvas-container">
+            <canvas id="tetris" width="240" height="400"></canvas>
+        </div>
+        <div class="controls">
+            <button class="control-btn" id="left">◄</button>
+            <button class="control-btn rotate-btn" id="rotate">↻</button>
+            <button class="control-btn" id="right">►</button>
+            <button class="control-btn down-btn" id="down">▼</button>
+        </div>
     </div>
 
     <div class="modal" id="modal">
         <div class="modal-content">
-            <h2 id="modal-title">🎉</h2>
-            <p id="modal-text">You win!</p>
-            <button id="modal-button">Play Again</button>
+            <h2 id="modal-title">GAME OVER</h2>
+            <p id="modal-text">Final Score: 0</p>
+            <button id="modal-button">PLAY AGAIN</button>
         </div>
     </div>
 
@@ -325,202 +290,223 @@
     </div>
 
     <script>
-        const GRID_SIZE = 8;
-        const MINE_COUNT = 10;
-
-        let grid = [];
-        let revealed = [];
-        let flagged = [];
-        let gameOver = false;
-        let firstClick = true;
-        let flagMode = false;
-        let minesLeft = MINE_COUNT;
-        let timer = 0;
-        let timerInterval = null;
-
-        const gridElement = document.getElementById('grid');
-        const flagToggle = document.getElementById('flag-toggle');
-        const newGameButton = document.getElementById('new-game');
-        const minesLeftElement = document.getElementById('mines-left');
-        const timerElement = document.getElementById('timer');
+        const canvas = document.getElementById('tetris');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const linesElement = document.getElementById('lines');
         const modal = document.getElementById('modal');
         const modalTitle = document.getElementById('modal-title');
         const modalText = document.getElementById('modal-text');
         const modalButton = document.getElementById('modal-button');
+        const newGameButton = document.getElementById('new-game');
         const codeToggle = document.getElementById('code-toggle');
         const codePanel = document.getElementById('code-panel');
         const codeEditor = document.getElementById('code-editor');
         const applyCode = document.getElementById('apply-code');
         const closePanel = document.getElementById('close-panel');
 
-        function initGame() {
-            grid = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0));
-            revealed = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(false));
-            flagged = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(false));
-            gameOver = false;
-            firstClick = true;
-            flagMode = false;
-            minesLeft = MINE_COUNT;
-            timer = 0;
+        const COLS = 12;
+        const ROWS = 20;
+        const BLOCK_SIZE = 20;
 
-            if (timerInterval) clearInterval(timerInterval);
+        const COLORS = [
+            '#000000',
+            '#ff69b4',
+            '#ff1493',
+            '#c71585',
+            '#ff85c1',
+            '#ffb6d9',
+            '#ff99cc',
+            '#db7093'
+        ];
 
-            flagToggle.classList.remove('active');
-            minesLeftElement.textContent = minesLeft;
-            timerElement.textContent = timer;
-            modal.classList.remove('show');
+        const SHAPES = [
+            [[1,1,1,1]],
+            [[1,1],[1,1]],
+            [[1,1,1],[0,1,0]],
+            [[1,1,1],[1,0,0]],
+            [[1,1,1],[0,0,1]],
+            [[1,1,0],[0,1,1]],
+            [[0,1,1],[1,1,0]]
+        ];
 
-            renderGrid();
+        let board = [];
+        let score = 0;
+        let lines = 0;
+        let currentPiece = null;
+        let gameOver = false;
+        let dropInterval = null;
+
+        function createBoard() {
+            return Array(ROWS).fill().map(() => Array(COLS).fill(0));
         }
 
-        function placeMines(excludeRow, excludeCol) {
-            let minesPlaced = 0;
-            while (minesPlaced < MINE_COUNT) {
-                const row = Math.floor(Math.random() * GRID_SIZE);
-                const col = Math.floor(Math.random() * GRID_SIZE);
+        function drawBoard() {
+            ctx.fillStyle = '#2d1a2e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                if (grid[row][col] !== -1 && !(row === excludeRow && col === excludeCol)) {
-                    grid[row][col] = -1;
-                    minesPlaced++;
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    if (board[row][col]) {
+                        ctx.fillStyle = COLORS[board[row][col]];
+                        ctx.fillRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
+                    }
+                }
+            }
 
-                    for (let dr = -1; dr <= 1; dr++) {
-                        for (let dc = -1; dc <= 1; dc++) {
-                            const nr = row + dr;
-                            const nc = col + dc;
-                            if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE && grid[nr][nc] !== -1) {
-                                grid[nr][nc]++;
-                            }
+            if (currentPiece) {
+                ctx.fillStyle = COLORS[currentPiece.color];
+                currentPiece.shape.forEach((row, y) => {
+                    row.forEach((value, x) => {
+                        if (value) {
+                            ctx.fillRect(
+                                (currentPiece.x + x) * BLOCK_SIZE,
+                                (currentPiece.y + y) * BLOCK_SIZE,
+                                BLOCK_SIZE - 1,
+                                BLOCK_SIZE - 1
+                            );
+                        }
+                    });
+                });
+            }
+        }
+
+        function createPiece() {
+            const shapeIndex = Math.floor(Math.random() * SHAPES.length);
+            return {
+                shape: SHAPES[shapeIndex],
+                color: (shapeIndex % 6) + 1,
+                x: Math.floor(COLS / 2) - 1,
+                y: 0
+            };
+        }
+
+        function collision(piece, offsetX = 0, offsetY = 0) {
+            for (let y = 0; y < piece.shape.length; y++) {
+                for (let x = 0; x < piece.shape[y].length; x++) {
+                    if (piece.shape[y][x]) {
+                        const newX = piece.x + x + offsetX;
+                        const newY = piece.y + y + offsetY;
+                        if (newX < 0 || newX >= COLS || newY >= ROWS) {
+                            return true;
+                        }
+                        if (newY >= 0 && board[newY][newX]) {
+                            return true;
                         }
                     }
                 }
             }
+            return false;
         }
 
-        function renderGrid() {
-            gridElement.innerHTML = '';
-            for (let row = 0; row < GRID_SIZE; row++) {
-                for (let col = 0; col < GRID_SIZE; col++) {
-                    const cell = document.createElement('button');
-                    cell.className = 'cell';
-                    cell.dataset.row = row;
-                    cell.dataset.col = col;
-
-                    if (revealed[row][col]) {
-                        cell.classList.add('revealed');
-                        if (grid[row][col] === -1) {
-                            cell.classList.add('mine');
-                        } else if (grid[row][col] > 0) {
-                            cell.textContent = grid[row][col];
-                            cell.classList.add(`number-${grid[row][col]}`);
-                        }
-                    } else if (flagged[row][col]) {
-                        cell.classList.add('flagged');
-                    }
-
-                    cell.addEventListener('pointerdown', handleCellClick);
-                    gridElement.appendChild(cell);
-                }
-            }
-        }
-
-        function handleCellClick(e) {
-            e.preventDefault();
-            if (gameOver) return;
-
-            const row = parseInt(e.target.dataset.row);
-            const col = parseInt(e.target.dataset.col);
-
-            if (revealed[row][col]) return;
-
-            if (flagMode) {
-                toggleFlag(row, col);
-            } else {
-                revealCell(row, col);
-            }
-        }
-
-        function toggleFlag(row, col) {
-            if (revealed[row][col]) return;
-
-            flagged[row][col] = !flagged[row][col];
-            minesLeft += flagged[row][col] ? -1 : 1;
-            minesLeftElement.textContent = minesLeft;
-            renderGrid();
-        }
-
-        function revealCell(row, col) {
-            if (firstClick) {
-                firstClick = false;
-                placeMines(row, col);
-                startTimer();
-            }
-
-            if (flagged[row][col]) return;
-            if (revealed[row][col]) return;
-
-            revealed[row][col] = true;
-
-            if (grid[row][col] === -1) {
-                gameOver = true;
-                revealAllMines();
-                showModal('💥 Game Over!', 'You hit a mine!');
-                if (timerInterval) clearInterval(timerInterval);
-                return;
-            }
-
-            if (grid[row][col] === 0) {
-                for (let dr = -1; dr <= 1; dr++) {
-                    for (let dc = -1; dc <= 1; dc++) {
-                        const nr = row + dr;
-                        const nc = col + dc;
-                        if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE) {
-                            revealCell(nr, nc);
+        function merge() {
+            currentPiece.shape.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value) {
+                        const boardY = currentPiece.y + y;
+                        const boardX = currentPiece.x + x;
+                        if (boardY >= 0) {
+                            board[boardY][boardX] = currentPiece.color;
                         }
                     }
-                }
-            }
-
-            renderGrid();
-            checkWin();
+                });
+            });
         }
 
-        function revealAllMines() {
-            for (let row = 0; row < GRID_SIZE; row++) {
-                for (let col = 0; col < GRID_SIZE; col++) {
-                    if (grid[row][col] === -1) {
-                        revealed[row][col] = true;
+        function clearLines() {
+            let linesCleared = 0;
+            for (let row = ROWS - 1; row >= 0; row--) {
+                if (board[row].every(cell => cell !== 0)) {
+                    board.splice(row, 1);
+                    board.unshift(Array(COLS).fill(0));
+                    linesCleared++;
+                    row++;
+                }
+            }
+            if (linesCleared > 0) {
+                lines += linesCleared;
+                score += linesCleared * 100 * linesCleared;
+                linesElement.textContent = lines;
+                scoreElement.textContent = score;
+            }
+        }
+
+        function rotate(piece) {
+            const newShape = piece.shape[0].map((_, i) =>
+                piece.shape.map(row => row[i]).reverse()
+            );
+            return { ...piece, shape: newShape };
+        }
+
+        function moveLeft() {
+            if (!gameOver && currentPiece && !collision(currentPiece, -1, 0)) {
+                currentPiece.x--;
+                drawBoard();
+            }
+        }
+
+        function moveRight() {
+            if (!gameOver && currentPiece && !collision(currentPiece, 1, 0)) {
+                currentPiece.x++;
+                drawBoard();
+            }
+        }
+
+        function moveDown() {
+            if (!gameOver && currentPiece) {
+                if (!collision(currentPiece, 0, 1)) {
+                    currentPiece.y++;
+                    drawBoard();
+                } else {
+                    merge();
+                    clearLines();
+                    currentPiece = createPiece();
+                    if (collision(currentPiece, 0, 0)) {
+                        endGame();
                     }
+                    drawBoard();
                 }
-            }
-            renderGrid();
-        }
-
-        function checkWin() {
-            let revealedCount = 0;
-            for (let row = 0; row < GRID_SIZE; row++) {
-                for (let col = 0; col < GRID_SIZE; col++) {
-                    if (revealed[row][col]) revealedCount++;
-                }
-            }
-
-            if (revealedCount === GRID_SIZE * GRID_SIZE - MINE_COUNT) {
-                gameOver = true;
-                showModal('🎉 You Win!', `Completed in ${timer} seconds!`);
-                if (timerInterval) clearInterval(timerInterval);
             }
         }
 
-        function showModal(title, text) {
-            modalTitle.textContent = title;
-            modalText.textContent = text;
+        function rotatePiece() {
+            if (!gameOver && currentPiece) {
+                const rotated = rotate(currentPiece);
+                if (!collision(rotated, 0, 0)) {
+                    currentPiece = rotated;
+                    drawBoard();
+                }
+            }
+        }
+
+        function drop() {
+            if (!gameOver) {
+                moveDown();
+            }
+        }
+
+        function endGame() {
+            gameOver = true;
+            clearInterval(dropInterval);
+            modalTitle.textContent = 'GAME OVER';
+            modalText.textContent = `Final Score: ${score}`;
             modal.classList.add('show');
         }
 
-        function startTimer() {
-            timerInterval = setInterval(() => {
-                timer++;
-                timerElement.textContent = timer;
-            }, 1000);
+        function initGame() {
+            board = createBoard();
+            score = 0;
+            lines = 0;
+            gameOver = false;
+            scoreElement.textContent = score;
+            linesElement.textContent = lines;
+            modal.classList.remove('show');
+            currentPiece = createPiece();
+
+            if (dropInterval) clearInterval(dropInterval);
+            dropInterval = setInterval(drop, 800);
+
+            drawBoard();
         }
 
         function openCodePanel() {
@@ -539,10 +525,24 @@
             document.close();
         }
 
-        flagToggle.addEventListener('pointerdown', (e) => {
+        document.getElementById('left').addEventListener('pointerdown', (e) => {
             e.preventDefault();
-            flagMode = !flagMode;
-            flagToggle.classList.toggle('active');
+            moveLeft();
+        });
+
+        document.getElementById('right').addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            moveRight();
+        });
+
+        document.getElementById('down').addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            moveDown();
+        });
+
+        document.getElementById('rotate').addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            rotatePiece();
         });
 
         newGameButton.addEventListener('pointerdown', (e) => {
@@ -574,6 +574,14 @@
         applyCode.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             applySourceCode();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (gameOver) return;
+            if (e.key === 'ArrowLeft') moveLeft();
+            if (e.key === 'ArrowRight') moveRight();
+            if (e.key === 'ArrowDown') moveDown();
+            if (e.key === 'ArrowUp' || e.key === ' ') rotatePiece();
         });
 
         initGame();
