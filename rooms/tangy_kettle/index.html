@@ -74,7 +74,7 @@
             transform: scale(0.9);
         }
 
-        .lawn-mower {
+        .lawn-mower, .farmer {
             background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
             border: 3px solid #fff;
             font-size: 40px;
@@ -113,6 +113,21 @@
             font-size: 34px;
         }
 
+        .worm {
+            background: radial-gradient(circle, #ffb6c1 0%, #db7093 100%) !important;
+            font-size: 32px;
+        }
+
+        .ivy {
+            background: radial-gradient(circle, #2f4f2f 0%, #1a2f1a 100%) !important;
+            font-size: 34px;
+        }
+
+        .bird {
+            background: radial-gradient(circle, #87ceeb 0%, #4682b4 100%) !important;
+            font-size: 36px;
+        }
+
         @keyframes wiggle {
             0%, 100% { transform: rotate(-5deg); }
             50% { transform: rotate(5deg); }
@@ -128,9 +143,10 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
             z-index: 100;
             overflow-y: auto;
+            padding: 20px;
         }
 
         #gameOverScreen {
@@ -203,6 +219,19 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
 
+        #levelDisplay {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            background: rgba(255, 215, 0, 0.95);
+            color: #333;
+            padding: 10px 20px;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
         .leaderboard {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 15px;
@@ -245,11 +274,12 @@
             </div>
         </div>
 
-        <div id="multiplierDisplay">🌱 Fertilizer x<span id="multiplierValue">2</span></div>
+        <div id="multiplierDisplay">🌱 x<span id="multiplierValue">2</span></div>
+        <div id="levelDisplay">🌸 Flowers</div>
 
         <div id="startScreen">
             <h1>Flower Rush!</h1>
-            <p class="instructions">Tap flowers for points! Tap lawn mower to clear all! Tap fertilizer to multiply! DON'T tap pests like frogs, grasshoppers, or weeds!</p>
+            <p class="instructions">Tap flowers for points! Reach 1000 for fruit level! DON'T tap pests! Tap power-ups for bonuses!</p>
             <button class="btn" id="startBtn">Start Game</button>
         </div>
 
@@ -275,6 +305,7 @@
         const finalScoreDisplay = document.getElementById('finalScore');
         const multiplierDisplay = document.getElementById('multiplierDisplay');
         const multiplierValue = document.getElementById('multiplierValue');
+        const levelDisplay = document.getElementById('levelDisplay');
         const leaderboardEntries = document.getElementById('leaderboardEntries');
 
         let score = 0;
@@ -282,7 +313,7 @@
         let gameActive = false;
         let spawnInterval;
         let difficultyInterval;
-        let lawnMowerInterval;
+        let powerupInterval;
         let pestInterval;
         let fertilizerInterval;
         let circles = [];
@@ -290,12 +321,21 @@
         let flowersPerSpawn = 1;
         let pestsPerSpawn = 1;
         let fertilizerMultiplier = 1;
+        let isFruitLevel = false;
 
-        const pestTypes = [
+        const flowerPests = [
             { emoji: '🐸', class: 'frog' },
             { emoji: '🦗', class: 'grasshopper' },
             { emoji: '🌿', class: 'weed' }
         ];
+
+        const fruitPests = [
+            { emoji: '🐛', class: 'worm' },
+            { emoji: '🍃', class: 'ivy' },
+            { emoji: '🐦', class: 'bird' }
+        ];
+
+        const fruits = ['🍎', '🍌', '🍑', '🍒', '🍐', '🍊', '🍓', '🍇'];
 
         function createFlowerSVG(petals, petalColor, centerColor) {
             const center = 50;
@@ -352,6 +392,14 @@
             }
         }
 
+        function checkLevelUp() {
+            if (!isFruitLevel && score >= 1000) {
+                isFruitLevel = true;
+                levelDisplay.textContent = '🍎 Fruits!';
+                levelDisplay.style.background = 'rgba(255, 99, 71, 0.95)';
+            }
+        }
+
         function loseLife() {
             lives--;
             updateLivesDisplay();
@@ -373,10 +421,16 @@
             const scores = JSON.parse(localStorage.getItem('flowerRushScores') || '[]');
             leaderboardEntries.innerHTML = '';
 
+            if (scores.length === 0) {
+                leaderboardEntries.innerHTML = '<div style="color: white; text-align: center; padding: 10px;">No scores yet!</div>';
+                return;
+            }
+
             scores.forEach((entry, index) => {
                 const div = document.createElement('div');
                 div.className = 'leaderboard-entry';
-                if (entry.score === currentScore && entry.date === scores.find(s => s.score === currentScore).date) {
+                const isCurrentScore = Math.abs(Date.now() - entry.date) < 1000 && entry.score === currentScore;
+                if (isCurrentScore) {
                     div.classList.add('current');
                 }
                 div.innerHTML = `<span>#${index + 1}</span><span>${entry.score} pts</span>`;
@@ -439,6 +493,7 @@
 
                 score += 10;
                 scoreDisplay.textContent = score;
+                checkLevelUp();
 
                 circle.style.transition = 'opacity 0.2s, transform 0.2s';
                 circle.style.opacity = '0';
@@ -456,7 +511,8 @@
         function createPest() {
             if (!gameActive) return;
 
-            const pestType = pestTypes[Math.floor(Math.random() * pestTypes.length)];
+            const pestList = isFruitLevel ? fruitPests : flowerPests;
+            const pestType = pestList[Math.floor(Math.random() * pestList.length)];
             const circle = document.createElement('div');
             circle.className = 'circle pest ' + pestType.class;
             circle.dataset.type = 'pest';
@@ -496,7 +552,7 @@
                         circles = circles.filter(c => c !== circle);
                     }, 300);
                 }
-            }, 3500);
+            }, 3000);
 
             circle.addEventListener('pointerdown', (e) => {
                 e.preventDefault();
@@ -519,21 +575,21 @@
 
         function spawnPests() {
             for (let i = 0; i < pestsPerSpawn; i++) {
-                setTimeout(() => createPest(), i * 150);
+                setTimeout(() => createPest(), i * 120);
             }
         }
 
-        function createLawnMower() {
+        function createPowerup() {
             if (!gameActive) return;
 
             const circle = document.createElement('div');
-            circle.className = 'circle lawn-mower';
-            circle.dataset.type = 'mower';
+            circle.className = isFruitLevel ? 'circle farmer' : 'circle lawn-mower';
+            circle.dataset.type = 'powerup';
 
             const size = 90;
             circle.style.width = size + 'px';
             circle.style.height = size + 'px';
-            circle.textContent = '🚜';
+            circle.textContent = isFruitLevel ? '👨‍🌾' : '🚜';
 
             const maxX = window.innerWidth - size - 20;
             const maxY = window.innerHeight - size - 120;
@@ -573,18 +629,18 @@
 
                 clearTimeout(timeoutId);
 
-                const allFlowers = circles.filter(c => !c.dataset.type);
+                const allItems = circles.filter(c => !c.dataset.type);
                 let clearedCount = 0;
 
-                allFlowers.forEach(flower => {
-                    if (flower.parentNode) {
-                        flower.style.transition = 'opacity 0.3s, transform 0.3s';
-                        flower.style.opacity = '0';
-                        flower.style.transform = 'scale(0)';
+                allItems.forEach(item => {
+                    if (item.parentNode) {
+                        item.style.transition = 'opacity 0.3s, transform 0.3s';
+                        item.style.opacity = '0';
+                        item.style.transform = 'scale(0)';
                         clearedCount++;
                         setTimeout(() => {
-                            if (flower.parentNode) {
-                                flower.remove();
+                            if (item.parentNode) {
+                                item.remove();
                             }
                         }, 300);
                     }
@@ -592,8 +648,10 @@
 
                 circles = circles.filter(c => c.dataset.type);
 
-                score += clearedCount * 5;
+                const bonus = isFruitLevel ? 8 : 5;
+                score += clearedCount * bonus;
                 scoreDisplay.textContent = score;
+                checkLevelUp();
 
                 circle.style.transition = 'opacity 0.2s, transform 0.2s';
                 circle.style.opacity = '0';
@@ -625,11 +683,18 @@
             circle.style.left = (20 + Math.random() * maxX) + 'px';
             circle.style.top = (minY + Math.random() * (maxY - minY)) + 'px';
 
-            const points = Math.floor(size / 10);
-            const colors = getFlowerColors(points);
-            const flowerSVG = createFlowerSVG(points, colors.petal, colors.center);
-
-            circle.innerHTML = flowerSVG;
+            let points;
+            if (isFruitLevel) {
+                const fruit = fruits[Math.floor(Math.random() * fruits.length)];
+                circle.textContent = fruit;
+                circle.style.fontSize = (size * 0.6) + 'px';
+                points = Math.floor(15 + Math.random() * 10);
+            } else {
+                points = Math.floor(size / 10);
+                const colors = getFlowerColors(points);
+                const flowerSVG = createFlowerSVG(points, colors.petal, colors.center);
+                circle.innerHTML = flowerSVG;
+            }
 
             gameContainer.appendChild(circle);
             circles.push(circle);
@@ -665,6 +730,7 @@
 
                 score += points;
                 scoreDisplay.textContent = score;
+                checkLevelUp();
 
                 if (fertilizerMultiplier > 1) {
                     for (let i = 0; i < fertilizerMultiplier - 1; i++) {
@@ -685,7 +751,7 @@
             });
         }
 
-        function spawnFlowers() {
+        function spawnItems() {
             for (let i = 0; i < flowersPerSpawn; i++) {
                 setTimeout(() => createCircle(), i * 100);
             }
@@ -698,11 +764,14 @@
             flowersPerSpawn = 1;
             pestsPerSpawn = 1;
             fertilizerMultiplier = 1;
+            isFruitLevel = false;
             gameActive = true;
 
             scoreDisplay.textContent = score;
             updateLivesDisplay();
             updateMultiplierDisplay();
+            levelDisplay.textContent = '🌸 Flowers';
+            levelDisplay.style.background = 'rgba(255, 215, 0, 0.95)';
 
             startScreen.style.display = 'none';
             gameOverScreen.style.display = 'none';
@@ -710,35 +779,35 @@
             circles.forEach(circle => circle.remove());
             circles = [];
 
-            spawnInterval = setInterval(spawnFlowers, spawnRate);
+            spawnInterval = setInterval(spawnItems, spawnRate);
 
             difficultyInterval = setInterval(() => {
                 if (spawnRate > 500) {
                     spawnRate -= 50;
                     clearInterval(spawnInterval);
-                    spawnInterval = setInterval(spawnFlowers, spawnRate);
+                    spawnInterval = setInterval(spawnItems, spawnRate);
                 }
 
-                if (flowersPerSpawn < 4) {
+                if (flowersPerSpawn < 5) {
                     flowersPerSpawn++;
                 }
 
-                if (pestsPerSpawn < 3) {
+                if (pestsPerSpawn < 4) {
                     pestsPerSpawn++;
                 }
             }, 15000);
 
-            lawnMowerInterval = setInterval(() => {
+            powerupInterval = setInterval(() => {
                 if (gameActive) {
-                    createLawnMower();
+                    createPowerup();
                 }
             }, 22000);
 
             pestInterval = setInterval(() => {
-                if (gameActive && Math.random() > 0.2) {
+                if (gameActive) {
                     spawnPests();
                 }
-            }, 9000);
+            }, 7000);
 
             fertilizerInterval = setInterval(() => {
                 if (gameActive) {
@@ -751,7 +820,7 @@
             gameActive = false;
             clearInterval(spawnInterval);
             clearInterval(difficultyInterval);
-            clearInterval(lawnMowerInterval);
+            clearInterval(powerupInterval);
             clearInterval(pestInterval);
             clearInterval(fertilizerInterval);
 
