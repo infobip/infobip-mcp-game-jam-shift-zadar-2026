@@ -196,6 +196,56 @@
             background: rgba(76,175,80,0.9);
             transform: scale(0.95);
         }
+        #dpadContainer {
+            display: none;
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 200px;
+            z-index: 100;
+        }
+        .dpad-btn {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            background: rgba(255,255,255,0.2);
+            border: 3px solid rgba(255,255,255,0.5);
+            border-radius: 15px;
+            touch-action: manipulation;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .dpad-btn:active {
+            background: rgba(255,255,255,0.4);
+            transform: scale(0.9);
+        }
+        #upBtn {
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        #downBtn {
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        #leftBtn {
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+        }
+        #rightBtn {
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+        }
         #backButton {
             display: none;
             position: fixed;
@@ -254,6 +304,14 @@
         <div id="joystickKnob"></div>
     </div>
     <div id="gasButton">GAS</div>
+
+    <div id="dpadContainer">
+        <button class="dpad-btn" id="upBtn">↑</button>
+        <button class="dpad-btn" id="leftBtn">←</button>
+        <button class="dpad-btn" id="rightBtn">→</button>
+        <button class="dpad-btn" id="downBtn">↓</button>
+    </div>
+
     <button id="backButton">←</button>
 
     <script>
@@ -312,6 +370,7 @@
             document.getElementById('toiletHud').style.display = 'none';
             document.getElementById('joystick').style.display = 'none';
             document.getElementById('gasButton').style.display = 'none';
+            document.getElementById('dpadContainer').style.display = 'none';
             document.getElementById('backButton').style.display = 'none';
         }
 
@@ -492,7 +551,7 @@
             document.getElementById('characterSelect').style.display = 'none';
             document.getElementById('gameCanvas').style.display = 'block';
             document.getElementById('toiletHud').style.display = 'block';
-            document.getElementById('joystick').style.display = 'block';
+            document.getElementById('dpadContainer').style.display = 'block';
             document.getElementById('backButton').style.display = 'block';
             initToiletGame();
         }
@@ -502,10 +561,8 @@
             player: {
                 x: 0,
                 y: 0,
-                targetX: 0,
-                targetY: 0,
-                moving: false,
-                moveProgress: 0
+                gridX: 0,
+                gridY: 0
             },
             camera: 0,
             urgency: 100,
@@ -513,17 +570,19 @@
             gameOver: false,
             won: false,
             lanes: [],
-            toiletY: -3000
+            toiletY: -3000,
+            moveDelay: 0
         };
 
         function initToiletGame() {
+            const startGridX = Math.floor(canvas.width / 2 / TILE_SIZE);
+            const startGridY = -2;
+
             toiletGame.player = {
-                x: canvas.width / 2,
-                y: canvas.height - 100,
-                targetX: canvas.width / 2,
-                targetY: canvas.height - 100,
-                moving: false,
-                moveProgress: 0
+                x: startGridX * TILE_SIZE + TILE_SIZE / 2,
+                y: startGridY * TILE_SIZE,
+                gridX: startGridX,
+                gridY: startGridY
             };
 
             toiletGame.camera = 0;
@@ -533,6 +592,7 @@
             toiletGame.won = false;
             toiletGame.lanes = [];
             toiletGame.toiletY = -3000;
+            toiletGame.moveDelay = 0;
 
             generateLanes();
         }
@@ -541,19 +601,19 @@
             toiletGame.lanes = [];
 
             for (let i = 0; i < 60; i++) {
-                const y = i * TILE_SIZE;
+                const y = -i * TILE_SIZE;
                 const rand = Math.random();
 
-                if (i === 0 || i === 59) {
+                if (i < 3 || i === 59) {
                     toiletGame.lanes.push({ type: 'safe', y: y, obstacles: [] });
                 } else if (rand < 0.3) {
                     toiletGame.lanes.push({ type: 'safe', y: y, obstacles: [] });
                 } else if (rand < 0.65) {
                     const direction = Math.random() > 0.5 ? 1 : -1;
-                    const speed = 1 + Math.random() * 2;
+                    const speed = 1.5 + Math.random() * 2;
                     const obstacles = [];
-                    const gap = 150 + Math.random() * 200;
-                    for (let j = 0; j < canvas.width + 400; j += gap) {
+                    const gap = 180 + Math.random() * 150;
+                    for (let j = -200; j < canvas.width + 400; j += gap) {
                         obstacles.push({
                             x: j + Math.random() * 50,
                             width: 80 + Math.random() * 40,
@@ -565,13 +625,13 @@
                     toiletGame.lanes.push({ type: 'road', y: y, obstacles: obstacles });
                 } else {
                     const direction = Math.random() > 0.5 ? 1 : -1;
-                    const speed = 0.8 + Math.random() * 1.2;
+                    const speed = 1 + Math.random() * 1.5;
                     const obstacles = [];
-                    const gap = 120 + Math.random() * 100;
-                    for (let j = 0; j < canvas.width + 400; j += gap) {
+                    const gap = 140 + Math.random() * 80;
+                    for (let j = -200; j < canvas.width + 400; j += gap) {
                         obstacles.push({
                             x: j + Math.random() * 30,
-                            width: 80 + Math.random() * 30,
+                            width: 90 + Math.random() * 40,
                             height: 35,
                             direction: direction,
                             speed: speed,
@@ -583,109 +643,93 @@
             }
         }
 
+        function movePlayer(dx, dy) {
+            if (toiletGame.gameOver || toiletGame.won || toiletGame.moveDelay > 0) return;
+
+            toiletGame.player.gridX += dx;
+            toiletGame.player.gridY += dy;
+            toiletGame.player.x = toiletGame.player.gridX * TILE_SIZE + TILE_SIZE / 2;
+            toiletGame.player.y = toiletGame.player.gridY * TILE_SIZE;
+            toiletGame.moveDelay = 8;
+        }
+
+        document.getElementById('upBtn').addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            movePlayer(0, -1);
+        });
+
+        document.getElementById('downBtn').addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            movePlayer(0, 1);
+        });
+
+        document.getElementById('leftBtn').addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            movePlayer(-1, 0);
+        });
+
+        document.getElementById('rightBtn').addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            movePlayer(1, 0);
+        });
+
         function updateToiletGame() {
             if (toiletGame.gameOver || toiletGame.won) return;
 
+            if (toiletGame.moveDelay > 0) {
+                toiletGame.moveDelay--;
+            }
+
             const p = toiletGame.player;
-
-            if (!p.moving) {
-                const steerMagnitude = Math.sqrt(controls.steerX ** 2 + controls.steerY ** 2);
-
-                if (steerMagnitude > 0.5) {
-                    const angle = Math.atan2(controls.steerY, controls.steerX);
-                    const absX = Math.abs(controls.steerX);
-                    const absY = Math.abs(controls.steerY);
-
-                    if (absY > absX) {
-                        if (controls.steerY < 0) {
-                            p.targetY -= TILE_SIZE;
-                            p.moving = true;
-                            p.moveProgress = 0;
-                        } else if (controls.steerY > 0) {
-                            p.targetY += TILE_SIZE;
-                            p.moving = true;
-                            p.moveProgress = 0;
-                        }
-                    } else {
-                        if (controls.steerX < 0) {
-                            p.targetX -= TILE_SIZE;
-                            p.moving = true;
-                            p.moveProgress = 0;
-                        } else if (controls.steerX > 0) {
-                            p.targetX += TILE_SIZE;
-                            p.moving = true;
-                            p.moveProgress = 0;
-                        }
-                    }
-
-                    p.targetX = Math.max(30, Math.min(canvas.width - 30, p.targetX));
-                }
-            }
-
-            if (p.moving) {
-                p.moveProgress += 0.15;
-                if (p.moveProgress >= 1) {
-                    p.x = p.targetX;
-                    p.y = p.targetY;
-                    p.moving = false;
-                    p.moveProgress = 0;
-                } else {
-                    const t = p.moveProgress;
-                    const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-                    p.x = p.x + (p.targetX - p.x) * 0.2;
-                    p.y = p.y + (p.targetY - p.y) * 0.2;
-                }
-            }
-
             toiletGame.camera = p.y - canvas.height * 0.7;
 
             for (const lane of toiletGame.lanes) {
                 if (lane.type === 'road' || lane.type === 'river') {
                     for (const obs of lane.obstacles) {
                         obs.x += obs.direction * obs.speed;
-                        if (obs.direction > 0 && obs.x > canvas.width + 200) {
+                        if (obs.direction > 0 && obs.x > canvas.width + 300) {
                             obs.x = -200;
-                        } else if (obs.direction < 0 && obs.x < -200) {
+                        } else if (obs.direction < 0 && obs.x < -300) {
                             obs.x = canvas.width + 200;
                         }
                     }
                 }
             }
 
-            const playerLaneIndex = Math.floor(-p.y / TILE_SIZE);
+            const playerLaneIndex = Math.abs(Math.floor(p.y / TILE_SIZE));
             if (playerLaneIndex >= 0 && playerLaneIndex < toiletGame.lanes.length) {
                 const lane = toiletGame.lanes[playerLaneIndex];
 
                 if (lane.type === 'road') {
                     for (const obs of lane.obstacles) {
-                        if (p.x > obs.x - 25 && p.x < obs.x + obs.width + 25 &&
-                            Math.abs(p.y + lane.y) < 35) {
+                        if (p.x > obs.x - 20 && p.x < obs.x + obs.width + 20 &&
+                            Math.abs(p.y - lane.y) < 25) {
                             toiletGame.gameOver = true;
                         }
                     }
                 } else if (lane.type === 'river') {
                     let onLog = false;
                     for (const obs of lane.obstacles) {
-                        if (p.x > obs.x && p.x < obs.x + obs.width &&
-                            Math.abs(p.y + lane.y) < 35) {
+                        if (p.x > obs.x + 5 && p.x < obs.x + obs.width - 5 &&
+                            Math.abs(p.y - lane.y) < 25) {
                             onLog = true;
-                            if (!p.moving) {
-                                p.x += obs.direction * obs.speed;
-                                p.targetX = p.x;
-                            }
+                            p.x += obs.direction * obs.speed;
+                            p.gridX = Math.round(p.x / TILE_SIZE);
                         }
                     }
-                    if (!onLog && !p.moving) {
+                    if (!onLog) {
                         toiletGame.gameOver = true;
                     }
                 }
             }
 
-            if (p.x < 10 || p.x > canvas.width - 10) {
+            const maxX = canvas.width - TILE_SIZE / 2;
+            const minX = TILE_SIZE / 2;
+            if (p.x < minX || p.x > maxX) {
                 toiletGame.gameOver = true;
             }
 
-            toiletGame.urgency -= 0.04;
+            toiletGame.urgency -= 0.035;
             if (toiletGame.urgency <= 0) {
                 toiletGame.gameOver = true;
             }
@@ -694,7 +738,7 @@
             document.getElementById('distance').textContent = toiletGame.progress;
             document.getElementById('urgencyFill').style.width = Math.max(0, toiletGame.urgency) + '%';
 
-            if (p.y < toiletGame.toiletY + 50) {
+            if (p.y < toiletGame.toiletY + 100) {
                 toiletGame.won = true;
             }
         }
