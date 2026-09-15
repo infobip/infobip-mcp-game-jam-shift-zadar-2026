@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Drift Racer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            width: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            background: #1a1a1a;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            touch-action: none;
+        }
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100dvh;
+            background: #2a2a2a;
+            touch-action: none;
+        }
+        #hud {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 18px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none;
+            z-index: 10;
+        }
+        #driftScore {
+            color: #ff6b35;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        #joystick {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            width: 120px;
+            height: 120px;
+            background: rgba(255,255,255,0.1);
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            touch-action: none;
+            z-index: 100;
+        }
+        #joystickKnob {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: rgba(255,107,53,0.8);
+            border: 2px solid white;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+        #gasButton {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 120px;
+            height: 120px;
+            background: rgba(76,175,80,0.7);
+            border: 3px solid rgba(255,255,255,0.5);
+            border-radius: 50%;
+            touch-action: none;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+        #gasButton:active {
+            background: rgba(76,175,80,0.9);
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="hud">
+        <div>Speed: <span id="speed">0</span> km/h</div>
+        <div id="driftScore">Drift: <span id="drift">0</span></div>
+        <div>Score: <span id="score">0</span></div>
+    </div>
+    <div id="joystick">
+        <div id="joystickKnob"></div>
+    </div>
+    <div id="gasButton">GAS</div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set canvas size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Game state
+        const car = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            vx: 0,
+            vy: 0,
+            angle: 0,
+            speed: 0,
+            drift: 0,
+            driftScore: 0,
+            totalScore: 0
+        };
+
+        const controls = {
+            steerX: 0,
+            steerY: 0,
+            gas: false
+        };
+
+        // Physics constants
+        const MAX_SPEED = 15;
+        const ACCELERATION = 0.4;
+        const DRIFT_FACTOR = 0.92;
+        const GRIP_FACTOR = 0.96;
+        const FRICTION = 0.98;
+        const TURN_SPEED = 0.08;
+
+        // Joystick handling
+        const joystick = document.getElementById('joystick');
+        const joystickKnob = document.getElementById('joystickKnob');
+        let joystickActive = false;
+        let joystickId = null;
+
+        joystick.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            joystickActive = true;
+            joystickId = e.pointerId;
+            joystick.setPointerCapture(e.pointerId);
+            updateJoystick(e);
+        });
+
+        joystick.addEventListener('pointermove', (e) => {
+            if (joystickActive && e.pointerId === joystickId) {
+                e.preventDefault();
+                updateJoystick(e);
+            }
+        });
+
+        joystick.addEventListener('pointerup', (e) => {
+            if (e.pointerId === joystickId) {
+                e.preventDefault();
+                joystickActive = false;
+                joystickId = null;
+                controls.steerX = 0;
+                controls.steerY = 0;
+                joystickKnob.style.transform = 'translate(-50%, -50%)';
+            }
+        });
+
+        joystick.addEventListener('pointercancel', (e) => {
+            if (e.pointerId === joystickId) {
+                joystickActive = false;
+                joystickId = null;
+                controls.steerX = 0;
+                controls.steerY = 0;
+                joystickKnob.style.transform = 'translate(-50%, -50%)';
+            }
+        });
+
+        function updateJoystick(e) {
+            const rect = joystick.getBoundingClientRect();
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const x = e.clientX - rect.left - centerX;
+            const y = e.clientY - rect.top - centerY;
+
+            const distance = Math.sqrt(x * x + y * y);
+            const maxDistance = 35;
+
+            if (distance > maxDistance) {
+                const angle = Math.atan2(y, x);
+                controls.steerX = Math.cos(angle);
+                controls.steerY = Math.sin(angle);
+                joystickKnob.style.transform = `translate(calc(-50% + ${Math.cos(angle) * maxDistance}px), calc(-50% + ${Math.sin(angle) * maxDistance}px))`;
+            } else {
+                controls.steerX = x / maxDistance;
+                controls.steerY = y / maxDistance;
+                joystickKnob.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+            }
+        }
+
+        // Gas button handling
+        const gasButton = document.getElementById('gasButton');
+        let gasActive = false;
+
+        gasButton.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            controls.gas = true;
+            gasActive = true;
+        });
+
+        gasButton.addEventListener('pointerup', (e) => {
+            e.preventDefault();
+            controls.gas = false;
+            gasActive = false;
+        });
+
+        gasButton.addEventListener('pointercancel', (e) => {
+            e.preventDefault();
+            controls.gas = false;
+            gasActive = false;
+        });
+
+        // Track waypoints for endless track
+        const waypoints = [];
+        const numWaypoints = 20;
+        for (let i = 0; i < numWaypoints; i++) {
+            const angle = (i / numWaypoints) * Math.PI * 2;
+            const radius = 300 + Math.sin(i * 0.7) * 150;
+            waypoints.push({
+                x: Math.cos(angle) * radius,
+                y: Math.sin(angle) * radius
+            });
+        }
+
+        // Camera offset
+        const camera = { x: 0, y: 0 };
+
+        function updatePhysics() {
+            // Steering
+            const steerAngle = Math.atan2(controls.steerY, controls.steerX);
+            const steerMagnitude = Math.sqrt(controls.steerX ** 2 + controls.steerY ** 2);
+
+            if (steerMagnitude > 0.1) {
+                const targetAngle = steerAngle - Math.PI / 2;
+                let angleDiff = targetAngle - car.angle;
+                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                car.angle += angleDiff * TURN_SPEED * steerMagnitude;
+            }
+
+            // Acceleration
+            if (controls.gas) {
+                const ax = Math.sin(car.angle) * ACCELERATION;
+                const ay = -Math.cos(car.angle) * ACCELERATION;
+                car.vx += ax;
+                car.vy += ay;
+            }
+
+            // Speed calculation
+            car.speed = Math.sqrt(car.vx ** 2 + car.vy ** 2);
+
+            // Limit speed
+            if (car.speed > MAX_SPEED) {
+                car.vx = (car.vx / car.speed) * MAX_SPEED;
+                car.vy = (car.vy / car.speed) * MAX_SPEED;
+                car.speed = MAX_SPEED;
+            }
+
+            // Drift physics
+            const velocityAngle = Math.atan2(car.vy, car.vx);
+            const carDirection = car.angle + Math.PI / 2;
+            let driftAngle = velocityAngle - carDirection;
+            while (driftAngle > Math.PI) driftAngle -= Math.PI * 2;
+            while (driftAngle < -Math.PI) driftAngle += Math.PI * 2;
+
+            car.drift = Math.abs(driftAngle);
+
+            // Apply drift vs grip
+            const driftThreshold = 0.3;
+            if (car.drift > driftThreshold && car.speed > 3) {
+                // Drifting
+                car.vx *= DRIFT_FACTOR;
+                car.vy *= DRIFT_FACTOR;
+                car.driftScore += car.speed * car.drift * 0.5;
+                car.totalScore += car.speed * car.drift * 0.1;
+            } else {
+                // Gripping
+                car.vx *= GRIP_FACTOR;
+                car.vy *= GRIP_FACTOR;
+                car.driftScore *= 0.95;
+            }
+
+            // Friction
+            car.vx *= FRICTION;
+            car.vy *= FRICTION;
+
+            // Update position
+            car.x += car.vx;
+            car.y += car.vy;
+
+            // Camera follows car
+            camera.x = car.x - canvas.width / 2;
+            camera.y = car.y - canvas.height / 2;
+        }
+
+        function render() {
+            // Clear
+            ctx.fillStyle = '#2a2a2a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            ctx.translate(-camera.x, -camera.y);
+
+            // Draw track
+            ctx.strokeStyle = 'rgba(100, 100, 100, 0.3)';
+            ctx.lineWidth = 200;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            for (let i = 0; i < waypoints.length; i++) {
+                const wp = waypoints[i];
+                if (i === 0) {
+                    ctx.moveTo(wp.x, wp.y);
+                } else {
+                    ctx.lineTo(wp.x, wp.y);
+                }
+            }
+            ctx.closePath();
+            ctx.stroke();
+
+            // Draw track center line
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([10, 10]);
+            ctx.beginPath();
+            for (let i = 0; i < waypoints.length; i++) {
+                const wp = waypoints[i];
+                if (i === 0) {
+                    ctx.moveTo(wp.x, wp.y);
+                } else {
+                    ctx.lineTo(wp.x, wp.y);
+                }
+            }
+            ctx.closePath();
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Draw drift marks
+            if (car.drift > 0.5 && car.speed > 3) {
+                ctx.fillStyle = 'rgba(50, 50, 50, 0.3)';
+                ctx.fillRect(car.x - 5, car.y - 5, 10, 10);
+            }
+
+            // Draw car
+            ctx.save();
+            ctx.translate(car.x, car.y);
+            ctx.rotate(car.angle);
+
+            // Car body
+            ctx.fillStyle = car.drift > 0.5 ? '#ff6b35' : '#4CAF50';
+            ctx.fillRect(-15, -25, 30, 50);
+
+            // Car windows
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(-10, -15, 20, 15);
+
+            // Car headlights
+            ctx.fillStyle = '#ffeb3b';
+            ctx.fillRect(-12, -27, 8, 4);
+            ctx.fillRect(4, -27, 8, 4);
+
+            ctx.restore();
+
+            ctx.restore();
+
+            // Update HUD
+            document.getElementById('speed').textContent = Math.round(car.speed * 10);
+            document.getElementById('drift').textContent = Math.round(car.driftScore);
+            document.getElementById('score').textContent = Math.round(car.totalScore);
+        }
+
+        function gameLoop() {
+            updatePhysics();
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>
