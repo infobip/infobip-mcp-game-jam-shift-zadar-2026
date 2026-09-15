@@ -11,136 +11,76 @@
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
-
         body {
             background: #0a0a0a;
             font-family: 'Courier New', monospace;
             color: #00ff00;
             overflow: hidden;
-            overflow-x: hidden;
             touch-action: none;
             height: 100dvh;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
-            padding-top: 5px;
-        }
-
-        #game-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            max-width: 100%;
-            padding: 5px;
-        }
-
-        #title {
-            text-align: center;
-            font-size: 18px;
-            letter-spacing: 3px;
-            text-shadow: 0 0 10px #00ff00;
-            margin-bottom: 5px;
-        }
-
-        #play-area {
-            display: flex;
-            gap: 10px;
-            align-items: flex-start;
             justify-content: center;
         }
-
+        #game {
+            display: flex;
+            gap: 15px;
+            padding: 10px;
+        }
+        #main {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        h1 {
+            font-size: 20px;
+            text-align: center;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px #00ff00;
+        }
         #canvas {
             border: 4px solid #00ff00;
             box-shadow: 0 0 20px #00ff00;
             background: #000;
             display: block;
             image-rendering: pixelated;
-            image-rendering: crisp-edges;
         }
-
-        #side-panel {
+        #side {
             display: flex;
             flex-direction: column;
             gap: 10px;
-            min-width: 100px;
+            width: 120px;
         }
-
-        #next-panel {
-            border: 3px solid #00ff00;
-            box-shadow: 0 0 15px #00ff00;
-            background: #000;
-            padding: 8px;
-            text-align: center;
-        }
-
-        #next-panel h3 {
-            font-size: 12px;
-            margin-bottom: 8px;
-            text-shadow: 0 0 8px #00ff00;
-        }
-
-        #next-canvas {
-            border: 2px solid #003300;
-            background: #000;
-            display: block;
-            margin: 0 auto;
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
-        }
-
-        #score-panel {
+        .panel {
             border: 3px solid #00ff00;
             box-shadow: 0 0 15px #00ff00;
             background: #000;
             padding: 10px;
             text-align: center;
-            font-size: 12px;
+        }
+        .panel h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
             text-shadow: 0 0 8px #00ff00;
         }
-
-        #score-panel div {
-            margin: 5px 0;
+        #next-canvas {
+            border: 2px solid #003300;
+            background: #000;
+            margin: 0 auto;
+            display: block;
+            image-rendering: pixelated;
         }
-
-        #sound-toggle {
-            background: #003300;
-            border: 3px solid #00ff00;
-            color: #00ff00;
-            font-family: 'Courier New', monospace;
-            font-size: 18px;
-            width: 100%;
-            height: 50px;
-            cursor: pointer;
-            touch-action: none;
-            user-select: none;
-            text-shadow: 0 0 5px #00ff00;
-            box-shadow: 0 0 10px #00ff00;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .stat {
+            font-size: 12px;
+            margin: 8px 0;
+            text-shadow: 0 0 8px #00ff00;
         }
-
-        #sound-toggle:active {
-            background: #00ff00;
-            color: #000;
-        }
-
-        #sound-toggle.muted {
-            opacity: 0.5;
-        }
-
         #controls {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 8px;
-            width: 100%;
-            max-width: 300px;
             touch-action: none;
-            margin-bottom: 10px;
         }
-
         .btn {
             background: #003300;
             border: 3px solid #00ff00;
@@ -155,36 +95,15 @@
             user-select: none;
             text-shadow: 0 0 5px #00ff00;
             box-shadow: 0 0 10px #00ff00;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
-
         .btn:active {
             background: #00ff00;
             color: #000;
-            box-shadow: 0 0 20px #00ff00;
         }
-
-        #rotate {
-            grid-column: 2;
-        }
-
-        #left {
-            grid-column: 1;
-            grid-row: 2;
-        }
-
-        #down {
-            grid-column: 2;
-            grid-row: 2;
-        }
-
-        #right {
-            grid-column: 3;
-            grid-row: 2;
-        }
-
+        #rotate { grid-column: 2; }
+        #left { grid-column: 1; grid-row: 2; }
+        #down { grid-column: 2; grid-row: 2; }
+        #right { grid-column: 3; grid-row: 2; }
         #game-over {
             display: none;
             position: fixed;
@@ -196,147 +115,35 @@
             padding: 30px;
             text-align: center;
             box-shadow: 0 0 30px #00ff00;
-            z-index: 1000;
+            z-index: 100;
         }
-
         #game-over h2 {
-            font-size: 32px;
+            font-size: 28px;
             margin-bottom: 20px;
             text-shadow: 0 0 10px #00ff00;
-        }
-
-        #restart {
-            margin-top: 20px;
-            width: 100%;
         }
     </style>
 </head>
 <body>
-    <div id="game-container">
-        <h1 id="title">8-BIT TETRIS</h1>
-
-        <div id="play-area">
+    <div id="game">
+        <div id="main">
+            <h1>8-BIT TETRIS</h1>
             <canvas id="canvas" width="240" height="504"></canvas>
-            <div id="side-panel">
-                <div id="next-panel">
-                    <h3>NEXT</h3>
-                    <canvas id="next-canvas" width="96" height="96"></canvas>
-                </div>
-                <div id="score-panel">
-                    <div>SCORE: <span id="score">0</span></div>
-                    <div>LINES: <span id="lines">0</span></div>
-                    <div>LEVEL: <span id="level">1</span></div>
-                </div>
-                <button id="sound-toggle">♪ SOUND</button>
+            <div id="controls">
+                <button class="btn" id="rotate">ROTATE</button>
+                <button class="btn" id="left">LEFT</button>
+                <button class="btn" id="down">DROP</button>
+                <button class="btn" id="right">RIGHT</button>
             </div>
         </div>
-
-        <div id="controls">
-            <button class="btn" id="rotate">ROTATE</button>
-            <button class="btn" id="left">LEFT</button>
-            <button class="btn" id="down">DROP</button>
-            <button class="btn" id="right">RIGHT</button>
+        <div id="side">
+            <div class="panel">
+                <h3>NEXT</h3>
+                <canvas id="next-canvas" width="100" height="100"></canvas>
+            </div>
+            <div class="panel">
+                <div class="stat">SCORE<br><span id="score">0</span></div>
+                <div class="stat">LINES<br><span id="lines">0</span></div>
+                <div class="stat">LEVEL<br><span id="level">1</span></div>
+            </div>
         </div>
-    </div>
-
-    <div id="game-over">
-        <h2>GAME OVER</h2>
-        <div>FINAL SCORE: <span id="final-score">0</span></div>
-        <button class="btn" id="restart">RESTART</button>
-    </div>
-
-    <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const nextCanvas = document.getElementById('next-canvas');
-        const nextCtx = nextCanvas.getContext('2d');
-
-        const COLS = 10;
-        const ROWS = 21;
-        const BLOCK_SIZE = 24;
-
-        const COLORS = [
-            '#000000',
-            '#ff0000',
-            '#00ff00',
-            '#0000ff',
-            '#ffff00',
-            '#ff00ff',
-            '#00ffff',
-            '#ff8800'
-        ];
-
-        const SHAPES = [
-            [[1,1,1,1]],
-            [[1,1],[1,1]],
-            [[0,1,0],[1,1,1]],
-            [[0,1,1],[1,1,0]],
-            [[1,1,0],[0,1,1]],
-            [[1,0,0],[1,1,1]],
-            [[0,0,1],[1,1,1]]
-        ];
-
-        let board = [];
-        let score = 0;
-        let lines = 0;
-        let level = 1;
-        let dropCounter = 0;
-        let dropInterval = 1000;
-        let lastTime = 0;
-        let gameRunning = true;
-        let currentPiece = null;
-        let nextPiece = null;
-        let currentX = 0;
-        let currentY = 0;
-        let audioContext = null;
-        let musicStarted = false;
-        let soundEnabled = true;
-        let masterGain = null;
-
-        function initAudio() {
-            if (audioContext) return;
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            masterGain = audioContext.createGain();
-            masterGain.connect(audioContext.destination);
-        }
-
-        function toggleSound() {
-            soundEnabled = !soundEnabled;
-            const btn = document.getElementById('sound-toggle');
-            if (soundEnabled) {
-                btn.classList.remove('muted');
-                btn.textContent = '♪ SOUND';
-                if (masterGain) masterGain.gain.setValueAtTime(1, audioContext.currentTime);
-            } else {
-                btn.classList.add('muted');
-                btn.textContent = '♪ MUTED';
-                if (masterGain) masterGain.gain.setValueAtTime(0, audioContext.currentTime);
-            }
-        }
-
-        function playNote(frequency, startTime, duration, type = 'square', volume = 0.1) {
-            if (!soundEnabled) return;
-            const osc = audioContext.createOscillator();
-            const gain = audioContext.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(frequency, startTime);
-            gain.gain.setValueAtTime(0, startTime);
-            gain.gain.linearRampToValueAtTime(volume, startTime + 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-            osc.connect(gain);
-            gain.connect(masterGain);
-            osc.start(startTime);
-            osc.stop(startTime + duration);
-        }
-
-        function playChord(frequencies, startTime, duration, type = 'sawtooth') {
-            frequencies.forEach(freq => playNote(freq, startTime, duration, type, 0.06));
-        }
-
-        function playBassNote(frequency, startTime, duration) {
-            if (!soundEnabled) return;
-            const osc = audioContext.createOscillator();
-            const gain = audioContext.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(frequency, startTime);
-            gain.gain.setValueAtTime(0, startTime
