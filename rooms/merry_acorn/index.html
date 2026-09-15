@@ -245,9 +245,9 @@
     </div>
 
     <div id="toiletHud">
-        <div style="font-size: 28px; font-weight: bold;">FIND THE TOILET!</div>
+        <div style="font-size: 28px; font-weight: bold;">REACH THE TOILET!</div>
         <div id="urgencyBar"><div id="urgencyFill" style="width: 100%;"></div></div>
-        <div>Distance: <span id="distance">0</span>m</div>
+        <div>Progress: <span id="distance">0</span>m</div>
     </div>
 
     <div id="joystick">
@@ -486,7 +486,7 @@
             ctx.restore();
         }
 
-        // TOILET GAME
+        // TOILET GAME - Crossy Road Style
         function startToiletGame() {
             currentGame = 'toilet';
             document.getElementById('characterSelect').style.display = 'none';
@@ -497,50 +497,89 @@
             initToiletGame();
         }
 
+        const TILE_SIZE = 60;
         const toiletGame = {
             player: {
-                x: 100,
-                y: 100,
-                vx: 0,
-                vy: 0,
-                speed: 3
-            },
-            toilet: {
                 x: 0,
-                y: 0
+                y: 0,
+                targetX: 0,
+                targetY: 0,
+                moving: false,
+                moveProgress: 0
             },
+            camera: 0,
             urgency: 100,
-            obstacles: [],
+            progress: 0,
             gameOver: false,
-            won: false
+            won: false,
+            lanes: [],
+            toiletY: -3000
         };
 
         function initToiletGame() {
             toiletGame.player = {
-                x: 100,
+                x: canvas.width / 2,
                 y: canvas.height - 100,
-                vx: 0,
-                vy: 0,
-                speed: 3
+                targetX: canvas.width / 2,
+                targetY: canvas.height - 100,
+                moving: false,
+                moveProgress: 0
             };
 
-            toiletGame.toilet = {
-                x: canvas.width - 100,
-                y: 100
-            };
-
+            toiletGame.camera = 0;
             toiletGame.urgency = 100;
+            toiletGame.progress = 0;
             toiletGame.gameOver = false;
             toiletGame.won = false;
-            toiletGame.obstacles = [];
+            toiletGame.lanes = [];
+            toiletGame.toiletY = -3000;
 
-            for (let i = 0; i < 8; i++) {
-                toiletGame.obstacles.push({
-                    x: Math.random() * (canvas.width - 200) + 100,
-                    y: Math.random() * (canvas.height - 200) + 100,
-                    width: 60 + Math.random() * 40,
-                    height: 60 + Math.random() * 40
-                });
+            generateLanes();
+        }
+
+        function generateLanes() {
+            toiletGame.lanes = [];
+
+            for (let i = 0; i < 60; i++) {
+                const y = i * TILE_SIZE;
+                const rand = Math.random();
+
+                if (i === 0 || i === 59) {
+                    toiletGame.lanes.push({ type: 'safe', y: y, obstacles: [] });
+                } else if (rand < 0.3) {
+                    toiletGame.lanes.push({ type: 'safe', y: y, obstacles: [] });
+                } else if (rand < 0.65) {
+                    const direction = Math.random() > 0.5 ? 1 : -1;
+                    const speed = 1 + Math.random() * 2;
+                    const obstacles = [];
+                    const gap = 150 + Math.random() * 200;
+                    for (let j = 0; j < canvas.width + 400; j += gap) {
+                        obstacles.push({
+                            x: j + Math.random() * 50,
+                            width: 80 + Math.random() * 40,
+                            height: 45,
+                            direction: direction,
+                            speed: speed
+                        });
+                    }
+                    toiletGame.lanes.push({ type: 'road', y: y, obstacles: obstacles });
+                } else {
+                    const direction = Math.random() > 0.5 ? 1 : -1;
+                    const speed = 0.8 + Math.random() * 1.2;
+                    const obstacles = [];
+                    const gap = 120 + Math.random() * 100;
+                    for (let j = 0; j < canvas.width + 400; j += gap) {
+                        obstacles.push({
+                            x: j + Math.random() * 30,
+                            width: 80 + Math.random() * 30,
+                            height: 35,
+                            direction: direction,
+                            speed: speed,
+                            isLog: true
+                        });
+                    }
+                    toiletGame.lanes.push({ type: 'river', y: y, obstacles: obstacles });
+                }
             }
         }
 
@@ -548,98 +587,226 @@
             if (toiletGame.gameOver || toiletGame.won) return;
 
             const p = toiletGame.player;
-            const steerMagnitude = Math.sqrt(controls.steerX ** 2 + controls.steerY ** 2);
 
-            if (steerMagnitude > 0.1) {
-                p.vx = controls.steerX * p.speed;
-                p.vy = controls.steerY * p.speed;
-            } else {
-                p.vx *= 0.8;
-                p.vy *= 0.8;
-            }
+            if (!p.moving) {
+                const steerMagnitude = Math.sqrt(controls.steerX ** 2 + controls.steerY ** 2);
 
-            const newX = p.x + p.vx;
-            const newY = p.y + p.vy;
+                if (steerMagnitude > 0.5) {
+                    const angle = Math.atan2(controls.steerY, controls.steerX);
+                    const absX = Math.abs(controls.steerX);
+                    const absY = Math.abs(controls.steerY);
 
-            let collision = false;
-            for (const obs of toiletGame.obstacles) {
-                if (newX > obs.x && newX < obs.x + obs.width &&
-                    newY > obs.y && newY < obs.y + obs.height) {
-                    collision = true;
-                    break;
+                    if (absY > absX) {
+                        if (controls.steerY < 0) {
+                            p.targetY -= TILE_SIZE;
+                            p.moving = true;
+                            p.moveProgress = 0;
+                        } else if (controls.steerY > 0) {
+                            p.targetY += TILE_SIZE;
+                            p.moving = true;
+                            p.moveProgress = 0;
+                        }
+                    } else {
+                        if (controls.steerX < 0) {
+                            p.targetX -= TILE_SIZE;
+                            p.moving = true;
+                            p.moveProgress = 0;
+                        } else if (controls.steerX > 0) {
+                            p.targetX += TILE_SIZE;
+                            p.moving = true;
+                            p.moveProgress = 0;
+                        }
+                    }
+
+                    p.targetX = Math.max(30, Math.min(canvas.width - 30, p.targetX));
                 }
             }
 
-            if (!collision) {
-                p.x = Math.max(20, Math.min(canvas.width - 20, newX));
-                p.y = Math.max(20, Math.min(canvas.height - 20, newY));
+            if (p.moving) {
+                p.moveProgress += 0.15;
+                if (p.moveProgress >= 1) {
+                    p.x = p.targetX;
+                    p.y = p.targetY;
+                    p.moving = false;
+                    p.moveProgress = 0;
+                } else {
+                    const t = p.moveProgress;
+                    const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+                    p.x = p.x + (p.targetX - p.x) * 0.2;
+                    p.y = p.y + (p.targetY - p.y) * 0.2;
+                }
             }
 
-            toiletGame.urgency -= 0.08;
+            toiletGame.camera = p.y - canvas.height * 0.7;
+
+            for (const lane of toiletGame.lanes) {
+                if (lane.type === 'road' || lane.type === 'river') {
+                    for (const obs of lane.obstacles) {
+                        obs.x += obs.direction * obs.speed;
+                        if (obs.direction > 0 && obs.x > canvas.width + 200) {
+                            obs.x = -200;
+                        } else if (obs.direction < 0 && obs.x < -200) {
+                            obs.x = canvas.width + 200;
+                        }
+                    }
+                }
+            }
+
+            const playerLaneIndex = Math.floor(-p.y / TILE_SIZE);
+            if (playerLaneIndex >= 0 && playerLaneIndex < toiletGame.lanes.length) {
+                const lane = toiletGame.lanes[playerLaneIndex];
+
+                if (lane.type === 'road') {
+                    for (const obs of lane.obstacles) {
+                        if (p.x > obs.x - 25 && p.x < obs.x + obs.width + 25 &&
+                            Math.abs(p.y + lane.y) < 35) {
+                            toiletGame.gameOver = true;
+                        }
+                    }
+                } else if (lane.type === 'river') {
+                    let onLog = false;
+                    for (const obs of lane.obstacles) {
+                        if (p.x > obs.x && p.x < obs.x + obs.width &&
+                            Math.abs(p.y + lane.y) < 35) {
+                            onLog = true;
+                            if (!p.moving) {
+                                p.x += obs.direction * obs.speed;
+                                p.targetX = p.x;
+                            }
+                        }
+                    }
+                    if (!onLog && !p.moving) {
+                        toiletGame.gameOver = true;
+                    }
+                }
+            }
+
+            if (p.x < 10 || p.x > canvas.width - 10) {
+                toiletGame.gameOver = true;
+            }
+
+            toiletGame.urgency -= 0.04;
             if (toiletGame.urgency <= 0) {
                 toiletGame.gameOver = true;
             }
 
-            const dist = Math.sqrt((p.x - toiletGame.toilet.x) ** 2 + (p.y - toiletGame.toilet.y) ** 2);
-            document.getElementById('distance').textContent = Math.round(dist);
-            document.getElementById('urgencyFill').style.width = toiletGame.urgency + '%';
+            toiletGame.progress = Math.max(0, Math.floor(-p.y / 10));
+            document.getElementById('distance').textContent = toiletGame.progress;
+            document.getElementById('urgencyFill').style.width = Math.max(0, toiletGame.urgency) + '%';
 
-            if (dist < 40) {
+            if (p.y < toiletGame.toiletY + 50) {
                 toiletGame.won = true;
             }
         }
 
         function renderToiletGame() {
-            ctx.fillStyle = '#8B4513';
+            ctx.fillStyle = '#87CEEB';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            for (const obs of toiletGame.obstacles) {
-                ctx.fillStyle = '#654321';
-                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
-                ctx.strokeStyle = '#3d2817';
-                ctx.lineWidth = 3;
-                ctx.strokeRect(obs.x, obs.y, obs.width, obs.height);
+            ctx.save();
+            ctx.translate(0, toiletGame.camera);
+
+            const startLane = Math.floor(-toiletGame.camera / TILE_SIZE) - 2;
+            const endLane = Math.ceil((-toiletGame.camera + canvas.height) / TILE_SIZE) + 2;
+
+            for (let i = Math.max(0, startLane); i < Math.min(toiletGame.lanes.length, endLane); i++) {
+                const lane = toiletGame.lanes[i];
+                const y = -lane.y;
+
+                if (lane.type === 'safe') {
+                    ctx.fillStyle = i % 2 === 0 ? '#7cb342' : '#689f38';
+                    ctx.fillRect(0, y, canvas.width, TILE_SIZE);
+                } else if (lane.type === 'road') {
+                    ctx.fillStyle = '#424242';
+                    ctx.fillRect(0, y, canvas.width, TILE_SIZE);
+
+                    ctx.strokeStyle = '#ffeb3b';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([15, 15]);
+                    ctx.beginPath();
+                    ctx.moveTo(0, y + TILE_SIZE / 2);
+                    ctx.lineTo(canvas.width, y + TILE_SIZE / 2);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    for (const obs of lane.obstacles) {
+                        const carColors = ['#e53935', '#1e88e5', '#43a047', '#fb8c00'];
+                        ctx.fillStyle = carColors[Math.floor(obs.x / 300) % carColors.length];
+                        ctx.fillRect(obs.x, y + 7, obs.width, obs.height);
+
+                        ctx.fillStyle = '#ffffff';
+                        if (obs.direction > 0) {
+                            ctx.fillRect(obs.x + obs.width - 15, y + 10, 10, 8);
+                            ctx.fillRect(obs.x + obs.width - 15, y + 27, 10, 8);
+                        } else {
+                            ctx.fillRect(obs.x + 5, y + 10, 10, 8);
+                            ctx.fillRect(obs.x + 5, y + 27, 10, 8);
+                        }
+                    }
+                } else if (lane.type === 'river') {
+                    ctx.fillStyle = '#1976d2';
+                    ctx.fillRect(0, y, canvas.width, TILE_SIZE);
+
+                    for (const obs of lane.obstacles) {
+                        ctx.fillStyle = '#795548';
+                        ctx.fillRect(obs.x, y + 12, obs.width, obs.height);
+                        ctx.fillStyle = '#5d4037';
+                        for (let r = 0; r < 3; r++) {
+                            ctx.fillRect(obs.x + 10 + r * 25, y + 15, 15, obs.height - 6);
+                        }
+                    }
+                }
             }
 
-            ctx.fillStyle = 'white';
-            ctx.fillRect(toiletGame.toilet.x - 25, toiletGame.toilet.y - 35, 50, 70);
+            const toiletY = -toiletGame.toiletY;
+            ctx.fillStyle = '#ffd54f';
+            ctx.fillRect(0, toiletY - 100, canvas.width, 100);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(canvas.width / 2 - 40, toiletY - 80, 80, 70);
             ctx.fillStyle = '#e0e0e0';
-            ctx.fillRect(toiletGame.toilet.x - 20, toiletGame.toilet.y - 30, 40, 30);
+            ctx.fillRect(canvas.width / 2 - 35, toiletY - 75, 70, 40);
             ctx.fillStyle = '#333';
-            ctx.font = 'bold 30px Arial';
+            ctx.font = 'bold 50px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('🚽', toiletGame.toilet.x, toiletGame.toilet.y);
+            ctx.fillText('🚽', canvas.width / 2, toiletY - 30);
 
             const p = toiletGame.player;
             ctx.fillStyle = selectedCharacter === 'martina' ? '#f5576c' : '#4a90e2';
             ctx.beginPath();
-            ctx.arc(p.x, p.y, 25, 0, Math.PI * 2);
+            ctx.arc(p.x, -p.y, 25, 0, Math.PI * 2);
             ctx.fill();
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 3;
+            ctx.stroke();
 
             ctx.fillStyle = 'white';
-            ctx.font = 'bold 35px Arial';
+            ctx.font = 'bold 40px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(selectedCharacter === 'martina' ? '👩' : '👨', p.x, p.y + 12);
+            ctx.fillText(selectedCharacter === 'martina' ? '👩' : '👨', p.x, -p.y + 13);
+
+            ctx.restore();
 
             if (toiletGame.gameOver) {
                 ctx.fillStyle = 'rgba(0,0,0,0.7)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = 'white';
+                ctx.fillStyle = '#F44336';
                 ctx.font = 'bold 48px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText('ACCIDENT!', canvas.width / 2, canvas.height / 2);
+                ctx.fillText('GAME OVER!', canvas.width / 2, canvas.height / 2);
                 ctx.font = '24px Arial';
-                ctx.fillText('Tap back button to try again', canvas.width / 2, canvas.height / 2 + 50);
+                ctx.fillStyle = 'white';
+                ctx.fillText('Progress: ' + toiletGame.progress + 'm', canvas.width / 2, canvas.height / 2 + 50);
+                ctx.fillText('Tap back to try again', canvas.width / 2, canvas.height / 2 + 90);
             } else if (toiletGame.won) {
                 ctx.fillStyle = 'rgba(0,0,0,0.7)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = '#4CAF50';
                 ctx.font = 'bold 48px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText('MADE IT!', canvas.width / 2, canvas.height / 2);
-                ctx.font = '24px Arial';
+                ctx.fillText('SUCCESS!', canvas.width / 2, canvas.height / 2);
+                ctx.font = '28px Arial';
                 ctx.fillStyle = 'white';
-                ctx.fillText('Crisis averted!', canvas.width / 2, canvas.height / 2 + 50);
+                ctx.fillText('Made it to the toilet!', canvas.width / 2, canvas.height / 2 + 50);
             }
         }
 
