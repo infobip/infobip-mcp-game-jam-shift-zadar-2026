@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Tap Frenzy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            overflow: hidden;
+            touch-action: none;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 100vw;
+            height: 100svh;
+        }
+
+        #game-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #header {
+            padding: 20px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 20px;
+            font-weight: bold;
+            z-index: 10;
+        }
+
+        #game-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .target {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            touch-action: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+        }
+
+        .target:active {
+            transform: scale(0.9);
+        }
+
+        #start-screen, #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 100;
+        }
+
+        #start-screen h1, #game-over-screen h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #start-screen p, #game-over-screen p {
+            font-size: 18px;
+            margin-bottom: 30px;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .btn {
+            padding: 18px 48px;
+            font-size: 24px;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            cursor: pointer;
+            touch-action: manipulation;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            min-width: 200px;
+            min-height: 60px;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        #final-score {
+            font-size: 36px;
+            margin: 20px 0;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="header">
+            <div>Score: <span id="score">0</span></div>
+            <div>Time: <span id="timer">30</span>s</div>
+        </div>
+
+        <div id="game-area"></div>
+
+        <div id="start-screen">
+            <h1>🎯 Tap Frenzy</h1>
+            <p>Tap the colorful targets as fast as you can!<br>You have 30 seconds. Ready?</p>
+            <button class="btn" id="start-btn">START GAME</button>
+        </div>
+
+        <div id="game-over-screen" class="hidden">
+            <h1>Game Over!</h1>
+            <div id="final-score">Score: 0</div>
+            <button class="btn" id="restart-btn">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script>
+        const gameArea = document.getElementById('game-area');
+        const scoreDisplay = document.getElementById('score');
+        const timerDisplay = document.getElementById('timer');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const finalScoreDisplay = document.getElementById('final-score');
+
+        let score = 0;
+        let timeLeft = 30;
+        let gameActive = false;
+        let timerInterval;
+        let spawnInterval;
+
+        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2'];
+
+        function getRandomColor() {
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        function createTarget() {
+            if (!gameActive) return;
+
+            const target = document.createElement('div');
+            target.className = 'target';
+
+            const size = 60 + Math.random() * 40;
+            target.style.width = size + 'px';
+            target.style.height = size + 'px';
+            target.style.backgroundColor = getRandomColor();
+
+            const maxX = gameArea.clientWidth - size;
+            const maxY = gameArea.clientHeight - size;
+            target.style.left = Math.random() * maxX + 'px';
+            target.style.top = Math.random() * maxY + 'px';
+
+            const points = Math.floor(Math.random() * 3) + 1;
+            target.textContent = points;
+            target.dataset.points = points;
+
+            target.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                if (gameActive) {
+                    score += parseInt(target.dataset.points);
+                    scoreDisplay.textContent = score;
+                    target.remove();
+                }
+            });
+
+            gameArea.appendChild(target);
+
+            setTimeout(() => {
+                if (target.parentNode) {
+                    target.remove();
+                }
+            }, 2000);
+        }
+
+        function startGame() {
+            score = 0;
+            timeLeft = 30;
+            gameActive = true;
+            scoreDisplay.textContent = score;
+            timerDisplay.textContent = timeLeft;
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            gameArea.innerHTML = '';
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+
+            spawnInterval = setInterval(createTarget, 600);
+            createTarget();
+        }
+
+        function endGame() {
+            gameActive = false;
+            clearInterval(timerInterval);
+            clearInterval(spawnInterval);
+            gameArea.innerHTML = '';
+            finalScoreDisplay.textContent = 'Score: ' + score;
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        startBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            startGame();
+        });
+
+        restartBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            startGame();
+        });
+    </script>
+</body>
+</html>
