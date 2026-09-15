@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Drift Racer</title>
+    <title>Game Hub</title>
     <style>
         * {
             margin: 0;
@@ -19,14 +19,94 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             touch-action: none;
         }
+        #menu {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100dvh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        #menu h1 {
+            color: white;
+            font-size: 36px;
+            margin-bottom: 50px;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+        }
+        .menu-button {
+            width: 280px;
+            height: 70px;
+            margin: 15px;
+            background: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            cursor: pointer;
+            touch-action: manipulation;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        .menu-button:active {
+            transform: scale(0.95);
+        }
+        #characterSelect {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100dvh;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        #characterSelect h2 {
+            color: white;
+            font-size: 32px;
+            margin-bottom: 40px;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+        }
+        .character-button {
+            width: 280px;
+            height: 120px;
+            margin: 15px;
+            background: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            touch-action: manipulation;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .character-button:active {
+            transform: scale(0.95);
+        }
+        .character-button.female {
+            color: #f5576c;
+        }
+        .character-button.male {
+            color: #4a90e2;
+        }
+        .character-emoji {
+            font-size: 48px;
+            margin-bottom: 5px;
+        }
         #gameCanvas {
-            display: block;
+            display: none;
             width: 100%;
             height: 100dvh;
             background: #2a2a2a;
             touch-action: none;
         }
         #hud {
+            display: none;
             position: fixed;
             top: 20px;
             left: 20px;
@@ -41,7 +121,35 @@
             font-size: 24px;
             font-weight: bold;
         }
+        #toiletHud {
+            display: none;
+            position: fixed;
+            top: 20px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none;
+            z-index: 10;
+        }
+        #urgencyBar {
+            width: 80%;
+            max-width: 400px;
+            height: 30px;
+            background: rgba(0,0,0,0.3);
+            border: 3px solid white;
+            border-radius: 15px;
+            margin: 10px auto;
+            overflow: hidden;
+        }
+        #urgencyFill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50 0%, #FFC107 50%, #F44336 100%);
+            transition: width 0.3s;
+        }
         #joystick {
+            display: none;
             position: fixed;
             bottom: 30px;
             left: 30px;
@@ -66,6 +174,7 @@
             pointer-events: none;
         }
         #gasButton {
+            display: none;
             position: fixed;
             bottom: 30px;
             right: 30px;
@@ -76,7 +185,6 @@
             border-radius: 50%;
             touch-action: none;
             z-index: 100;
-            display: flex;
             align-items: center;
             justify-content: center;
             font-size: 20px;
@@ -88,25 +196,73 @@
             background: rgba(76,175,80,0.9);
             transform: scale(0.95);
         }
+        #backButton {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            border-radius: 50%;
+            touch-action: manipulation;
+            z-index: 1000;
+            font-size: 24px;
+            color: white;
+            cursor: pointer;
+        }
+        #backButton:active {
+            transform: scale(0.9);
+        }
     </style>
 </head>
 <body>
+    <div id="menu">
+        <h1>Choose Your Game</h1>
+        <button class="menu-button" id="driftBtn">Drift Racer</button>
+        <button class="menu-button" id="toiletBtn">Toilet Rush</button>
+    </div>
+
+    <div id="characterSelect">
+        <h2>Choose Your Character</h2>
+        <button class="character-button female" id="martinaBtn">
+            <div class="character-emoji">👩</div>
+            <div>Martina</div>
+        </button>
+        <button class="character-button male" id="cabyBtn">
+            <div class="character-emoji">👨</div>
+            <div>Caby</div>
+        </button>
+    </div>
+
     <canvas id="gameCanvas"></canvas>
+
     <div id="hud">
         <div>Speed: <span id="speed">0</span> km/h</div>
         <div id="driftScore">Drift: <span id="drift">0</span></div>
         <div>Score: <span id="score">0</span></div>
     </div>
+
+    <div id="toiletHud">
+        <div style="font-size: 28px; font-weight: bold;">FIND THE TOILET!</div>
+        <div id="urgencyBar"><div id="urgencyFill" style="width: 100%;"></div></div>
+        <div>Distance: <span id="distance">0</span>m</div>
+    </div>
+
     <div id="joystick">
         <div id="joystickKnob"></div>
     </div>
     <div id="gasButton">GAS</div>
+    <button id="backButton">←</button>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Set canvas size
+        let currentGame = null;
+        let selectedCharacter = null;
+
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
@@ -114,34 +270,386 @@
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
-        // Game state
-        const car = {
-            x: canvas.width / 2,
-            y: canvas.height / 2,
-            vx: 0,
-            vy: 0,
-            angle: 0,
-            speed: 0,
-            drift: 0,
-            driftScore: 0,
-            totalScore: 0
+        // Menu navigation
+        document.getElementById('driftBtn').addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            startDriftGame();
+        });
+
+        document.getElementById('toiletBtn').addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            showCharacterSelect();
+        });
+
+        document.getElementById('martinaBtn').addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            selectedCharacter = 'martina';
+            startToiletGame();
+        });
+
+        document.getElementById('cabyBtn').addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            selectedCharacter = 'caby';
+            startToiletGame();
+        });
+
+        document.getElementById('backButton').addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            backToMenu();
+        });
+
+        function showCharacterSelect() {
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('characterSelect').style.display = 'flex';
+        }
+
+        function backToMenu() {
+            currentGame = null;
+            document.getElementById('menu').style.display = 'flex';
+            document.getElementById('characterSelect').style.display = 'none';
+            document.getElementById('gameCanvas').style.display = 'none';
+            document.getElementById('hud').style.display = 'none';
+            document.getElementById('toiletHud').style.display = 'none';
+            document.getElementById('joystick').style.display = 'none';
+            document.getElementById('gasButton').style.display = 'none';
+            document.getElementById('backButton').style.display = 'none';
+        }
+
+        // DRIFT GAME
+        function startDriftGame() {
+            currentGame = 'drift';
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('gameCanvas').style.display = 'block';
+            document.getElementById('hud').style.display = 'block';
+            document.getElementById('joystick').style.display = 'block';
+            document.getElementById('gasButton').style.display = 'flex';
+            document.getElementById('backButton').style.display = 'block';
+            initDriftGame();
+        }
+
+        const driftGame = {
+            car: {
+                x: 0,
+                y: 0,
+                vx: 0,
+                vy: 0,
+                angle: 0,
+                speed: 0,
+                drift: 0,
+                driftScore: 0,
+                totalScore: 0
+            },
+            camera: { x: 0, y: 0 },
+            waypoints: []
         };
 
+        function initDriftGame() {
+            driftGame.car = {
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                vx: 0,
+                vy: 0,
+                angle: 0,
+                speed: 0,
+                drift: 0,
+                driftScore: 0,
+                totalScore: 0
+            };
+
+            driftGame.waypoints = [];
+            const numWaypoints = 20;
+            for (let i = 0; i < numWaypoints; i++) {
+                const angle = (i / numWaypoints) * Math.PI * 2;
+                const radius = 300 + Math.sin(i * 0.7) * 150;
+                driftGame.waypoints.push({
+                    x: Math.cos(angle) * radius,
+                    y: Math.sin(angle) * radius
+                });
+            }
+        }
+
+        function updateDriftGame() {
+            const car = driftGame.car;
+            const steerAngle = Math.atan2(controls.steerY, controls.steerX);
+            const steerMagnitude = Math.sqrt(controls.steerX ** 2 + controls.steerY ** 2);
+
+            if (steerMagnitude > 0.1) {
+                const targetAngle = steerAngle - Math.PI / 2;
+                let angleDiff = targetAngle - car.angle;
+                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                car.angle += angleDiff * 0.08 * steerMagnitude;
+            }
+
+            if (controls.gas) {
+                const ax = Math.sin(car.angle) * 0.4;
+                const ay = -Math.cos(car.angle) * 0.4;
+                car.vx += ax;
+                car.vy += ay;
+            }
+
+            car.speed = Math.sqrt(car.vx ** 2 + car.vy ** 2);
+
+            if (car.speed > 15) {
+                car.vx = (car.vx / car.speed) * 15;
+                car.vy = (car.vy / car.speed) * 15;
+                car.speed = 15;
+            }
+
+            const velocityAngle = Math.atan2(car.vy, car.vx);
+            const carDirection = car.angle + Math.PI / 2;
+            let driftAngle = velocityAngle - carDirection;
+            while (driftAngle > Math.PI) driftAngle -= Math.PI * 2;
+            while (driftAngle < -Math.PI) driftAngle += Math.PI * 2;
+
+            car.drift = Math.abs(driftAngle);
+
+            if (car.drift > 0.3 && car.speed > 3) {
+                car.vx *= 0.92;
+                car.vy *= 0.92;
+                car.driftScore += car.speed * car.drift * 0.5;
+                car.totalScore += car.speed * car.drift * 0.1;
+            } else {
+                car.vx *= 0.96;
+                car.vy *= 0.96;
+                car.driftScore *= 0.95;
+            }
+
+            car.vx *= 0.98;
+            car.vy *= 0.98;
+            car.x += car.vx;
+            car.y += car.vy;
+
+            driftGame.camera.x = car.x - canvas.width / 2;
+            driftGame.camera.y = car.y - canvas.height / 2;
+
+            document.getElementById('speed').textContent = Math.round(car.speed * 10);
+            document.getElementById('drift').textContent = Math.round(car.driftScore);
+            document.getElementById('score').textContent = Math.round(car.totalScore);
+        }
+
+        function renderDriftGame() {
+            ctx.fillStyle = '#2a2a2a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            ctx.translate(-driftGame.camera.x, -driftGame.camera.y);
+
+            ctx.strokeStyle = 'rgba(100, 100, 100, 0.3)';
+            ctx.lineWidth = 200;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            for (let i = 0; i < driftGame.waypoints.length; i++) {
+                const wp = driftGame.waypoints[i];
+                if (i === 0) {
+                    ctx.moveTo(wp.x, wp.y);
+                } else {
+                    ctx.lineTo(wp.x, wp.y);
+                }
+            }
+            ctx.closePath();
+            ctx.stroke();
+
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([10, 10]);
+            ctx.beginPath();
+            for (let i = 0; i < driftGame.waypoints.length; i++) {
+                const wp = driftGame.waypoints[i];
+                if (i === 0) {
+                    ctx.moveTo(wp.x, wp.y);
+                } else {
+                    ctx.lineTo(wp.x, wp.y);
+                }
+            }
+            ctx.closePath();
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            const car = driftGame.car;
+            ctx.save();
+            ctx.translate(car.x, car.y);
+            ctx.rotate(car.angle);
+
+            ctx.fillStyle = car.drift > 0.5 ? '#ff6b35' : '#4CAF50';
+            ctx.fillRect(-15, -25, 30, 50);
+
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(-10, -15, 20, 15);
+
+            ctx.fillStyle = '#ffeb3b';
+            ctx.fillRect(-12, -27, 8, 4);
+            ctx.fillRect(4, -27, 8, 4);
+
+            ctx.restore();
+            ctx.restore();
+        }
+
+        // TOILET GAME
+        function startToiletGame() {
+            currentGame = 'toilet';
+            document.getElementById('characterSelect').style.display = 'none';
+            document.getElementById('gameCanvas').style.display = 'block';
+            document.getElementById('toiletHud').style.display = 'block';
+            document.getElementById('joystick').style.display = 'block';
+            document.getElementById('backButton').style.display = 'block';
+            initToiletGame();
+        }
+
+        const toiletGame = {
+            player: {
+                x: 100,
+                y: 100,
+                vx: 0,
+                vy: 0,
+                speed: 3
+            },
+            toilet: {
+                x: 0,
+                y: 0
+            },
+            urgency: 100,
+            obstacles: [],
+            gameOver: false,
+            won: false
+        };
+
+        function initToiletGame() {
+            toiletGame.player = {
+                x: 100,
+                y: canvas.height - 100,
+                vx: 0,
+                vy: 0,
+                speed: 3
+            };
+
+            toiletGame.toilet = {
+                x: canvas.width - 100,
+                y: 100
+            };
+
+            toiletGame.urgency = 100;
+            toiletGame.gameOver = false;
+            toiletGame.won = false;
+            toiletGame.obstacles = [];
+
+            for (let i = 0; i < 8; i++) {
+                toiletGame.obstacles.push({
+                    x: Math.random() * (canvas.width - 200) + 100,
+                    y: Math.random() * (canvas.height - 200) + 100,
+                    width: 60 + Math.random() * 40,
+                    height: 60 + Math.random() * 40
+                });
+            }
+        }
+
+        function updateToiletGame() {
+            if (toiletGame.gameOver || toiletGame.won) return;
+
+            const p = toiletGame.player;
+            const steerMagnitude = Math.sqrt(controls.steerX ** 2 + controls.steerY ** 2);
+
+            if (steerMagnitude > 0.1) {
+                p.vx = controls.steerX * p.speed;
+                p.vy = controls.steerY * p.speed;
+            } else {
+                p.vx *= 0.8;
+                p.vy *= 0.8;
+            }
+
+            const newX = p.x + p.vx;
+            const newY = p.y + p.vy;
+
+            let collision = false;
+            for (const obs of toiletGame.obstacles) {
+                if (newX > obs.x && newX < obs.x + obs.width &&
+                    newY > obs.y && newY < obs.y + obs.height) {
+                    collision = true;
+                    break;
+                }
+            }
+
+            if (!collision) {
+                p.x = Math.max(20, Math.min(canvas.width - 20, newX));
+                p.y = Math.max(20, Math.min(canvas.height - 20, newY));
+            }
+
+            toiletGame.urgency -= 0.08;
+            if (toiletGame.urgency <= 0) {
+                toiletGame.gameOver = true;
+            }
+
+            const dist = Math.sqrt((p.x - toiletGame.toilet.x) ** 2 + (p.y - toiletGame.toilet.y) ** 2);
+            document.getElementById('distance').textContent = Math.round(dist);
+            document.getElementById('urgencyFill').style.width = toiletGame.urgency + '%';
+
+            if (dist < 40) {
+                toiletGame.won = true;
+            }
+        }
+
+        function renderToiletGame() {
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (const obs of toiletGame.obstacles) {
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                ctx.strokeStyle = '#3d2817';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(obs.x, obs.y, obs.width, obs.height);
+            }
+
+            ctx.fillStyle = 'white';
+            ctx.fillRect(toiletGame.toilet.x - 25, toiletGame.toilet.y - 35, 50, 70);
+            ctx.fillStyle = '#e0e0e0';
+            ctx.fillRect(toiletGame.toilet.x - 20, toiletGame.toilet.y - 30, 40, 30);
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 30px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('🚽', toiletGame.toilet.x, toiletGame.toilet.y);
+
+            const p = toiletGame.player;
+            ctx.fillStyle = selectedCharacter === 'martina' ? '#f5576c' : '#4a90e2';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 25, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 35px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(selectedCharacter === 'martina' ? '👩' : '👨', p.x, p.y + 12);
+
+            if (toiletGame.gameOver) {
+                ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 48px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('ACCIDENT!', canvas.width / 2, canvas.height / 2);
+                ctx.font = '24px Arial';
+                ctx.fillText('Tap back button to try again', canvas.width / 2, canvas.height / 2 + 50);
+            } else if (toiletGame.won) {
+                ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#4CAF50';
+                ctx.font = 'bold 48px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('MADE IT!', canvas.width / 2, canvas.height / 2);
+                ctx.font = '24px Arial';
+                ctx.fillStyle = 'white';
+                ctx.fillText('Crisis averted!', canvas.width / 2, canvas.height / 2 + 50);
+            }
+        }
+
+        // Controls
         const controls = {
             steerX: 0,
             steerY: 0,
             gas: false
         };
 
-        // Physics constants
-        const MAX_SPEED = 15;
-        const ACCELERATION = 0.4;
-        const DRIFT_FACTOR = 0.92;
-        const GRIP_FACTOR = 0.96;
-        const FRICTION = 0.98;
-        const TURN_SPEED = 0.08;
-
-        // Joystick handling
         const joystick = document.getElementById('joystick');
         const joystickKnob = document.getElementById('joystickKnob');
         let joystickActive = false;
@@ -205,190 +713,31 @@
             }
         }
 
-        // Gas button handling
         const gasButton = document.getElementById('gasButton');
-        let gasActive = false;
-
         gasButton.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             controls.gas = true;
-            gasActive = true;
         });
 
         gasButton.addEventListener('pointerup', (e) => {
             e.preventDefault();
             controls.gas = false;
-            gasActive = false;
         });
 
         gasButton.addEventListener('pointercancel', (e) => {
             e.preventDefault();
             controls.gas = false;
-            gasActive = false;
         });
 
-        // Track waypoints for endless track
-        const waypoints = [];
-        const numWaypoints = 20;
-        for (let i = 0; i < numWaypoints; i++) {
-            const angle = (i / numWaypoints) * Math.PI * 2;
-            const radius = 300 + Math.sin(i * 0.7) * 150;
-            waypoints.push({
-                x: Math.cos(angle) * radius,
-                y: Math.sin(angle) * radius
-            });
-        }
-
-        // Camera offset
-        const camera = { x: 0, y: 0 };
-
-        function updatePhysics() {
-            // Steering
-            const steerAngle = Math.atan2(controls.steerY, controls.steerX);
-            const steerMagnitude = Math.sqrt(controls.steerX ** 2 + controls.steerY ** 2);
-
-            if (steerMagnitude > 0.1) {
-                const targetAngle = steerAngle - Math.PI / 2;
-                let angleDiff = targetAngle - car.angle;
-                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-                car.angle += angleDiff * TURN_SPEED * steerMagnitude;
-            }
-
-            // Acceleration
-            if (controls.gas) {
-                const ax = Math.sin(car.angle) * ACCELERATION;
-                const ay = -Math.cos(car.angle) * ACCELERATION;
-                car.vx += ax;
-                car.vy += ay;
-            }
-
-            // Speed calculation
-            car.speed = Math.sqrt(car.vx ** 2 + car.vy ** 2);
-
-            // Limit speed
-            if (car.speed > MAX_SPEED) {
-                car.vx = (car.vx / car.speed) * MAX_SPEED;
-                car.vy = (car.vy / car.speed) * MAX_SPEED;
-                car.speed = MAX_SPEED;
-            }
-
-            // Drift physics
-            const velocityAngle = Math.atan2(car.vy, car.vx);
-            const carDirection = car.angle + Math.PI / 2;
-            let driftAngle = velocityAngle - carDirection;
-            while (driftAngle > Math.PI) driftAngle -= Math.PI * 2;
-            while (driftAngle < -Math.PI) driftAngle += Math.PI * 2;
-
-            car.drift = Math.abs(driftAngle);
-
-            // Apply drift vs grip
-            const driftThreshold = 0.3;
-            if (car.drift > driftThreshold && car.speed > 3) {
-                // Drifting
-                car.vx *= DRIFT_FACTOR;
-                car.vy *= DRIFT_FACTOR;
-                car.driftScore += car.speed * car.drift * 0.5;
-                car.totalScore += car.speed * car.drift * 0.1;
-            } else {
-                // Gripping
-                car.vx *= GRIP_FACTOR;
-                car.vy *= GRIP_FACTOR;
-                car.driftScore *= 0.95;
-            }
-
-            // Friction
-            car.vx *= FRICTION;
-            car.vy *= FRICTION;
-
-            // Update position
-            car.x += car.vx;
-            car.y += car.vy;
-
-            // Camera follows car
-            camera.x = car.x - canvas.width / 2;
-            camera.y = car.y - canvas.height / 2;
-        }
-
-        function render() {
-            // Clear
-            ctx.fillStyle = '#2a2a2a';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.save();
-            ctx.translate(-camera.x, -camera.y);
-
-            // Draw track
-            ctx.strokeStyle = 'rgba(100, 100, 100, 0.3)';
-            ctx.lineWidth = 200;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.beginPath();
-            for (let i = 0; i < waypoints.length; i++) {
-                const wp = waypoints[i];
-                if (i === 0) {
-                    ctx.moveTo(wp.x, wp.y);
-                } else {
-                    ctx.lineTo(wp.x, wp.y);
-                }
-            }
-            ctx.closePath();
-            ctx.stroke();
-
-            // Draw track center line
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([10, 10]);
-            ctx.beginPath();
-            for (let i = 0; i < waypoints.length; i++) {
-                const wp = waypoints[i];
-                if (i === 0) {
-                    ctx.moveTo(wp.x, wp.y);
-                } else {
-                    ctx.lineTo(wp.x, wp.y);
-                }
-            }
-            ctx.closePath();
-            ctx.stroke();
-            ctx.setLineDash([]);
-
-            // Draw drift marks
-            if (car.drift > 0.5 && car.speed > 3) {
-                ctx.fillStyle = 'rgba(50, 50, 50, 0.3)';
-                ctx.fillRect(car.x - 5, car.y - 5, 10, 10);
-            }
-
-            // Draw car
-            ctx.save();
-            ctx.translate(car.x, car.y);
-            ctx.rotate(car.angle);
-
-            // Car body
-            ctx.fillStyle = car.drift > 0.5 ? '#ff6b35' : '#4CAF50';
-            ctx.fillRect(-15, -25, 30, 50);
-
-            // Car windows
-            ctx.fillStyle = '#1a1a1a';
-            ctx.fillRect(-10, -15, 20, 15);
-
-            // Car headlights
-            ctx.fillStyle = '#ffeb3b';
-            ctx.fillRect(-12, -27, 8, 4);
-            ctx.fillRect(4, -27, 8, 4);
-
-            ctx.restore();
-
-            ctx.restore();
-
-            // Update HUD
-            document.getElementById('speed').textContent = Math.round(car.speed * 10);
-            document.getElementById('drift').textContent = Math.round(car.driftScore);
-            document.getElementById('score').textContent = Math.round(car.totalScore);
-        }
-
+        // Game loop
         function gameLoop() {
-            updatePhysics();
-            render();
+            if (currentGame === 'drift') {
+                updateDriftGame();
+                renderDriftGame();
+            } else if (currentGame === 'toilet') {
+                updateToiletGame();
+                renderToiletGame();
+            }
             requestAnimationFrame(gameLoop);
         }
 
