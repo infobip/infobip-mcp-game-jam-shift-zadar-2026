@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Metro Rush</title>
+    <title>Grand Theft Auto Mobile</title>
     <style>
         * {
             margin: 0;
@@ -13,7 +13,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #1a1a2e;
+            background: #000;
             overflow: hidden;
             touch-action: none;
             height: 100dvh;
@@ -22,37 +22,51 @@
         }
 
         #game-header {
-            padding: 15px;
+            padding: 10px;
             color: white;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.8);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            font-size: 14px;
             z-index: 10;
         }
 
         .stat {
             display: flex;
-            flex-direction: column;
             align-items: center;
+            gap: 5px;
         }
 
-        .stat-label {
-            font-size: 11px;
-            opacity: 0.8;
-            text-transform: uppercase;
+        .stat-icon {
+            font-size: 18px;
         }
 
         .stat-value {
-            font-size: 24px;
+            font-size: 16px;
             font-weight: bold;
+        }
+
+        .wanted-stars {
+            display: flex;
+            gap: 3px;
+        }
+
+        .star {
+            font-size: 16px;
+            opacity: 0.3;
+        }
+
+        .star.active {
+            opacity: 1;
+            color: #fbbf24;
         }
 
         #game-container {
             flex: 1;
             position: relative;
             overflow: hidden;
-            background: #2d2d44;
+            background: #1a1a1a;
         }
 
         #canvas {
@@ -64,42 +78,128 @@
             touch-action: none;
         }
 
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .joystick-container {
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 60px;
+            position: relative;
+            pointer-events: all;
+            touch-action: none;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .joystick-stick {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 25px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.1s;
+            border: 3px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: all;
+        }
+
+        .action-btn {
+            width: 70px;
+            height: 70px;
+            background: rgba(239, 68, 68, 0.7);
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            touch-action: manipulation;
+            font-weight: bold;
+        }
+
+        .action-btn:active {
+            transform: scale(0.9);
+            background: rgba(239, 68, 68, 0.9);
+        }
+
+        .action-btn.secondary {
+            background: rgba(59, 130, 246, 0.7);
+        }
+
+        .action-btn.secondary:active {
+            background: rgba(59, 130, 246, 0.9);
+        }
+
+        #mission-banner {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            display: none;
+            z-index: 20;
+            text-align: center;
+            max-width: 90%;
+            border: 2px solid #fbbf24;
+        }
+
         #game-over {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: white;
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
             padding: 35px;
             border-radius: 20px;
             text-align: center;
             display: none;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
             max-width: 90%;
             z-index: 100;
+            border: 3px solid #ef4444;
         }
 
         #game-over h2 {
             color: #ef4444;
             font-size: 32px;
-            margin-bottom: 15px;
-        }
-
-        #final-score {
-            font-size: 48px;
-            color: #3b82f6;
-            margin: 20px 0;
-            font-weight: bold;
-        }
-
-        #high-score-display {
-            font-size: 16px;
-            color: #666;
             margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .game-over-stat {
+            font-size: 18px;
+            margin: 10px 0;
+            color: #fbbf24;
         }
 
         #restart-btn {
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            background: linear-gradient(135deg, #ef4444, #dc2626);
             color: white;
             border: none;
             padding: 16px 40px;
@@ -109,483 +209,648 @@
             touch-action: manipulation;
             min-width: 200px;
             min-height: 56px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            font-weight: bold;
+            text-transform: uppercase;
         }
 
         #restart-btn:active {
             transform: scale(0.95);
         }
 
-        .swipe-hint {
+        .minimap {
             position: absolute;
-            bottom: 30%;
-            left: 50%;
-            transform: translateX(-50%);
-            color: white;
-            font-size: 18px;
-            text-align: center;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 15px 25px;
-            border-radius: 15px;
-            pointer-events: none;
-            opacity: 0;
-            animation: fadeInOut 3s ease-in-out;
-        }
-
-        @keyframes fadeInOut {
-            0%, 100% { opacity: 0; }
-            20%, 80% { opacity: 1; }
+            top: 80px;
+            right: 10px;
+            width: 120px;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            z-index: 10;
         }
     </style>
 </head>
 <body>
     <div id="game-header">
         <div class="stat">
-            <div class="stat-label">Score</div>
-            <div class="stat-value" id="score-value">0</div>
+            <span class="stat-icon">💰</span>
+            <span class="stat-value" id="money-value">$0</span>
+        </div>
+        <div class="wanted-stars" id="wanted-stars">
+            <span class="star">★</span>
+            <span class="star">★</span>
+            <span class="star">★</span>
+            <span class="star">★</span>
+            <span class="star">★</span>
         </div>
         <div class="stat">
-            <div class="stat-label">Coins</div>
-            <div class="stat-value" id="coins-value">0</div>
-        </div>
-        <div class="stat">
-            <div class="stat-label">Speed</div>
-            <div class="stat-value" id="speed-value">1.0x</div>
+            <span class="stat-icon">🎯</span>
+            <span class="stat-value" id="score-value">0</span>
         </div>
     </div>
 
     <div id="game-container">
         <canvas id="canvas"></canvas>
-        <div class="swipe-hint" id="swipe-hint">
-            Swipe ↑ Jump  ↓ Slide  ← → Switch Lanes
+        <div class="minimap" id="minimap"></div>
+        <div id="mission-banner"></div>
+
+        <div id="controls">
+            <div class="joystick-container" id="joystick">
+                <div class="joystick-stick" id="joystick-stick"></div>
+            </div>
+            <div class="action-buttons">
+                <button class="action-btn secondary" id="horn-btn">🔊</button>
+                <button class="action-btn" id="shoot-btn">🔫</button>
+            </div>
         </div>
     </div>
 
     <div id="game-over">
-        <h2>Game Over!</h2>
-        <div id="final-score">0</div>
-        <div id="high-score-display">Best: 0</div>
-        <button id="restart-btn">Play Again</button>
+        <h2>Wasted</h2>
+        <div class="game-over-stat">Money Earned: <span id="final-money">$0</span></div>
+        <div class="game-over-stat">Score: <span id="final-score">0</span></div>
+        <div class="game-over-stat">Time: <span id="final-time">0:00</span></div>
+        <button id="restart-btn">Restart</button>
     </div>
 
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
+        const moneyValue = document.getElementById('money-value');
         const scoreValue = document.getElementById('score-value');
-        const coinsValue = document.getElementById('coins-value');
-        const speedValue = document.getElementById('speed-value');
+        const wantedStars = document.getElementById('wanted-stars').children;
         const gameOverScreen = document.getElementById('game-over');
-        const finalScoreDisplay = document.getElementById('final-score');
-        const highScoreDisplay = document.getElementById('high-score-display');
+        const finalMoney = document.getElementById('final-money');
+        const finalScore = document.getElementById('final-score');
+        const finalTime = document.getElementById('final-time');
         const restartBtn = document.getElementById('restart-btn');
-        const swipeHint = document.getElementById('swipe-hint');
+        const missionBanner = document.getElementById('mission-banner');
+        const hornBtn = document.getElementById('horn-btn');
+        const shootBtn = document.getElementById('shoot-btn');
 
         let canvasWidth, canvasHeight;
         let gameActive = false;
+        let money = 0;
         let score = 0;
-        let coins = 0;
-        let speed = 8;
-        let baseSpeed = 8;
-        let highScore = 0;
+        let wantedLevel = 0;
+        let gameTime = 0;
+
+        let camera = { x: 0, y: 0 };
 
         let player = {
-            lane: 1,
-            y: 0,
-            targetY: 0,
-            jumping: false,
-            sliding: false,
-            velocityY: 0,
-            size: 30
+            x: 500,
+            y: 500,
+            angle: 0,
+            speed: 0,
+            maxSpeed: 6,
+            acceleration: 0.3,
+            friction: 0.95,
+            turnSpeed: 0.08,
+            width: 30,
+            height: 50
         };
 
-        let obstacles = [];
-        let coinItems = [];
-        let trackOffset = 0;
-        let nextObstacle = 0;
-        let nextCoin = 0;
+        let joystickActive = false;
+        let joystickAngle = 0;
+        let joystickPower = 0;
 
-        const LANE_WIDTH = 100;
-        const GROUND_Y = 0.75;
-        const JUMP_POWER = -18;
-        const GRAVITY = 0.8;
+        let buildings = [];
+        let pickups = [];
+        let cops = [];
+        let bullets = [];
+        let particles = [];
 
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let touchStartTime = 0;
+        const WORLD_SIZE = 2000;
+        const BUILDING_COUNT = 40;
 
         function resizeCanvas() {
             canvasWidth = canvas.offsetWidth;
             canvasHeight = canvas.offsetHeight;
             canvas.width = canvasWidth;
             canvas.height = canvasHeight;
-
-            player.y = canvasHeight * GROUND_Y;
-            player.targetY = player.y;
         }
 
-        function drawBackground() {
-            const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
-            gradient.addColorStop(0, '#1a1a2e');
-            gradient.addColorStop(1, '#16213e');
-            ctx.fillStyle = gradient;
+        function generateCity() {
+            buildings = [];
+
+            for (let i = 0; i < BUILDING_COUNT; i++) {
+                const w = 80 + Math.random() * 120;
+                const h = 80 + Math.random() * 120;
+                const x = Math.random() * (WORLD_SIZE - w);
+                const y = Math.random() * (WORLD_SIZE - h);
+
+                let overlaps = false;
+                for (let b of buildings) {
+                    if (x < b.x + b.width + 40 && x + w > b.x - 40 &&
+                        y < b.y + b.height + 40 && y + h > b.y - 40) {
+                        overlaps = true;
+                        break;
+                    }
+                }
+
+                if (!overlaps) {
+                    buildings.push({
+                        x, y, width: w, height: h,
+                        color: `hsl(${Math.random() * 30 + 200}, 20%, ${30 + Math.random() * 20}%)`
+                    });
+                }
+            }
+
+            for (let i = 0; i < 15; i++) {
+                spawnPickup();
+            }
+        }
+
+        function spawnPickup() {
+            let x, y, validPos;
+
+            do {
+                validPos = true;
+                x = Math.random() * WORLD_SIZE;
+                y = Math.random() * WORLD_SIZE;
+
+                for (let b of buildings) {
+                    if (x > b.x && x < b.x + b.width && y > b.y && y < b.y + b.height) {
+                        validPos = false;
+                        break;
+                    }
+                }
+            } while (!validPos);
+
+            pickups.push({ x, y, value: 100 + Math.floor(Math.random() * 400), collected: false });
+        }
+
+        function spawnCop() {
+            let x, y;
+            const side = Math.floor(Math.random() * 4);
+
+            if (side === 0) { x = player.x - 600; y = player.y + (Math.random() - 0.5) * 1000; }
+            else if (side === 1) { x = player.x + 600; y = player.y + (Math.random() - 0.5) * 1000; }
+            else if (side === 2) { x = player.x + (Math.random() - 0.5) * 1000; y = player.y - 600; }
+            else { x = player.x + (Math.random() - 0.5) * 1000; y = player.y + 600; }
+
+            cops.push({
+                x: Math.max(0, Math.min(WORLD_SIZE, x)),
+                y: Math.max(0, Math.min(WORLD_SIZE, y)),
+                angle: 0,
+                speed: 0,
+                health: 100
+            });
+        }
+
+        function updateCamera() {
+            camera.x = player.x - canvasWidth / 2;
+            camera.y = player.y - canvasHeight / 2;
+
+            camera.x = Math.max(0, Math.min(WORLD_SIZE - canvasWidth, camera.x));
+            camera.y = Math.max(0, Math.min(WORLD_SIZE - canvasHeight, camera.y));
+        }
+
+        function drawWorld() {
+            ctx.fillStyle = '#2d3748';
             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
-            for (let i = 0; i < 50; i++) {
-                const x = (Math.sin(i * 123.456) * 10000) % canvasWidth;
-                const y = (Math.cos(i * 789.123) * 10000) % canvasHeight;
-                ctx.fillRect(x, y, 2, 2);
-            }
-        }
+            const gridSize = 100;
+            ctx.strokeStyle = '#1a202c';
+            ctx.lineWidth = 1;
 
-        function drawTracks() {
-            const centerX = canvasWidth / 2;
-            const groundY = canvasHeight * GROUND_Y;
+            const startX = Math.floor(camera.x / gridSize) * gridSize;
+            const startY = Math.floor(camera.y / gridSize) * gridSize;
 
-            ctx.fillStyle = '#374151';
-            ctx.fillRect(centerX - LANE_WIDTH * 1.8, groundY, LANE_WIDTH * 3.6, canvasHeight - groundY);
-
-            for (let lane = 0; lane < 3; lane++) {
-                const x = centerX + (lane - 1) * LANE_WIDTH;
-
-                ctx.strokeStyle = '#4b5563';
-                ctx.lineWidth = 2;
-                ctx.setLineDash([]);
+            for (let x = startX; x < camera.x + canvasWidth; x += gridSize) {
                 ctx.beginPath();
-                ctx.moveTo(x - LANE_WIDTH / 2, groundY);
-                ctx.lineTo(x - LANE_WIDTH / 2, canvasHeight);
+                ctx.moveTo(x - camera.x, 0);
+                ctx.lineTo(x - camera.x, canvasHeight);
                 ctx.stroke();
             }
 
-            const dashOffset = (trackOffset * 2) % 40;
-            for (let lane = 0; lane < 3; lane++) {
-                const x = centerX + (lane - 1) * LANE_WIDTH;
-
-                ctx.strokeStyle = '#fbbf24';
-                ctx.lineWidth = 3;
-                ctx.setLineDash([20, 20]);
-                ctx.lineDashOffset = -dashOffset;
+            for (let y = startY; y < camera.y + canvasHeight; y += gridSize) {
                 ctx.beginPath();
-                ctx.moveTo(x, groundY);
-                ctx.lineTo(x, canvasHeight);
+                ctx.moveTo(0, y - camera.y);
+                ctx.lineTo(canvasWidth, y - camera.y);
                 ctx.stroke();
             }
-            ctx.setLineDash([]);
-
-            ctx.fillStyle = '#1f2937';
-            ctx.fillRect(0, canvasHeight * GROUND_Y, canvasWidth, 4);
         }
 
-        function drawPlayer() {
-            const centerX = canvasWidth / 2;
-            const x = centerX + (player.lane - 1) * LANE_WIDTH;
-            const size = player.sliding ? player.size * 0.6 : player.size;
+        function drawBuildings() {
+            buildings.forEach(b => {
+                const screenX = b.x - camera.x;
+                const screenY = b.y - camera.y;
 
-            ctx.fillStyle = '#3b82f6';
-            ctx.fillRect(x - size / 2, player.y - size, size, size);
+                if (screenX + b.width > 0 && screenX < canvasWidth &&
+                    screenY + b.height > 0 && screenY < canvasHeight) {
 
-            ctx.fillStyle = '#60a5fa';
-            ctx.fillRect(x - size / 3, player.y - size + 5, size * 0.66, size * 0.4);
+                    ctx.fillStyle = b.color;
+                    ctx.fillRect(screenX, screenY, b.width, b.height);
 
-            ctx.fillStyle = '#1e40af';
-            ctx.fillRect(x - size / 2, player.y - size / 3, size, size / 3);
-        }
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(screenX, screenY, b.width, b.height);
 
-        function updatePlayer() {
-            if (player.jumping) {
-                player.velocityY += GRAVITY;
-                player.y += player.velocityY;
-
-                if (player.y >= player.targetY) {
-                    player.y = player.targetY;
-                    player.jumping = false;
-                    player.velocityY = 0;
-                    player.sliding = false;
-                }
-            }
-        }
-
-        function jump() {
-            if (!player.jumping) {
-                player.jumping = true;
-                player.velocityY = JUMP_POWER;
-            }
-        }
-
-        function slide() {
-            if (!player.jumping) {
-                player.sliding = true;
-                setTimeout(() => {
-                    player.sliding = false;
-                }, 500);
-            }
-        }
-
-        function changeLane(direction) {
-            player.lane = Math.max(0, Math.min(2, player.lane + direction));
-        }
-
-        function spawnObstacle() {
-            const lane = Math.floor(Math.random() * 3);
-            const type = Math.random() > 0.5 ? 'barrier' : 'low';
-
-            obstacles.push({
-                lane,
-                y: -100,
-                type,
-                width: 40,
-                height: type === 'barrier' ? 60 : 30,
-                passed: false
-            });
-
-            nextObstacle = Math.random() * 100 + 100;
-        }
-
-        function spawnCoin() {
-            const lane = Math.floor(Math.random() * 3);
-            const pattern = Math.random();
-
-            if (pattern < 0.3) {
-                for (let i = 0; i < 3; i++) {
-                    coinItems.push({
-                        lane: i,
-                        y: -100 - i * 50,
-                        collected: false
-                    });
-                }
-            } else {
-                for (let i = 0; i < 5; i++) {
-                    coinItems.push({
-                        lane,
-                        y: -100 - i * 40,
-                        collected: false
-                    });
-                }
-            }
-
-            nextCoin = Math.random() * 150 + 200;
-        }
-
-        function updateObstacles() {
-            const centerX = canvasWidth / 2;
-
-            for (let i = obstacles.length - 1; i >= 0; i--) {
-                const obs = obstacles[i];
-                obs.y += speed;
-
-                const obsX = centerX + (obs.lane - 1) * LANE_WIDTH;
-                const playerX = centerX + (player.lane - 1) * LANE_WIDTH;
-
-                if (!obs.passed && obs.y > canvasHeight * GROUND_Y) {
-                    if (player.lane === obs.lane) {
-                        const playerBottom = player.y;
-                        const playerTop = player.y - (player.sliding ? player.size * 0.6 : player.size);
-                        const obsBottom = obs.y;
-                        const obsTop = obs.y - obs.height;
-
-                        if (playerBottom > obsTop && playerTop < obsBottom) {
-                            if (obs.type === 'barrier' && !player.jumping) {
-                                endGame();
-                            } else if (obs.type === 'low' && !player.sliding && !player.jumping) {
-                                endGame();
+                    const windowSize = 8;
+                    const windowGap = 20;
+                    ctx.fillStyle = 'rgba(255, 255, 100, 0.6)';
+                    for (let wx = windowGap; wx < b.width - windowSize; wx += windowGap) {
+                        for (let wy = windowGap; wy < b.height - windowSize; wy += windowGap) {
+                            if (Math.random() > 0.3) {
+                                ctx.fillRect(screenX + wx, screenY + wy, windowSize, windowSize);
                             }
                         }
                     }
-                    obs.passed = true;
-                }
-
-                if (obs.y > canvasHeight + 100) {
-                    obstacles.splice(i, 1);
-                }
-            }
-
-            nextObstacle--;
-            if (nextObstacle <= 0) {
-                spawnObstacle();
-            }
-        }
-
-        function updateCoins() {
-            const centerX = canvasWidth / 2;
-
-            for (let i = coinItems.length - 1; i >= 0; i--) {
-                const coin = coinItems[i];
-                coin.y += speed;
-
-                if (!coin.collected && coin.y > player.y - player.size && coin.y < player.y) {
-                    if (player.lane === coin.lane) {
-                        coin.collected = true;
-                        coins++;
-                        coinsValue.textContent = coins;
-                    }
-                }
-
-                if (coin.y > canvasHeight + 100) {
-                    coinItems.splice(i, 1);
-                }
-            }
-
-            nextCoin--;
-            if (nextCoin <= 0) {
-                spawnCoin();
-            }
-        }
-
-        function drawObstacles() {
-            const centerX = canvasWidth / 2;
-
-            obstacles.forEach(obs => {
-                const x = centerX + (obs.lane - 1) * LANE_WIDTH;
-
-                if (obs.type === 'barrier') {
-                    ctx.fillStyle = '#ef4444';
-                    ctx.fillRect(x - obs.width / 2, obs.y - obs.height, obs.width, obs.height);
-
-                    ctx.fillStyle = '#fca5a5';
-                    ctx.fillRect(x - obs.width / 2 + 5, obs.y - obs.height + 5, obs.width - 10, 8);
-                    ctx.fillRect(x - obs.width / 2 + 5, obs.y - obs.height + 20, obs.width - 10, 8);
-                } else {
-                    ctx.fillStyle = '#f59e0b';
-                    ctx.fillRect(x - obs.width / 2, obs.y - obs.height, obs.width, obs.height);
-
-                    ctx.fillStyle = '#fbbf24';
-                    ctx.fillRect(x - obs.width / 2 + 3, obs.y - obs.height + 3, obs.width - 6, obs.height - 6);
                 }
             });
         }
 
-        function drawCoins() {
-            const centerX = canvasWidth / 2;
+        function drawPickups() {
+            pickups.forEach(p => {
+                if (p.collected) return;
 
-            coinItems.forEach(coin => {
-                if (coin.collected) return;
+                const screenX = p.x - camera.x;
+                const screenY = p.y - camera.y;
 
-                const x = centerX + (coin.lane - 1) * LANE_WIDTH;
+                ctx.fillStyle = '#10b981';
+                ctx.beginPath();
+                ctx.arc(screenX, screenY, 15, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#fbbf24';
+                ctx.font = 'bold 20px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('$', screenX, screenY);
+            });
+        }
+
+        function drawPlayer() {
+            const screenX = player.x - camera.x;
+            const screenY = player.y - camera.y;
+
+            ctx.save();
+            ctx.translate(screenX, screenY);
+            ctx.rotate(player.angle);
+
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(-player.width / 2, -player.height / 2, player.width, player.height);
+
+            ctx.fillStyle = '#7dd3fc';
+            ctx.fillRect(-player.width / 2 + 5, -player.height / 2 + 10, player.width - 10, 15);
+
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(-player.width / 2, player.height / 2 - 15, player.width, 10);
+
+            ctx.restore();
+        }
+
+        function drawCops() {
+            cops.forEach(cop => {
+                const screenX = cop.x - camera.x;
+                const screenY = cop.y - camera.y;
+
+                ctx.save();
+                ctx.translate(screenX, screenY);
+                ctx.rotate(cop.angle);
+
+                ctx.fillStyle = '#3b82f6';
+                ctx.fillRect(-15, -25, 30, 50);
+
+                ctx.fillStyle = '#60a5fa';
+                ctx.fillRect(-12, -20, 24, 15);
+
+                ctx.fillStyle = '#ef4444';
+                ctx.beginPath();
+                ctx.arc(0, -28, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            });
+        }
+
+        function drawBullets() {
+            bullets.forEach(b => {
+                const screenX = b.x - camera.x;
+                const screenY = b.y - camera.y;
 
                 ctx.fillStyle = '#fbbf24';
                 ctx.beginPath();
-                ctx.arc(x, coin.y, 12, 0, Math.PI * 2);
+                ctx.arc(screenX, screenY, 3, 0, Math.PI * 2);
                 ctx.fill();
-
-                ctx.strokeStyle = '#f59e0b';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.arc(x, coin.y, 12, 0, Math.PI * 2);
-                ctx.stroke();
-
-                ctx.fillStyle = '#fef3c7';
-                ctx.font = 'bold 14px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('$', x, coin.y);
             });
+        }
+
+        function drawParticles() {
+            particles.forEach(p => {
+                const screenX = p.x - camera.x;
+                const screenY = p.y - camera.y;
+
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life;
+                ctx.beginPath();
+                ctx.arc(screenX, screenY, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            });
+        }
+
+        function updatePlayer() {
+            if (joystickActive && joystickPower > 0.1) {
+                const targetAngle = joystickAngle;
+                let angleDiff = targetAngle - player.angle;
+
+                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+                player.angle += angleDiff * player.turnSpeed;
+                player.speed += player.acceleration * joystickPower;
+            }
+
+            player.speed *= player.friction;
+            player.speed = Math.max(-player.maxSpeed * 0.5, Math.min(player.maxSpeed, player.speed));
+
+            const newX = player.x + Math.cos(player.angle) * player.speed;
+            const newY = player.y + Math.sin(player.angle) * player.speed;
+
+            let collision = false;
+            for (let b of buildings) {
+                if (newX > b.x - player.width / 2 && newX < b.x + b.width + player.width / 2 &&
+                    newY > b.y - player.height / 2 && newY < b.y + b.height + player.height / 2) {
+                    collision = true;
+                    player.speed *= -0.5;
+                    break;
+                }
+            }
+
+            if (!collision) {
+                player.x = Math.max(0, Math.min(WORLD_SIZE, newX));
+                player.y = Math.max(0, Math.min(WORLD_SIZE, newY));
+            }
+
+            pickups.forEach(p => {
+                if (p.collected) return;
+                const dx = player.x - p.x;
+                const dy = player.y - p.y;
+                if (Math.sqrt(dx * dx + dy * dy) < 30) {
+                    p.collected = true;
+                    money += p.value;
+                    score += p.value;
+                    moneyValue.textContent = `$${money}`;
+                    scoreValue.textContent = score;
+
+                    if (Math.random() > 0.7) {
+                        wantedLevel = Math.min(5, wantedLevel + 1);
+                        updateWantedStars();
+                    }
+
+                    setTimeout(() => spawnPickup(), 3000);
+                }
+            });
+        }
+
+        function updateCops() {
+            if (wantedLevel > 0 && cops.length < wantedLevel * 2) {
+                if (Math.random() > 0.98) {
+                    spawnCop();
+                }
+            }
+
+            cops.forEach((cop, idx) => {
+                const dx = player.x - cop.x;
+                const dy = player.y - cop.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                const targetAngle = Math.atan2(dy, dx);
+                cop.angle = targetAngle;
+
+                cop.speed = Math.min(4, player.maxSpeed * 0.8);
+                cop.x += Math.cos(cop.angle) * cop.speed;
+                cop.y += Math.sin(cop.angle) * cop.speed;
+
+                if (dist < 40) {
+                    gameOver();
+                }
+
+                if (cop.health <= 0) {
+                    cops.splice(idx, 1);
+                    score += 500;
+                    scoreValue.textContent = score;
+                    wantedLevel = Math.min(5, wantedLevel + 1);
+                    updateWantedStars();
+                }
+            });
+
+            if (wantedLevel > 0 && Math.random() > 0.995) {
+                wantedLevel = Math.max(0, wantedLevel - 1);
+                updateWantedStars();
+            }
+        }
+
+        function updateBullets() {
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const b = bullets[i];
+                b.x += Math.cos(b.angle) * b.speed;
+                b.y += Math.sin(b.angle) * b.speed;
+                b.life--;
+
+                cops.forEach(cop => {
+                    const dx = cop.x - b.x;
+                    const dy = cop.y - b.y;
+                    if (Math.sqrt(dx * dx + dy * dy) < 30) {
+                        cop.health -= 50;
+                        bullets.splice(i, 1);
+                        createExplosion(b.x, b.y);
+                    }
+                });
+
+                if (b.life <= 0) {
+                    bullets.splice(i, 1);
+                }
+            }
+        }
+
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.02;
+
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+
+        function createExplosion(x, y) {
+            for (let i = 0; i < 10; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 3;
+                particles.push({
+                    x, y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    life: 1,
+                    size: 3 + Math.random() * 3,
+                    color: `hsl(${Math.random() * 60 + 20}, 100%, 50%)`
+                });
+            }
+        }
+
+        function shoot() {
+            bullets.push({
+                x: player.x + Math.cos(player.angle) * 30,
+                y: player.y + Math.sin(player.angle) * 30,
+                angle: player.angle,
+                speed: 12,
+                life: 60
+            });
+
+            wantedLevel = Math.min(5, wantedLevel + 1);
+            updateWantedStars();
+        }
+
+        function updateWantedStars() {
+            for (let i = 0; i < wantedStars.length; i++) {
+                if (i < wantedLevel) {
+                    wantedStars[i].classList.add('active');
+                } else {
+                    wantedStars[i].classList.remove('active');
+                }
+            }
         }
 
         function gameLoop() {
             if (!gameActive) return;
 
-            trackOffset += speed;
-            score += 1;
-            scoreValue.textContent = Math.floor(score / 10);
-
-            speed = baseSpeed + Math.floor(score / 1000) * 0.5;
-            speedValue.textContent = (speed / baseSpeed).toFixed(1) + 'x';
+            gameTime++;
 
             ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-            drawBackground();
-            drawTracks();
-            drawObstacles();
-            drawCoins();
-            drawPlayer();
-
             updatePlayer();
-            updateObstacles();
-            updateCoins();
+            updateCops();
+            updateBullets();
+            updateParticles();
+            updateCamera();
+
+            drawWorld();
+            drawBuildings();
+            drawPickups();
+            drawPlayer();
+            drawCops();
+            drawBullets();
+            drawParticles();
 
             requestAnimationFrame(gameLoop);
         }
 
         function startGame() {
             gameActive = true;
+            money = 0;
             score = 0;
-            coins = 0;
-            speed = baseSpeed;
-            obstacles = [];
-            coinItems = [];
-            trackOffset = 0;
-            nextObstacle = 100;
-            nextCoin = 150;
+            wantedLevel = 0;
+            gameTime = 0;
 
-            player.lane = 1;
-            player.y = canvasHeight * GROUND_Y;
-            player.targetY = player.y;
-            player.jumping = false;
-            player.sliding = false;
-            player.velocityY = 0;
+            player.x = WORLD_SIZE / 2;
+            player.y = WORLD_SIZE / 2;
+            player.angle = 0;
+            player.speed = 0;
 
+            cops = [];
+            bullets = [];
+            particles = [];
+
+            moneyValue.textContent = '$0';
             scoreValue.textContent = '0';
-            coinsValue.textContent = '0';
-            speedValue.textContent = '1.0x';
+            updateWantedStars();
             gameOverScreen.style.display = 'none';
 
-            setTimeout(() => {
-                swipeHint.style.animation = 'fadeInOut 3s ease-in-out';
-            }, 500);
-
             resizeCanvas();
+            generateCity();
+
+            missionBanner.textContent = 'Collect money! Avoid the cops!';
+            missionBanner.style.display = 'block';
+            setTimeout(() => {
+                missionBanner.style.display = 'none';
+            }, 3000);
+
             gameLoop();
         }
 
-        function endGame() {
+        function gameOver() {
             gameActive = false;
 
-            const finalScore = Math.floor(score / 10);
-            finalScoreDisplay.textContent = finalScore;
+            const minutes = Math.floor(gameTime / 3600);
+            const seconds = Math.floor((gameTime % 3600) / 60);
 
-            if (finalScore > highScore) {
-                highScore = finalScore;
-            }
+            finalMoney.textContent = `$${money}`;
+            finalScore.textContent = score;
+            finalTime.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
 
-            highScoreDisplay.textContent = `Best: ${highScore}`;
             gameOverScreen.style.display = 'block';
         }
 
-        canvas.addEventListener('pointerdown', (e) => {
+        const joystick = document.getElementById('joystick');
+        const joystickStick = document.getElementById('joystick-stick');
+
+        joystick.addEventListener('pointerdown', (e) => {
             e.preventDefault();
-            touchStartX = e.clientX;
-            touchStartY = e.clientY;
-            touchStartTime = Date.now();
+            joystickActive = true;
+            updateJoystick(e);
         });
 
-        canvas.addEventListener('pointerup', (e) => {
-            e.preventDefault();
-            if (!gameActive) return;
-
-            const touchEndX = e.clientX;
-            const touchEndY = e.clientY;
-            const touchDuration = Date.now() - touchStartTime;
-
-            const deltaX = touchEndX - touchStartX;
-            const deltaY = touchEndY - touchStartY;
-
-            const isSwipe = touchDuration < 300 && (Math.abs(deltaX) > 50 || Math.abs(deltaY) > 50);
-
-            if (isSwipe) {
-                if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                    if (deltaX > 0) {
-                        changeLane(1);
-                    } else {
-                        changeLane(-1);
-                    }
-                } else {
-                    if (deltaY < 0) {
-                        jump();
-                    } else {
-                        slide();
-                    }
-                }
+        joystick.addEventListener('pointermove', (e) => {
+            if (joystickActive) {
+                e.preventDefault();
+                updateJoystick(e);
             }
+        });
+
+        joystick.addEventListener('pointerup', (e) => {
+            e.preventDefault();
+            joystickActive = false;
+            joystickStick.style.transform = 'translate(-50%, -50%)';
+            joystickPower = 0;
+        });
+
+        joystick.addEventListener('pointerleave', (e) => {
+            if (joystickActive) {
+                e.preventDefault();
+                joystickActive = false;
+                joystickStick.style.transform = 'translate(-50%, -50%)';
+                joystickPower = 0;
+            }
+        });
+
+        function updateJoystick(e) {
+            const rect = joystick.getBoundingClientRect();
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+
+            const touchX = e.clientX - rect.left;
+            const touchY = e.clientY - rect.top;
+
+            const deltaX = touchX - centerX;
+            const deltaY = touchY - centerY;
+
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            const maxDistance = 35;
+
+            joystickPower = Math.min(distance / maxDistance, 1);
+            joystickAngle = Math.atan2(deltaY, deltaX);
+
+            const clampedX = Math.max(-maxDistance, Math.min(maxDistance, deltaX));
+            const clampedY = Math.max(-maxDistance, Math.min(maxDistance, deltaY));
+
+            joystickStick.style.transform = `translate(calc(-50% + ${clampedX}px), calc(-50% + ${clampedY}px))`;
+        }
+
+        shootBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            if (gameActive) shoot();
+        });
+
+        hornBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
         });
 
         restartBtn.addEventListener('pointerdown', (e) => {
