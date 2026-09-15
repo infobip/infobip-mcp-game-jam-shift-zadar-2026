@@ -133,6 +133,18 @@
             pointer-events: none;
             z-index: 10;
         }
+        #detectiveHud {
+            display: none;
+            position: fixed;
+            top: 20px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none;
+            z-index: 10;
+        }
         #urgencyBar {
             width: 80%;
             max-width: 400px;
@@ -147,6 +159,22 @@
             height: 100%;
             background: linear-gradient(90deg, #4CAF50 0%, #FFC107 50%, #F44336 100%);
             transition: width 0.3s;
+        }
+        #influenceBar {
+            width: 80%;
+            max-width: 400px;
+            height: 30px;
+            background: rgba(0,0,0,0.3);
+            border: 3px solid white;
+            border-radius: 15px;
+            margin: 10px auto;
+            overflow: hidden;
+        }
+        #influenceFill {
+            height: 100%;
+            background: linear-gradient(90deg, #2196F3 0%, #9C27B0 50%, #E91E63 100%);
+            transition: width 0.3s;
+            width: 0%;
         }
         #joystick {
             display: none;
@@ -272,6 +300,7 @@
         <h1>Choose Your Game</h1>
         <button class="menu-button" id="driftBtn">Drift Racer</button>
         <button class="menu-button" id="toiletBtn">Toilet Rush</button>
+        <button class="menu-button" id="detectiveBtn">Detective Chase</button>
     </div>
 
     <div id="characterSelect">
@@ -298,6 +327,12 @@
         <div style="font-size: 28px; font-weight: bold;">REACH THE TOILET!</div>
         <div id="urgencyBar"><div id="urgencyFill" style="width: 100%;"></div></div>
         <div>Progress: <span id="distance">0</span>m</div>
+    </div>
+
+    <div id="detectiveHud">
+        <div style="font-size: 28px; font-weight: bold;">CATCH THE CRIMINALS!</div>
+        <div id="influenceBar"><div id="influenceFill"></div></div>
+        <div>Caught: <span id="caught">0</span> | Score: <span id="detScore">0</span></div>
     </div>
 
     <div id="joystick">
@@ -338,6 +373,11 @@
             showCharacterSelect();
         });
 
+        document.getElementById('detectiveBtn').addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            startDetectiveGame();
+        });
+
         document.getElementById('martinaBtn').addEventListener('pointerdown', (e) => {
             e.preventDefault();
             selectedCharacter = 'martina';
@@ -367,6 +407,7 @@
             document.getElementById('gameCanvas').style.display = 'none';
             document.getElementById('hud').style.display = 'none';
             document.getElementById('toiletHud').style.display = 'none';
+            document.getElementById('detectiveHud').style.display = 'none';
             document.getElementById('joystick').style.display = 'none';
             document.getElementById('gasButton').style.display = 'none';
             document.getElementById('dpadContainer').style.display = 'none';
@@ -612,25 +653,28 @@
             toiletGame.moveDelay = 8;
         }
 
-        document.getElementById('upBtn').addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            movePlayer(0, 1);
-        });
+        let upBtnHandler, downBtnHandler, leftBtnHandler, rightBtnHandler;
 
-        document.getElementById('downBtn').addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            movePlayer(0, -1);
-        });
+        function setupToiletControls() {
+            upBtnHandler = (e) => { e.preventDefault(); movePlayer(0, 1); };
+            downBtnHandler = (e) => { e.preventDefault(); movePlayer(0, -1); };
+            leftBtnHandler = (e) => { e.preventDefault(); movePlayer(-1, 0); };
+            rightBtnHandler = (e) => { e.preventDefault(); movePlayer(1, 0); };
 
-        document.getElementById('leftBtn').addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            movePlayer(-1, 0);
-        });
+            document.getElementById('upBtn').addEventListener('pointerdown', upBtnHandler);
+            document.getElementById('downBtn').addEventListener('pointerdown', downBtnHandler);
+            document.getElementById('leftBtn').addEventListener('pointerdown', leftBtnHandler);
+            document.getElementById('rightBtn').addEventListener('pointerdown', rightBtnHandler);
+        }
 
-        document.getElementById('rightBtn').addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            movePlayer(1, 0);
-        });
+        function removeToiletControls() {
+            if (upBtnHandler) {
+                document.getElementById('upBtn').removeEventListener('pointerdown', upBtnHandler);
+                document.getElementById('downBtn').removeEventListener('pointerdown', downBtnHandler);
+                document.getElementById('leftBtn').removeEventListener('pointerdown', leftBtnHandler);
+                document.getElementById('rightBtn').removeEventListener('pointerdown', rightBtnHandler);
+            }
+        }
 
         function updateToiletGame() {
             if (toiletGame.gameOver || toiletGame.won) return;
@@ -811,6 +855,192 @@
             }
         }
 
+        // DETECTIVE GAME
+        function startDetectiveGame() {
+            currentGame = 'detective';
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('gameCanvas').style.display = 'block';
+            document.getElementById('detectiveHud').style.display = 'block';
+            document.getElementById('joystick').style.display = 'block';
+            document.getElementById('backButton').style.display = 'block';
+            initDetectiveGame();
+        }
+
+        const detectiveGame = {
+            player: { x: 0, y: 0, vx: 0, vy: 0, speed: 4 },
+            criminals: [],
+            influence: 0,
+            caught: 0,
+            score: 0,
+            targetedCriminal: null
+        };
+
+        function initDetectiveGame() {
+            detectiveGame.player = {
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                vx: 0,
+                vy: 0,
+                speed: 4
+            };
+            detectiveGame.criminals = [];
+            detectiveGame.influence = 0;
+            detectiveGame.caught = 0;
+            detectiveGame.score = 0;
+            detectiveGame.targetedCriminal = null;
+
+            for (let i = 0; i < 5; i++) {
+                spawnCriminal();
+            }
+        }
+
+        function spawnCriminal() {
+            const types = ['thief', 'hacker', 'smuggler'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            const edge = Math.floor(Math.random() * 4);
+            let x, y;
+
+            if (edge === 0) { x = Math.random() * canvas.width; y = -50; }
+            else if (edge === 1) { x = canvas.width + 50; y = Math.random() * canvas.height; }
+            else if (edge === 2) { x = Math.random() * canvas.width; y = canvas.height + 50; }
+            else { x = -50; y = Math.random() * canvas.height; }
+
+            const targetX = Math.random() * canvas.width;
+            const targetY = Math.random() * canvas.height;
+            const dx = targetX - x;
+            const dy = targetY - y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const speed = 1 + Math.random() * 2;
+
+            detectiveGame.criminals.push({
+                x: x,
+                y: y,
+                vx: (dx / dist) * speed,
+                vy: (dy / dist) * speed,
+                type: type,
+                targeted: false,
+                caught: false
+            });
+        }
+
+        function updateDetectiveGame() {
+            const p = detectiveGame.player;
+            const steerMagnitude = Math.sqrt(controls.steerX ** 2 + controls.steerY ** 2);
+
+            if (steerMagnitude > 0.1) {
+                p.vx = controls.steerX * p.speed;
+                p.vy = controls.steerY * p.speed;
+            } else {
+                p.vx *= 0.9;
+                p.vy *= 0.9;
+            }
+
+            p.x += p.vx;
+            p.y += p.vy;
+            p.x = Math.max(30, Math.min(canvas.width - 30, p.x));
+            p.y = Math.max(30, Math.min(canvas.height - 30, p.y));
+
+            for (let i = detectiveGame.criminals.length - 1; i >= 0; i--) {
+                const crim = detectiveGame.criminals[i];
+                if (crim.caught) continue;
+
+                crim.x += crim.vx;
+                crim.y += crim.vy;
+
+                const dx = p.x - crim.x;
+                const dy = p.y - crim.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 150 && !crim.targeted) {
+                    crim.targeted = true;
+                    detectiveGame.targetedCriminal = crim;
+                    detectiveGame.influence = Math.min(100, detectiveGame.influence + 15);
+                }
+
+                if (dist < 40 && crim.targeted) {
+                    crim.caught = true;
+                    detectiveGame.caught++;
+                    detectiveGame.score += crim.type === 'hacker' ? 30 : crim.type === 'smuggler' ? 25 : 20;
+                    detectiveGame.influence = Math.min(100, detectiveGame.influence + 10);
+                    detectiveGame.criminals.splice(i, 1);
+                    spawnCriminal();
+                }
+
+                if (crim.x < -100 || crim.x > canvas.width + 100 || crim.y < -100 || crim.y > canvas.height + 100) {
+                    detectiveGame.criminals.splice(i, 1);
+                    spawnCriminal();
+                }
+            }
+
+            if (detectiveGame.influence > 0) {
+                detectiveGame.influence -= 0.1;
+            }
+
+            document.getElementById('caught').textContent = detectiveGame.caught;
+            document.getElementById('detScore').textContent = detectiveGame.score;
+            document.getElementById('influenceFill').style.width = detectiveGame.influence + '%';
+        }
+
+        function renderDetectiveGame() {
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let x = 0; x < canvas.width; x += 100) {
+                for (let y = 0; y < canvas.height; y += 100) {
+                    ctx.fillStyle = '#34495e';
+                    ctx.fillRect(x, y, 80, 80);
+                }
+            }
+
+            for (const crim of detectiveGame.criminals) {
+                if (crim.caught) continue;
+
+                if (crim.targeted) {
+                    ctx.strokeStyle = 'rgba(231, 76, 60, 0.5)';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(crim.x, crim.y, 50, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                    ctx.strokeStyle = '#e74c3c';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(detectiveGame.player.x, detectiveGame.player.y);
+                    ctx.lineTo(crim.x, crim.y);
+                    ctx.stroke();
+                }
+
+                const crimColor = crim.type === 'thief' ? '#e67e22' : crim.type === 'hacker' ? '#9b59b6' : '#e74c3c';
+                ctx.fillStyle = crimColor;
+                ctx.beginPath();
+                ctx.arc(crim.x, crim.y, 20, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'center';
+                const emoji = crim.type === 'thief' ? '💰' : crim.type === 'hacker' ? '💻' : '📦';
+                ctx.fillText(emoji, crim.x, crim.y + 8);
+            }
+
+            const p = detectiveGame.player;
+            ctx.fillStyle = '#3498db';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 25, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 35px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('👮', p.x, p.y + 12);
+        }
+
         const controls = { steerX: 0, steerY: 0, gas: false };
         const joystick = document.getElementById('joystick');
         const joystickKnob = document.getElementById('joystickKnob');
@@ -895,8 +1125,13 @@
                 updateDriftGame();
                 renderDriftGame();
             } else if (currentGame === 'toilet') {
+                if (!upBtnHandler) setupToiletControls();
                 updateToiletGame();
                 renderToiletGame();
+            } else if (currentGame === 'detective') {
+                removeToiletControls();
+                updateDetectiveGame();
+                renderDetectiveGame();
             }
             requestAnimationFrame(gameLoop);
         }
